@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+.runtime/
+.build-tools/
+.native-libs/
+build/
+dist/
+*.spec
+*.log
+.env
+.env.*
+progress*.json
+.DS_Store
+Thumbs.db
