@@ -1,88 +1,33 @@
-# Shellground
+# Shellground 4
 
-목표를 보고 Linux 명령어·경로·옵션을 스스로 조합하는 **네이티브 데스크톱 실습 프로그램**입니다. 웹 앱이나 웹뷰가 아닙니다. Qt 화면의 터미널에서 Docker 안의 실제 Ubuntu bash와 GNU 명령을 실행합니다.
+Linux·Docker 명령을 연습하는 **오프라인 네이티브 데스크톱 시뮬레이터**입니다. 웹 앱이 아니며 Docker·WSL·VM 설치가 필요하지 않습니다. 명령어 정답 문자열을 맞추는 방식이 아니라 가상 파일·권한·셸·프로세스·이미지·컨테이너 상태로 채점합니다.
 
-> **현재 상태:** Linux(Ubuntu 24.04, x86-64) 빌드와 통합 테스트를 확인했습니다. Windows용 공용 코드와 빌드 스크립트를 제공하지만 **Windows 실행 파일 제작·실기기 검증은 아직 완료하지 않았습니다.** Docker/WSL 없이 실행 파일 하나만으로 Linux 실습이 되는 프로그램은 아닙니다.
+## 현재 버전
 
-## 어떤 방식으로 배우나요?
+- 40단원, 5단원마다 종합 복습 8개, 완료 범위 올랜덤.
+- 설명을 보며 자유 연습 → 예시 → 서로 다른 활용 2개 → 완료 기록 자동 저장.
+- 활용·종합·랜덤 테스트 중에는 왼쪽 명령어·단원명을 숨깁니다. 배우기·예시에서는 복원합니다.
+- 미완료 채점 후 같은 상태에서 계속 수정하고 F5로 재채점할 수 있습니다.
+- Linux x86-64에서 빌드·검사했습니다. Windows 공용 코드/빌드 스크립트는 제공하지만 **Windows exe 산출물과 실기기 검증은 아직 없습니다**.
 
-1. **새 명령 배우기**: 용도, 옵션, 경로와 인용부호 설명.
-2. **예시 직접 실습**: 안내 명령을 실제 터미널에 입력.
-3. **활용 문제 2개**: 정답을 숨기고, 시작 위치·경로·파일 이름이 바뀐 목표 해결.
-4. **배운 범위 올랜덤**: 완료한 단원 전체에서 새 문제 생성. 후반 문제에서는 다운로드·경로·압축·권한 등을 조합.
+## 시작하기
 
-예를 들어 현재 위치가 `/home/learner/desk/team1`일 때 다른 폴더의 숨김 항목·하위 구조를 상세 목록으로 정리해 지정된 텍스트 파일에 저장합니다. 입력 문자열이 아니라 **실제로 만들어진 파일의 위치·이름·내용·권한과 현재 셸 위치**로 채점합니다. 같은 결과를 만드는 다른 명령 조합도 인정합니다.
+Linux 빌드 산출물은 `desktop/dist/Shellground`, Windows에서 빌드한 산출물은 `desktop/dist/Shellground.exe`입니다. 실행할 때 Docker나 가상화 설정은 필요 없습니다.
 
-```sh
-ls -alR /home/learner/data/release4242 > /home/learner/reports/inventory-4242.txt
-```
-
-위 경로는 설명용 예시입니다. 실제 실습에서는 문제에 표시된 경로를 사용하세요.
-
-## 학습 범위
-
-| 난이도 | 주요 실습 |
-| --- | --- |
-| 1 · 입문 | `pwd`, `ls`, `cd`, `mkdir -p`, `touch`, `cp`, `mv`, `rm`, 공백이 있는 경로 |
-| 2 · 목록과 보고서 | `ls -a`, `ls -al`, `ls -alR`, `>`, `cat`, 절대·상대 경로 |
-| 3 · 검색과 가공 | `grep -i`, 파이프 `\|`, `wc -l`, `find -type f -name`; `head`·`tail` 사용 설명 |
-| 4 · 파일 활용 | `curl`, `wget`, `.deb`·`.sh`·`.zip`·`.tar.gz` 다운로드, `tar`, `unzip`, `chmod`, 스크립트 실행, `dpkg-deb` 추출 |
-
-총 13개 단원입니다. 모든 Linux 명령·옵션이나 시스템 관리자 전체 과정을 다루지는 않습니다.
-
-## 빠른 시작: Linux
-
-먼저 Python 3.12, Git, Docker Engine을 설치하고 Docker를 실행하세요. 현재 사용자로 `docker info`가 성공해야 합니다. Ubuntu에서는 Python venv 및 Qt XCB 라이브러리도 필요합니다.
+소스에서 실행하려면 Python 3.12 환경에서 다음을 실행하세요.
 
 ```sh
-# Ubuntu에서 필요한 시스템 패키지 (Docker 자체 설치는 별도)
-sudo apt install python3-venv libxcb-cursor0
-
-git clone https://github.com/kimwoo666/shellground.git
-cd shellground/desktop
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python shellground.py
+cd desktop
+python -m pip install -r requirements.txt
+python shellground.py
 ```
 
-프로그램에서 **실행 환경 확인 → 최초 실습 환경 준비 → 예시 실습 시작** 순으로 진행합니다. 최초 준비에는 인터넷과 수백 MB의 공간이 필요합니다. 이미지가 이미 준비되어 있으면 다시 만들 필요가 없습니다.
+Linux 빌드: `bash desktop/build.sh`. Windows 빌드: PowerShell에서 `desktop/build-windows.ps1`.
 
-단일 실행 파일로 빌드하려면 같은 `desktop` 폴더에서:
+## 안내
 
-```sh
-bash build.sh
-./dist/Shellground
-```
+[사용설명서](docs/USER_GUIDE.ko.md) · [실행 및 지원 범위](desktop/README.md) · [학습 순서](desktop/LEARNING_PATH.md) · [검증 기록](desktop/VERIFICATION.md) · [개발 구조](docs/DEVELOPMENT.ko.md)
 
-저장소에는 소스와 글꼴을 포함하며 빌드 캐시·가상환경·실행 파일은 커밋하지 않습니다. 배포 바이너리가 별도로 제공되지 않은 경우 위 방법으로 직접 빌드해야 합니다.
+전체 GNU/bash/Docker를 구현한 운영체제가 아닙니다. 아직 미구현인 명령·옵션은 오류로 표시합니다. 패키지/이미지·자원 수치는 학습용 가상 상태이며 실제 설치·네트워크·성능 측정이 아닙니다. 강의자료의 모든 명령·옵션을 다루는 확장은 아직 미완료입니다.
 
-## Windows: 소스 실행 및 빌드 경로
-
-**아래는 제공된 실행/빌드 방법이며 Windows 실기기 검증 완료를 의미하지 않습니다.** Python 3.12, Git, Docker Desktop이 필요합니다. Docker Desktop은 WSL 2 기반 **Linux containers** 모드로 실행하세요.
-
-PowerShell에서:
-
-```powershell
-git clone https://github.com/kimwoo666/shellground.git
-cd shellground\desktop
-py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe shellground.py
-```
-
-실행 파일 빌드는 같은 폴더에서 `./build-windows.ps1`을 실행합니다. 성공 시 `desktop/dist/Shellground.exe`가 생성됩니다. Python 의존성 설치와 빌드는 Windows에서 수행해야 합니다. Linux 바이너리의 확장자만 `.exe`로 바꿔 사용할 수 없습니다.
-
-공식 설치 참고: [Docker Engine](https://docs.docker.com/engine/install/), [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/), [WSL 2 백엔드](https://docs.docker.com/desktop/features/wsl/).
-
-## 사용설명서와 검증
-
-- [상세 사용설명서](docs/USER_GUIDE.ko.md): 화면 조작, 예제 문제, 채점, 다운로드, 진도, 문제 해결.
-- [개발·빌드 안내](docs/DEVELOPMENT.ko.md): 코드 구조, 테스트 실행, 재배포 참고.
-- [검증 범위와 알려진 제한](desktop/VERIFICATION.md): 실제로 확인한 것과 아직 확인하지 못한 것.
-- [외부 구성요소 안내](THIRD_PARTY_NOTICES.md): 글꼴과 Python/Qt 의존성.
-
-## 실제 Linux와 안전 범위
-
-Tab 자동 완성, ↑↓ 명령 기록, Ctrl+C, Ctrl+L, 파이프·리다이렉션·오류 출력은 실제 bash와 프로그램이 처리합니다. ANSI 화면을 네이티브 위젯에 표시하며, 모든 xterm 확장/TUI와의 완전한 호환을 보장하지는 않습니다.
-
-실습 컨테이너에는 개인 폴더와 Docker 소켓을 연결하지 않습니다. 비관리자 사용자, 읽기 전용 루트, 메모리/PID 제한과 외부 네트워크 차단을 사용합니다. 다운로드는 컨테이너 안의 로컬 HTTP 서버에서 제공하는 실제 파일로 연습합니다. 일반 인터넷 다운로드, 관리자·커널·하드웨어 관리는 실습 범위가 아닙니다. 컨테이너는 가상 머신과 같은 보안 경계가 아니므로 악성 코드 실행 용도로 사용하지 마세요.
+이전 Docker 백엔드와 문자열 퀴즈는 보관용이며 4.x GUI에서 사용하지 않습니다. 이전 버전의 Docker 자원을 자동으로 삭제하지 않습니다. 완료 진도와 기억노트는 유지합니다.

@@ -1,6 +1,4 @@
-# Shellground 4 사용설명서
-
-아래 실행 명령과 상대경로는 desktop 폴더 기준입니다.
+# Shellground Desktop 4.0.0
 
 Linux·Docker 명령어를 연습하는 **오프라인 네이티브 시뮬레이터**입니다. 웹뷰가 아니며 Docker, WSL, Hyper-V, 가상머신 설치가 필요하지 않습니다. 명령은 프로그램 메모리 안의 파일·경로·권한·작업·이미지·컨테이너 상태에만 적용됩니다. 사용자 입력을 호스트 셸에 실행하거나 외부 네트워크로 보내지 않습니다.
 
@@ -72,7 +70,7 @@ nano 학습 편집기: Ctrl+K 줄 잘라내기, Ctrl+U 붙이기, Ctrl+O → Ent
 - Docker 이미지 아카이브 및 deb는 학습 전용 형식입니다. 실제 Docker/dpkg와 교환하거나 설치하는 산출물이 아닙니다.
 - 자원 옵션은 설정 상태를 연습하는 기능이지 실제 CPU·메모리 사용량 측정이 아닙니다. stats의 가상 수치를 실제 성능으로 해석하지 마세요.
 - 메모리 보호를 위해 파일당 2 MB, 가상 파일 시스템 데이터 8 MB·10,000항목, 동시에 16개 컨테이너 등의 제한이 있습니다.
-- 강의자료의 모든 명령·옵션을 숙달할 수 있는 전체 확장은 **아직 완료되지 않았습니다**. [범위와 남은 항목](../desktop/MATERIAL_COVERAGE.md)을 참고하세요.
+- 강의자료의 모든 명령·옵션을 숙달할 수 있는 전체 확장은 **아직 완료되지 않았습니다**. [범위와 남은 항목](MATERIAL_COVERAGE.md)을 참고하세요.
 
 ## 저장과 검증
 
@@ -80,7 +78,7 @@ nano 학습 편집기: Ctrl+K 줄 잘라내기, Ctrl+U 붙이기, Ctrl+O → Ent
 
 `progress-v3.json`, `memory-v1.json`은 Qt의 Shellground 사용자 데이터 폴더에 저장합니다. 가상 /home/learner 경로는 호스트의 실제 경로가 아닙니다.
 
-[학습 순서](../desktop/LEARNING_PATH.md) · [검증 기록](../desktop/VERIFICATION.md)
+[학습 순서](LEARNING_PATH.md) · [검증 기록](VERIFICATION.md)
 
 현재 시뮬레이터 검사:
 

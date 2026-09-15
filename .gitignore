@@ -11,5 +11,7 @@ dist/
 .env
 .env.*
 progress*.json
+memory-v1.json
+memory-v1.json.*.tmp
 .DS_Store
 Thumbs.db
