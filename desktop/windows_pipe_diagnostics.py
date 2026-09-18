@@ -44,10 +44,10 @@ def probe():
         if not block: break
         data.extend(block)
         if len(data) > 8192: raise ValueError('Probe input is too large')
-    # Bounded 3s of actual work under the new job, not an uncapped benchmark.
+    # Ten seconds amortizes the scheduler's short accounting intervals.
     started, used = time.monotonic(), time.process_time()
     iterations = 0
-    while time.monotonic() - started < 3:
+    while time.monotonic() - started < 10:
         sum(range(500))
         iterations += 1
     wall, consumed = time.monotonic() - started, time.process_time() - used
@@ -72,12 +72,15 @@ def validate_probe(completed):
     except ValueError as error: raise RuntimeError('Native CPU count is missing') from error
     if value.get('cpu_flags') != 5 or value.get('cpu_rate') != expected_rate or value.get('kill_on_close') is not True:
         raise RuntimeError('Native Job policy not applied')
-    if value.get('iterations', 0) <= 0 or not 3 <= value.get('wall_seconds', 0) <= 15:
+    if value.get('iterations', 0) <= 0 or not 10 <= value.get('wall_seconds', 0) <= 30:
         raise RuntimeError('Native CPU observation did not run in a bounded interval')
-    # Scheduling intervals and accounting granularity need a small tolerance.
-    # This proves this diagnostic child's cap, not WHPX guest CPU accounting.
-    if not 0 <= value.get('cpu_seconds', -1) <= value['wall_seconds'] * .6 + .2:
-        raise RuntimeError('Observed child CPU time exceeded the conservative budget')
+    # Windows caps processor cycles per scheduling interval, whereas process_time
+    # measures scheduled time. They are not interchangeable on variable-clock CPUs.
+    # The exact hard-cap flags/rate were queried above; this is a coarse sanity
+    # check that rejects an unthrottled child, not proof of WHPX guest accounting.
+    # https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-jobobject_cpu_rate_control_information
+    if not 0 <= value.get('cpu_seconds', -1) <= value['wall_seconds'] * .8 + .2:
+        raise RuntimeError('Observed child CPU time is inconsistent with throttling')
     return value
 
 
@@ -91,9 +94,12 @@ def main(argv=None):
                   state='in_progress', full_course_rerun=False, vm_tested=False)
     try:
         from vm_resources import vm_process_options
-        result = subprocess.run([sys.executable, '--internal-windows-pipe-probe'], input=PAYLOAD,
-                                text=True, encoding='utf-8', capture_output=True, timeout=45,
+        result = subprocess.run([sys.executable, '--internal-windows-pipe-probe'], input=PAYLOAD.encode('utf-8'),
+                                capture_output=True, timeout=45,
                                 env=dict(os.environ, PYINSTALLER_RESET_ENVIRONMENT='1'), **vm_process_options())
+        # Binary input preserves LF; text-mode stdin translates it to CRLF on Windows.
+        result.stdout = result.stdout.decode('utf-8')
+        result.stderr = result.stderr.decode('utf-8')
         report.update(state='complete', observed=validate_probe(result))
     except BaseException as error:
         report.update(state='failed', error=str(error)); raise

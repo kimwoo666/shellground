@@ -78,12 +78,22 @@ class WindowsStdioTests(unittest.TestCase):
 
     def test_native_probe_result_requires_all_observations(self):
         valid = dict(echo=diagnostic.PAYLOAD, eof=True, cpu_flags=5, cpu_rate=750, logical_cpus=8, utf8_mode=1, kill_on_close=True,
-                     cpu_seconds=1.7, wall_seconds=3.1, iterations=100)
+                     cpu_seconds=6.8, wall_seconds=10.1, iterations=100)
         complete = lambda value: subprocess.CompletedProcess([], 0, json.dumps(value), diagnostic.ERROR_MARKER)
         self.assertEqual(diagnostic.validate_probe(complete(valid)), valid)
         for change in ({'echo': 'broken'}, {'eof': False}, {'kill_on_close': False}, {'cpu_flags': 1},
-                       {'cpu_seconds': 2.9}, {'wall_seconds': 0}, {'iterations': 0}, {'cpu_rate': 6000}, {'logical_cpus': 0}, {'utf8_mode': 0}):
+                       {'cpu_seconds': 9.9}, {'wall_seconds': 0}, {'wall_seconds': 3.1}, {'iterations': 0}, {'cpu_rate': 6000}, {'logical_cpus': 0}, {'utf8_mode': 0}):
             with self.assertRaises(RuntimeError): diagnostic.validate_probe(complete(dict(valid, **change)))
+
+    def test_probe_uses_binary_input_to_preserve_lf_on_windows(self):
+        completed=subprocess.CompletedProcess([],0,b'{}',diagnostic.ERROR_MARKER.encode('utf-8'))
+        with tempfile.TemporaryDirectory() as folder, patch('windows_pipe_diagnostics.require_native'), \
+                patch('windows_pipe_diagnostics.subprocess.run',return_value=completed) as run, \
+                patch('windows_pipe_diagnostics.validate_probe',return_value={}) as validate:
+            diagnostic.main(['--report',str(Path(folder)/'result.json')])
+            self.assertEqual(run.call_args.kwargs['input'],diagnostic.PAYLOAD.encode('utf-8'))
+            self.assertNotIn('text',run.call_args.kwargs)
+            self.assertEqual(validate.call_args.args[0].stderr,diagnostic.ERROR_MARKER)
 
     def test_windows_build_adds_native_pipe_check_without_regrading_old_courses(self):
         from build_verification import verification_commands

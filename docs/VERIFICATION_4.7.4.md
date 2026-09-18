@@ -1,3 +1,5 @@
+> Windows 후속 수정 및 실제 실행 검증: [4.7.4-windows.1](WINDOWS_4.7.4.1_VERIFICATION.md). 아래는 초기 배포 당시 기록입니다.
+
 # 4.7.4 verification / 검증 기록
 
 2026-09-18 · Preview release. Build success, actual execution and physical-device acceptance are different claims.

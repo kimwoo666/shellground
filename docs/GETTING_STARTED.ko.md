@@ -4,9 +4,9 @@
 
 ## 운영체제에 맞는 파일 받기
 
-[간편 설치 다운로드](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-setup.1)에서 **내 운영체제의 파일 하나만** 받습니다. GitHub의 `Source code` 파일은 실행파일이 아닙니다.
+[다운로드](https://github.com/kimwoo666/shellground/releases)에서 **내 운영체제의 파일 하나만** 받습니다. GitHub의 `Source code` 파일은 실행파일이 아닙니다.
 
-- **Windows 10/11 x64:** `Shellground-Windows-Setup.exe`를 더블클릭하고 설치합니다. 이후에는 시작 메뉴나 바탕화면의 **Shellground**를 실행합니다.
+- **Windows 10/11 x64:** [Windows 호환성 수정판](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-windows.1/Shellground-Windows-Setup.exe)을 받아 더블클릭하고 설치합니다. 이후에는 시작 메뉴나 바탕화면의 **Shellground**를 실행합니다.
 - **Linux x86-64:** `Shellground-Linux-Setup.run`을 열어 설치합니다. 필요하면 파일 속성에서 **프로그램으로 실행 허용**을 켜세요. 파일 관리자가 실행하지 않으면 `chmod +x Shellground-Linux-Setup.run` 후 `./Shellground-Linux-Setup.run`을 사용합니다. 이후 앱 메뉴에서 **Shellground**를 검색합니다. Linux 실습에는 접근 가능한 `/dev/kvm`이 필요합니다.
 - **Android:** APK를 휴대폰에 내려받거나 옮긴 다음 열어 설치합니다. 필요하면 파일을 연 앱의 ‘알 수 없는 앱 설치’를 허용합니다. 설치 후 PC 연결은 필요 없습니다. Python은 Android7 이상, Linux 기반 과정은 Android9 이상과 지원되는64비트 ABI가 필요하며 실휴대폰 호환성은 미검증입니다.
 
@@ -16,7 +16,7 @@ Android APK는 약2.10GB입니다. Linux 최초 준비에 약2GB와 실습 파�
 
 자료를 최종 디스크에 직접 기록하므로 조각을 고르거나 합치지 않습니다. 취소·연결 중단 후 같은 설치파일을 다시 실행하면 검증된 구간부터 이어 받습니다. 설치 후에는 `Setup` 파일을 매번 열지 말고 **Shellground** 바로가기를 실행하세요. 개인 Python·Docker·WSL 환경이나 학습 진도는 변경하지 않습니다. Windows는 현재 사용자에게 설치하며 Windows 설정에서 제거합니다. Linux 기본 설치 위치는 `~/.local/share/shellground-app`입니다.
 
-Windows 실기동과 Android 실휴대폰 검증은 미실시입니다. 설치 파일은 미서명/개발서명이므로 OS 경고가 표시될 수 있습니다.
+[실제 Windows 검증 기록](WINDOWS_4.7.4.1_VERIFICATION.md)을 참고하세요. Android 실휴대폰 검증은 미실시입니다. 설치 파일은 미서명/개발서명이므로 OS 경고가 표시될 수 있습니다.
 
 ## 학습 시작
 

@@ -7,15 +7,16 @@ InstallDir "$LOCALAPPDATA\Programs\Shellground"
 RequestExecutionLevel user
 SetCompressor /SOLID zlib
 BrandingText "Shellground · Linux · Docker · ROS 2 · Python"
-VIProductVersion "4.7.4.1"
+VIProductVersion "4.7.4.2"
 VIAddVersionKey "ProductName" "Shellground Setup"
 VIAddVersionKey "FileDescription" "Shellground 설치 프로그램"
-VIAddVersionKey "FileVersion" "4.7.4.1"
+VIAddVersionKey "FileVersion" "4.7.4.2"
 VIAddVersionKey "LegalCopyright" "Shellground contributors"
 !define MUI_ABORTWARNING
 !define MUI_WELCOMEPAGE_TITLE "Shellground 설치"
 !define MUI_WELCOMEPAGE_TEXT "실습 자료는 설치 중 자동으로 내려받습니다.$\r$\n$\r$\n인터넷 연결과 약 9GB의 여유 공간이 필요합니다.$\r$\n파일을 따로 받거나 합칠 필요가 없습니다.$\r$\n$\r$\n개인 Docker·WSL·Python 환경과 학습 진도는 변경하지 않습니다."
-!define MUI_FINISHPAGE_RUN "$INSTDIR\app-4.7.4\Shellground.exe"
+!define APPDIR "app-4.7.4-windows.1"
+!define MUI_FINISHPAGE_RUN "$INSTDIR\${APPDIR}\Shellground.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Shellground 실행"
 !define MUI_FINISHPAGE_TEXT "설치가 완료됐습니다. 시작 메뉴 또는 바탕화면의 Shellground로 실행하세요."
 !insertmacro MUI_PAGE_WELCOME
@@ -33,6 +34,7 @@ Function .onInit
   ${EndIf}
 FunctionEnd
 Section "Shellground" Main
+  AddSize 8800000
   SetShellVarContext current
   InitPluginsDir
   SetOutPath "$PLUGINSDIR"
@@ -45,24 +47,24 @@ Section "Shellground" Main
     MessageBox MB_ICONEXCLAMATION "설치가 완료되지 않았습니다. 설치파일을 다시 실행하면 이어 받을 수 있습니다."
     Abort
   ${EndIf}
-  SetOutPath "$INSTDIR\app-4.7.4"
-  CreateShortCut "$SMPROGRAMS\Shellground.lnk" "$INSTDIR\app-4.7.4\Shellground.exe"
-  CreateShortCut "$DESKTOP\Shellground.lnk" "$INSTDIR\app-4.7.4\Shellground.exe"
+  SetOutPath "$INSTDIR\${APPDIR}"
+  CreateShortCut "$SMPROGRAMS\Shellground.lnk" "$INSTDIR\${APPDIR}\Shellground.exe"
+  CreateShortCut "$DESKTOP\Shellground.lnk" "$INSTDIR\${APPDIR}\Shellground.exe"
   WriteUninstaller "$INSTDIR\Shellground-Uninstall.exe"
   SetOutPath "$INSTDIR"
   File "Installer-Licenses.txt"
-  SetOutPath "$INSTDIR\app-4.7.4"
+  SetOutPath "$INSTDIR\${APPDIR}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Shellground" "DisplayName" "Shellground"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Shellground" "DisplayVersion" "4.7.4"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Shellground" "DisplayVersion" "4.7.4-windows.1"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Shellground" "UninstallString" '"$INSTDIR\Shellground-Uninstall.exe"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Shellground" "InstallLocation" "$INSTDIR"
 SectionEnd
 Section "Uninstall"
   SetShellVarContext current
   IfFileExists "$INSTDIR\.shellground-installer" 0 unsafe
-  IfFileExists "$INSTDIR\app-4.7.4\installed.sha256" 0 unsafe
-  RMDir /r "$INSTDIR\app-4.7.4"
-  IfFileExists "$INSTDIR\app-4.7.4\Shellground.exe" busy 0
+  IfFileExists "$INSTDIR\${APPDIR}\installed.sha256" 0 unsafe
+  RMDir /r "$INSTDIR\${APPDIR}"
+  IfFileExists "$INSTDIR\${APPDIR}\Shellground.exe" busy 0
   Delete "$SMPROGRAMS\Shellground.lnk"
   Delete "$DESKTOP\Shellground.lnk"
   DeleteRegKey HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Shellground"

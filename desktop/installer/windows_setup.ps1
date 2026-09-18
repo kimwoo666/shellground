@@ -2,7 +2,16 @@ param([Parameter(Mandatory=$true)][string]$InstallDir, [Parameter(Mandatory=$tru
 $ErrorActionPreference = 'Stop'
 try {
     Add-Type -AssemblyName System.Windows.Forms, System.Drawing, System.Net.Http, System.IO.Compression, System.IO.Compression.FileSystem
-    Add-Type -Path (Join-Path $PSScriptRoot 'windows_download.cs') -ReferencedAssemblies System.dll, System.Core.dll, System.Net.Http.dll, System.IO.Compression.dll, System.IO.Compression.FileSystem.dll
+    # NSIS also extracts a native System.dll into its working directory.
+    # Give the C# compiler actual managed assembly paths.
+    $frameworkReferences = @(
+        [System.Uri].Assembly.Location,
+        [System.Linq.Enumerable].Assembly.Location,
+        [System.Net.Http.HttpClient].Assembly.Location,
+        [System.IO.Compression.ZipArchive].Assembly.Location,
+        [System.IO.Compression.ZipFile].Assembly.Location
+    )
+    Add-Type -Path (Join-Path $PSScriptRoot 'windows_download.cs') -ReferencedAssemblies $frameworkReferences
     $spec = Get-Content -LiteralPath $ManifestPath -Raw -Encoding UTF8 | ConvertFrom-Json
     if ($spec.version -ne '4.7.4' -or $spec.base_url -ne 'https://github.com/kimwoo666/shellground/releases/download/v4.7.4-preview/') { throw 'Unknown release' }
     function Part($record) {

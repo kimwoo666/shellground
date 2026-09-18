@@ -1,17 +1,17 @@
 # Platform status / 운영체제별 상태
 
-Version4.7.4 preview · 2026-09-18
+Version 4.7.4 / Windows update 4.7.4-windows.1 · 2026-09-18
 
 [이번 배포의 구체적인 검증 기록 / Verification record](VERIFICATION_4.7.4.md)
 
 | Platform | Produced | What the evidence means |
 | --- | --- | --- |
 | Linux x86-64 | Native executable + bundled guest | Packaged Python, actual Conda/Jupyter and new ROS controls were checked on the development laptop. Existing unchanged course evidence was reused, not replayed. |
-| Windows x64 | Windows executable + bundled Windows QEMU | Built on Linux using Wine. Native Windows startup, WHPX acceleration, graphics and abnormal-exit handling are **not verified**. A successful build is not a native execution result. |
+| Windows x64 | Windows executable + bundled Windows QEMU | Native Windows build; current evidence and tested OS/hardware boundary are in the [Windows verification record](WINDOWS_4.7.4.1_VERIFICATION.md). |
 | Android | Native APK + embedded ARM64 guest | Emulator checks cover new port boundaries. This is not a physical ARM-phone or full-curriculum acceptance claim. |
 | macOS | Not packaged | Outside this release. |
 
-실행파일 제작과 실기기 검증을 구분합니다. Windows 테스트 PC는 제공되지 않는다는 조건으로 제작했습니다. Android 에뮬레이터 결과를 실제 휴대폰의 발열·속도·배터리 검증으로 바꾸어 표시하지 않습니다.
+실행파일 제작과 실기기 검증을 구분합니다. 초기 Wine 빌드 이후 Windows 호환성 수정판을 별도로 제작하고 실제 Windows에서 검증했습니다. Android 에뮬레이터 결과를 실제 휴대폰의 발열·속도·배터리 검증으로 바꾸어 표시하지 않습니다.
 
 Android 검사는 CPU 사용량을 제한한 x86-64 에뮬레이터 안에서 ARM64 Linux를 실행했습니다. 이 조건에서는 VM 시작과 실습 준비에 수분이 걸렸습니다. 앱 화면이 열리는 시간과 실습 OS·커널의 준비 시간은 다릅니다. 실제 휴대폰의 빠른 기동을 보장하는 결과가 아닙니다.
 

@@ -4,9 +4,9 @@
 
 ## Choose a package
 
-Download **one file for your OS** from [Easy setup](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-setup.1). GitHub's automatically generated “Source code” files are not the application.
+Download **one file for your OS** from [Releases](https://github.com/kimwoo666/shellground/releases). GitHub's automatically generated “Source code” files are not the application.
 
-- **Windows 10/11 x64:** double-click `Shellground-Windows-Setup.exe`, install, then use the **Shellground** Start-menu or desktop shortcut.
+- **Windows 10/11 x64:** download the [Windows compatibility update](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-windows.1/Shellground-Windows-Setup.exe), double-click `Shellground-Windows-Setup.exe`, install, then use the **Shellground** Start-menu or desktop shortcut.
 - **Linux x86-64:** open `Shellground-Linux-Setup.run` and install. Enable **Properties → Permissions → Allow executing as a program** if needed. If your file manager will not launch it, use `chmod +x Shellground-Linux-Setup.run` then `./Shellground-Linux-Setup.run`. Afterwards search for **Shellground** in the applications menu. Linux practice requires access to `/dev/kvm`.
 - **Android:** transfer/download the APK to the phone, open it and allow installation from that file-opening app if Android asks. No PC is needed to use the installed app. Python requires Android7+; the bundled Linux-based tracks require Android9+, a supported64-bit ABI and enough memory. Physical-phone compatibility remains unverified.
 
@@ -16,7 +16,7 @@ The Android APK is about2.10GB. Its Linux image is unpacked once into private ap
 
 No manual chunks, joining or extraction: data is streamed into the final disk. Cancel or lose connectivity? Run the same installer again to resume from verified segments. Afterwards open **Shellground**, not `Setup`. Personal Python/Docker/WSL environments and learning progress are untouched. Windows installation is per-user and removable through Settings. Linux installs to `~/.local/share/shellground-app` by default.
 
-Native Windows execution and physical Android-phone compatibility remain unverified. These unsigned/development-signed installers may trigger OS warnings.
+See the [native Windows verification record](WINDOWS_4.7.4.1_VERIFICATION.md). Physical Android-phone compatibility remains unverified. These unsigned/development-signed installers may trigger OS warnings.
 
 ## Start a lesson
 

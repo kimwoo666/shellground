@@ -55,7 +55,7 @@ for unit in selected:
         checked+=1
 by_key={unit.key:unit for unit in units}
 variants=0
-all_cases=(validation_cases()+review_cases()+coverage_cases()) if scope=='full' else coverage_cases()
+all_cases=(list(validation_cases())+list(review_cases())+list(coverage_cases())) if scope=='full' else coverage_cases()
 for case in all_cases:
     task=by_key[case['lesson']].problems[case['problem']]
     for kind,expected in [('wrong',False),('equivalent',True)]:

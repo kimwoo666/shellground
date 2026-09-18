@@ -4,6 +4,9 @@
 *.json text eol=lf
 *.md text eol=lf
 *.ps1 text eol=lf
+*.cs text eol=lf
+*.nsi text eol=lf
+*.yml text eol=lf
 *.txt text eol=lf
 desktop/guest/bashrc text eol=lf
 *.qcow2 binary

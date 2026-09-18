@@ -82,6 +82,29 @@ class RosLab:
             log.close()
         self.logs.clear()
 
+    def wait_for_turtlesim(self, timeout=60):
+        # Cold ROS imports compete with guest startup under the Windows CPU
+        # budget. Observe the already running DDS subscriber instead of
+        # repeatedly starting an expensive ros2 node-list process.
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            try:
+                observed = json.loads(self.observation.read_text())
+            except (OSError, ValueError):
+                observed = {}
+            if observed.get('pose') and time.monotonic() - observed.get('observed_at', 0) < 3:
+                try:
+                    code, value = self.command('ros2 param get /turtlesim background_r',
+                        timeout=max(1, min(15, deadline - time.monotonic())))
+                    if code == 0 and 'Integer value is:' in value:
+                        return
+                except subprocess.TimeoutExpired:
+                    pass
+            if any(process.poll() is not None for process in self.processes):
+                raise RuntimeError('실제 TurtleSim 또는 ROS 관찰 프로세스가 종료되었습니다. 게스트 ROS 로그를 확인하세요.')
+            time.sleep(.2)
+        raise RuntimeError('실제 TurtleSim 준비 시간이 초과되었습니다. 게스트 ROS 로그를 확인하세요.')
+
     def prepare(self, mission):
         if mission.get('review', {}).get('ros_controls'):
             from ros_controls_lab import ControlsLab
@@ -100,16 +123,7 @@ class RosLab:
         self.spawn('/usr/bin/python3 /opt/shellground/ros_observer.py ' + str(self.observation))
         if any(key not in ('env', 'overlay', 'run', 'launch', 'domain') for key in components):
             self.spawn('ros2 run turtlesim turtlesim_node')
-            deadline = time.monotonic() + 12
-            while time.monotonic() < deadline:
-                _, nodes = self.command('ros2 node list')
-                if '/turtlesim' in nodes.splitlines():
-                    code, value = self.command('ros2 param get /turtlesim background_r', timeout=5)
-                    if code == 0 and 'Integer value is:' in value:
-                        break
-                time.sleep(.2)
-            else:
-                raise RuntimeError('실제 TurtleSim 시작에 실패했습니다. 게스트 ROS 로그를 확인하세요.')
+            self.wait_for_turtlesim()
         if 'overlay' in components:
             code, _ = self.command('python3 /opt/shellground/ros_fixture.py overlay /home/learner/training_ws', 60)
             if code:

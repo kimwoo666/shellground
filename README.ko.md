@@ -8,7 +8,7 @@
 
 [English](README.md) · **한국어**
 
-[다운로드](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-setup.1) · [시작하기](docs/GETTING_STARTED.ko.md) · [운영체제별 확인 범위](docs/PLATFORMS.md)
+[다운로드](https://github.com/kimwoo666/shellground/releases) · [시작하기](docs/GETTING_STARTED.ko.md) · [운영체제별 확인 범위](docs/PLATFORMS.md)
 
 </div>
 
@@ -64,7 +64,7 @@
 | 운영체제 | 배포 형식 | 확인한 범위 |
 | --- | --- | --- |
 | Linux x86-64 | [Linux 설치파일.run](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-Linux-Setup.run) | 설치창·HTTPS 확인. 기존 학습 실행파일은 변경 없음 |
-| Windows x64 | [Windows 설치파일.exe](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-Windows-Setup.exe) | 설치파일 제작·C# 타입 검사. **Windows 실기동은 미검증** |
+| Windows x64 | [Windows 설치파일.exe](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-windows.1/Shellground-Windows-Setup.exe) | Windows 네이티브 빌드 · [실제 Windows 검증 기록](docs/WINDOWS_4.7.4.1_VERIFICATION.md) |
 | Android | [Android.apk](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-4.7.4-Android.apk) | 기존 검증 APK 유지. **ARM 실휴대폰은 미검증** |
 | macOS | 없음 | 이번 배포에 포함하지 않음 |
 

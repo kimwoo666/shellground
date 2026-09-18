@@ -76,3 +76,5 @@ next-env.d.ts
 /tmp/pdfs/
 memory-v1.json
 memory-v1.json.*.tmp
+
+/desktop/guest/__pycache__/

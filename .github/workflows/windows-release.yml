@@ -1,0 +1,63 @@
+name: Windows release
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - desktop/windows_release.json
+      - .github/workflows/windows-release.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-release
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    env:
+      PYTHONUTF8: '1'
+      QT_QPA_PLATFORM: offscreen
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: '0.12.16'
+          enable-cache: false
+      - name: Create the pinned native Python environment
+        run: |
+          uv python install 3.12.14
+          uv venv desktop/.venv --python 3.12.14
+      - name: Install pinned Windows build dependencies
+        run: uv pip install --python desktop/.venv/Scripts/python.exe -r desktop/requirements-windows-lock.txt
+      - name: Check Windows and ROS regressions
+        working-directory: desktop
+        run: ./.venv/Scripts/python.exe -m unittest test_windows_vm test_windows_stdio test_windows_boot_contract test_platform_runtime test_ros_grading -v
+      - name: Build and check the native executable and installer
+        run: ./desktop/.venv/Scripts/python.exe desktop/build_windows_release.py
+      - name: Publish Windows downloads
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $spec = Get-Content desktop/windows_release.json -Raw | ConvertFrom-Json
+          $tag = $spec.tag
+          $existing = gh release view $tag --json isDraft,targetCommitish 2>$null | ConvertFrom-Json
+          if ($LASTEXITCODE -eq 0) {
+            if (-not $existing.isDraft) { throw 'This version is already published. Bump windows_release.json for a new release.' }
+            if ($existing.targetCommitish -ne $env:GITHUB_SHA) { throw 'A draft from a different source commit already exists.' }
+          } else {
+            gh release create $tag --target $env:GITHUB_SHA --draft --title "Shellground $($spec.version) — Windows" --notes-file docs/WINDOWS_RELEASE_NOTES.md
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot create release draft.' }
+          }
+          $output = 'desktop/dist-windows-release'
+          gh release upload $tag "$output/$($spec.archive)" "$output/$($spec.setup)" "$output/SHA256SUMS.txt" "$output/windows-build.json" --clobber
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot upload verified build outputs.' }
+          gh release edit $tag --draft=false --latest
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot publish release.' }

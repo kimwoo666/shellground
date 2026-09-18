@@ -131,7 +131,14 @@ proof_environment = dict(os.environ, SHELLGROUND_TEST_PACKAGED=str(binary), SHEL
 for command in verification_commands(binary, destination, runtime_directory(binary) / runtime_name, sys.executable,
                                     conda=args.with_conda_runtime, notebook=args.with_notebook_runtime, full=args.verification=='full',
                                     build_only=args.verification=='build-only'):
-    subprocess.run(command, cwd=root, env=proof_environment, check=True)
+    # A windowed Windows executable needs explicit inherited standard handles,
+    # even when the build itself is launched with redirected output/no console.
+    result = subprocess.run(command, cwd=root, env=proof_environment,
+        stdin=subprocess.DEVNULL, capture_output=True, text=True, encoding='utf-8',
+        errors='replace', timeout=1800 if args.verification == 'full' else 600)
+    print(result.stdout, end='', flush=True)
+    print(result.stderr, end='', file=sys.stderr, flush=True)
+    result.check_returncode()
 (destination / 'build-status.json').write_text(json.dumps({
     'schema': 1, 'platform': runtime_name, 'executable': str(binary.relative_to(destination)),
     'verification': args.verification, 'artifact_checks_executed': args.verification != 'build-only',

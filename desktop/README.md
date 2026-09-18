@@ -6,10 +6,10 @@ The application switches Linux/Docker/ROS 2, Python, Conda and Jupyter courses w
 
 ## Run the packaged application
 
-Download one setup file from the [easy-install release](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-setup.1). It downloads and verifies the matching application and practice data automatically. Afterwards use the Shellground applications/Start-menu shortcut. [Installation guide](../docs/GETTING_STARTED.md) · [Installer source](installer/README.md)
+Download one setup file from the [releases](https://github.com/kimwoo666/shellground/releases). It downloads and verifies the matching application and practice data automatically. Afterwards use the Shellground applications/Start-menu shortcut. [Installation guide](../docs/GETTING_STARTED.md) · [Installer source](installer/README.md)
 
 - Linux x86-64: run `Shellground`. Accessible KVM acceleration is required for the Linux VM.
-- Windows x64: run `Shellground.exe`. This version was built using Wine; native Windows execution has **not** been verified. See [platform limitations](../docs/PLATFORMS.md).
+- Windows x64: install `v4.7.4-windows.1` and run the Shellground shortcut. This update is built on Windows; see the [native verification record](../docs/WINDOWS_4.7.4.1_VERIFICATION.md).
 - Android uses its own native app: [Android development](../android/README.md).
 
 Completed learning and substep positions persist. Temporary VM files, shell sessions and Python variables do not persist across practice shutdown. Legacy lightweight simulation remains a separate desktop mode; it is not presented as real Linux.
@@ -52,3 +52,17 @@ Run targeted tests for the module you change. Live-VM checks create owned tempor
 ## Distribution
 
 Keep current application source, tests, matching runtime metadata and small verification receipts. SDKs, build caches, temporary disks, old packaged binaries, personal progress and signing keys are excluded from publication. Third-party corresponding sources and required licenses are distribution materials, not disposable caches: [notices](../THIRD_PARTY_NOTICES.md).
+
+
+### Native Windows release build
+
+Use Python 3.12.14 on Windows x64:
+
+```powershell
+uv python install 3.12.14
+uv venv desktop/.venv --python 3.12.14
+uv pip install --python desktop/.venv/Scripts/python.exe -r desktop/requirements-windows-lock.txt
+./desktop/.venv/Scripts/python.exe desktop/build_windows_release.py
+```
+
+The builder verifies the pinned baseline asset archive and notebook wheels, bundles a new native executable, runs its pipe/job, bundle and UI checks, then compiles NSIS. The application ZIP excludes the shared guest disk; setup streams the existing pinned guest assets. Version/asset pins are in `desktop/windows_release.json`; bump the version before publishing a new release. `.github/workflows/windows-release.yml` builds and publishes on a version change. Full VM acceptance is performed on a Windows machine with WHPX and recorded separately.

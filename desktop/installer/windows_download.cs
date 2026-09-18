@@ -18,6 +18,8 @@ public sealed class ReleasePart {
 public sealed class ShellgroundSetup {
     const string Owner = "shellground-setup-v1";
     const string BaseUrl = "https://github.com/kimwoo666/shellground/releases/download/v4.7.4-preview/";
+    const string Version = "4.7.4-windows.1";
+    const string AppBaseUrl = "https://github.com/kimwoo666/shellground/releases/download/v" + Version + "/";
     readonly CancellationTokenSource cancellation = new CancellationTokenSource();
     public volatile string Stage = "설치 준비 중";
     public volatile string Error = null;
@@ -38,14 +40,14 @@ public sealed class ShellgroundSetup {
             throw new IOException("설치 경로는 링크일 수 없습니다: " + path);
     }
     void StopCheck() { cancellation.Token.ThrowIfCancellationRequested(); }
-    void Receive(HttpClient client, ReleasePart part, string target, long offset, long total) {
+    void Receive(HttpClient client, ReleasePart part, string target, long offset, long total, bool application = false) {
         StopCheck(); SafePath(target);
         Stage = "실습 자료 내려받는 중";
         Interlocked.Exchange(ref Current, offset); Interlocked.Exchange(ref Total, total);
         using (var output = new FileStream(target, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None)) {
             output.SetLength(offset); output.Position = offset;
             try {
-                using (var response = client.GetAsync(BaseUrl + part.Name,
+                using (var response = client.GetAsync((application ? AppBaseUrl : BaseUrl) + part.Name,
                     HttpCompletionOption.ResponseHeadersRead, cancellation.Token).GetAwaiter().GetResult()) {
                     response.EnsureSuccessStatusCode();
                     using (var input = response.Content.ReadAsStreamAsync().GetAwaiter().GetResult())
@@ -138,13 +140,14 @@ public sealed class ShellgroundSetup {
                 }
                 string lockPath = Path.Combine(root, ".setup.lock"); SafePath(lockPath);
                 using (var fileLock = new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None)) {
-                    Application = Path.Combine(root, "app-4.7.4");
+                    Application = Path.Combine(root, "app-" + Version);
                     string receipt = Path.Combine(Application, "installed.sha256");
                     SafePath(Application); SafePath(receipt);
-                    if (File.Exists(receipt) && File.ReadAllText(receipt) == diskHash &&
+                    string identity = diskHash + ":" + archive.Hash;
+                    if (File.Exists(receipt) && File.ReadAllText(receipt) == identity &&
                         File.Exists(Path.Combine(Application, "Shellground.exe"))) { Succeeded = true; return; }
                     if (Directory.Exists(Application)) throw new IOException("같은 버전의 기존 폴더가 있습니다. 빈 폴더를 사용하세요.");
-                    string incoming = Path.Combine(root, ".incoming-4.7.4"); SafePath(incoming); Directory.CreateDirectory(incoming);
+                    string incoming = Path.Combine(root, ".incoming-" + Version); SafePath(incoming); Directory.CreateDirectory(incoming);
                     string ready = Path.Combine(incoming, ".app-ready"); SafePath(ready);
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                     using (var client = new HttpClient()) {
@@ -152,12 +155,12 @@ public sealed class ShellgroundSetup {
                         client.DefaultRequestHeaders.UserAgent.ParseAdd("Shellground-Setup/4.7.4");
                         if (!File.Exists(ready)) {
                             string payload = Path.Combine(root, "application.zip.partial"); SafePath(payload);
-                            if (!File.Exists(payload) || HashFile(payload) != archive.Hash) Receive(client, archive, payload, 0, archive.Bytes);
+                            if (!File.Exists(payload) || HashFile(payload) != archive.Hash) Receive(client, archive, payload, 0, archive.Bytes, true);
                             Extract(payload, incoming); File.WriteAllText(ready, archive.Hash); File.Delete(payload);
                         } else if (File.ReadAllText(ready) != archive.Hash) throw new IOException("설치 자료 버전 불일치");
                         Disk(client, Path.Combine(incoming, "runtime", "windows-x86_64", "base.qcow2"), parts, diskHash, diskBytes);
                     }
-                    StopCheck(); File.WriteAllText(Path.Combine(incoming, "installed.sha256"), diskHash);
+                    StopCheck(); File.WriteAllText(Path.Combine(incoming, "installed.sha256"), identity);
                     Directory.Move(incoming, Application); Succeeded = true;
                 }
             } catch (OperationCanceledException) { Error = "취소했습니다. 다음 설치에서 이어 받습니다."; }

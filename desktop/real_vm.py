@@ -274,21 +274,30 @@ class RealEngine:
             listener.settimeout(1)
             port = listener.getsockname()[1]
             overlay_option = str(overlay)
+            serial_option = 'file:' + str(self.session_dir / 'console.log')
             if os.name == 'nt':
-                from windows_vm import option_path
-                overlay_option = option_path(overlay)
+                # QEMU's Windows option paths are not reliably Unicode-safe.
+                # CreateProcessW sets the Unicode working directory; all QEMU
+                # option-list filenames then stay ASCII and session-relative.
+                overlay_option = 'practice.qcow2'
+                serial_option = 'file:console.log'
             command = [str(root / spec['qemu']), '-name', 'shellground-private-lab',
                 '-machine', 'q35', *acceleration, '-smp', str(vcpu_count()), '-m', '2048',
                 '-display', 'none', '-vga', 'none', '-monitor', 'none',
-                '-serial', 'file:' + str(self.session_dir / 'console.log'),
+                '-serial', serial_option,
                 '-drive', f'file={overlay_option},format=qcow2,if=virtio', '-nic', 'none',
                 '-device', 'virtio-serial-pci',
-                '-chardev', f'socket,id=sg,host=127.0.0.1,port={port},reconnect=1',
+                '-chardev', f'socket,id=sg,host=127.0.0.1,port={port},' +
+                    ('reconnect-ms=1000' if os.name == 'nt' else 'reconnect=1'),
                 '-device', 'virtserialport,chardev=sg,name=org.shellground.agent', '-no-reboot']
             if os.name != 'nt':
                 command += ['-L', str(root / 'usr/share/qemu'), '-bios', str(root / 'usr/share/seabios/bios-256k.bin')]
             elif 'firmware' in spec and 'bios' in spec:
-                command += ['-L', str(root / spec['firmware']), '-bios', str(root / spec['bios'])]
+                shutil.copy2(root / spec['bios'], self.session_dir / 'qemu-bios.bin')
+                vapic = root / spec['firmware'] / 'kvmvapic.bin'
+                if vapic.is_file():
+                    shutil.copy2(vapic, self.session_dir / 'kvmvapic.bin')
+                command += ['-L', '.', '-bios', 'qemu-bios.bin']
             if os.name == 'nt':
                 from windows_vm import supervisor_output
                 self.log_file = supervisor_output()
@@ -304,7 +313,8 @@ class RealEngine:
             # Independent frozen extraction: app crash may remove its _MEIPASS.
             guard_env = dict(os.environ, PYINSTALLER_RESET_ENVIRONMENT='1')
             self.process = subprocess.Popen(supervisor + ['--', *command], stdin=subprocess.PIPE,
-                stdout=self.log_file, stderr=subprocess.STDOUT, env=guard_env, **vm_process_options())
+                stdout=self.log_file, stderr=subprocess.STDOUT, env=guard_env,
+                cwd=self.session_dir if os.name == 'nt' else None, **vm_process_options())
             self.supervised = True
             lower_priority(self.process)
             boot_seconds = 120

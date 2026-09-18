@@ -18,7 +18,8 @@ import tempfile
 import threading
 import uuid
 
-FILES = {'owner.json', 'guard.json', 'guard.json.pending', 'lease', 'practice.qcow2', 'console.log', 'qemu.log'}
+FILES = {'owner.json', 'guard.json', 'guard.json.pending', 'lease', 'practice.qcow2', 'console.log', 'qemu.log',
+         'qemu-bios.bin', 'kvmvapic.bin'}
 
 
 def process_identity(pid):

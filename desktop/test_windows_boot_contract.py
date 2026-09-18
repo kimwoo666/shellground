@@ -18,6 +18,9 @@ class WindowsBootContractTests(unittest.TestCase):
         session = temporary / '실습, 진행'; session.mkdir()
         spec = dict(qemu='qemu/qemu-system-x86_64.exe', qemu_img='qemu/qemu-img.exe',
                     image='base.qcow2', firmware='qemu/share', bios='qemu/share/bios-256k.bin')
+        (root / 'qemu/share').mkdir(parents=True)
+        (root / spec['bios']).write_bytes(b'test-bios')
+        (root / 'qemu/share/kvmvapic.bin').write_bytes(b'test-vapic')
         engine = RealEngine(root)
         process = Mock(); process.poll.return_value = None
         listener = Mock(); listener.accept.return_value = (Mock(), ('127.0.0.1', 10))
@@ -51,9 +54,15 @@ class WindowsBootContractTests(unittest.TestCase):
             try:
                 engine.boot(lines.append)
                 argv = popen.call_args.args[0]
-                self.assertEqual(argv[argv.index('-L') + 1], str(root / 'qemu/share'))
-                self.assertIn('file=' + str(session / 'practice.qcow2').replace(',', ',,') + ',format=qcow2,if=virtio', argv)
+                self.assertEqual(argv[argv.index('-L') + 1], '.')
+                self.assertEqual(argv[argv.index('-bios') + 1], 'qemu-bios.bin')
+                self.assertEqual(popen.call_args.kwargs['cwd'], session)
+                self.assertIn('file=practice.qcow2,format=qcow2,if=virtio', argv)
+                self.assertIn('file:console.log', argv)
+                self.assertEqual((session / 'qemu-bios.bin').read_bytes(), b'test-bios')
+                self.assertEqual((session / 'kvmvapic.bin').read_bytes(), b'test-vapic')
                 self.assertNotIn('--library-dir', argv)
+                self.assertIn('socket,id=sg,host=127.0.0.1,port=32123,reconnect-ms=1000', argv)
                 self.assertEqual(run.call_args.args[0][-1], str(session / 'practice.qcow2'))
                 self.assertIn('소프트웨어 실행', lines[-1])
                 self.assertFalse((session / 'qemu.log').exists())
