@@ -6,7 +6,7 @@ The application switches Linux/Docker/ROS 2, Python, Conda and Jupyter courses w
 
 ## Run the packaged application
 
-Download your platform's App archive, all five shared PC-Guest parts and its Join script from the [release page](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-preview). Follow the [assembly guide](../docs/GETTING_STARTED.md) once, then keep `runtime` and, on Windows, `_internal` beside the executable in the assembled folder.
+Download one setup file from the [easy-install release](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-setup.1). It downloads and verifies the matching application and practice data automatically. Afterwards use the Shellground applications/Start-menu shortcut. [Installation guide](../docs/GETTING_STARTED.md) · [Installer source](installer/README.md)
 
 - Linux x86-64: run `Shellground`. Accessible KVM acceleration is required for the Linux VM.
 - Windows x64: run `Shellground.exe`. This version was built using Wine; native Windows execution has **not** been verified. See [platform limitations](../docs/PLATFORMS.md).

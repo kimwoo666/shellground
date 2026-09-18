@@ -1,5 +1,7 @@
 # Shellground 4.7.4 preview
 
+> 이 문서는 최초 배포 당시의 기록입니다. 지금은 [OS별 설치파일 하나](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-setup.1)를 받으세요. 아래 수동 조각 합치기는 일반 사용자가 하지 않습니다. The current [setup guide](GETTING_STARTED.md) replaces the manual assembly instructions below.
+
 **Linux · Windows · Android**용 네이티브 학습 프로그램입니다. Linux 명령, Docker, ROS 2, Python·과학 라이브러리, Conda·pip, 실제 Jupyter 커널을 한 프로그램에서 연습합니다.
 
 [한국어 소개](https://github.com/kimwoo666/shellground/blob/main/README.ko.md) · [English introduction](https://github.com/kimwoo666/shellground/blob/main/README.md) · [사용 방법](https://github.com/kimwoo666/shellground/blob/main/docs/GETTING_STARTED.ko.md)

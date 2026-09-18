@@ -15,10 +15,12 @@ Shellground combines independently licensed components. Their authors retain the
 | FreeType | FreeType Project License, with attribution; [upstream](https://freetype.org/) |
 | Noto Sans CJK | SIL Open Font License1.1; [copyright](desktop/assets/Noto-COPYRIGHT.txt) |
 | Miniconda and included Conda packages | Anaconda and each package's own license/terms; app installation lessons show the source, license and checksum before batch installation |
+| NSIS installer | zlib/libpng license and component notices; [included notices](desktop/installer/licenses/nsis.txt) |
+| Linux setup: Tcl/Tk, BLT, CPython, PyInstaller | Original package notices and PyInstaller's bootloader exception are in [installer/licenses](desktop/installer/licenses), also included in the setup executable |
 
 ## Android native runtime source
 
-The release includes a `Shellground-4.7.4-Native-Sources.tar` companion containing the exact pinned QEMU/GLib/libffi/PCRE2/libfdt/proxy-libintl source archives, Shellground Android patches, build instructions and license texts. This is corresponding source material, not a VM cache or an old executable. It is deliberately kept alongside the APK.
+The [4.7.4 native-source companion](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-preview/Shellground-4.7.4-Native-Sources.tar) contains the exact pinned QEMU/GLib/libffi/PCRE2/libfdt/proxy-libintl source archives, Shellground Android patches, build instructions and license texts. This is corresponding source material, not a VM cache or an old executable. The easy-install release uses the unchanged APK and links this same companion rather than duplicating it.
 
 The exact versions, official URLs and SHA-256 hashes are in [native-sources.json](android/runtime/native-sources.json). Android-specific changes are in [runtime/patches](android/runtime/patches); build scripts are in [android/runtime](android/runtime). FreeType is built from unmodified upstream source with NDKr27c and16KB ELF load alignment; its source, notices and script are included in the companion.
 

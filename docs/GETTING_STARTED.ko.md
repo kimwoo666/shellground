@@ -4,15 +4,19 @@
 
 ## 운영체제에 맞는 파일 받기
 
-[Shellground 릴리스](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-preview)에서 실행 묶음을 받습니다. GitHub가 자동으로 붙이는 `Source code` 파일은 개발용 소스이며 실행 묶음이 아닙니다.
+[간편 설치 다운로드](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-setup.1)에서 **내 운영체제의 파일 하나만** 받습니다. GitHub의 `Source code` 파일은 실행파일이 아닙니다.
 
-- **Linux x86-64:** 아래 PC 조립 안내에 따라 `Join-Linux.sh`를 한 번 실행한 후, 완성된 폴더의 `Shellground`를 엽니다. `runtime` 폴더도 유지하세요. 실행 권한이 없다면 `chmod +x Shellground` 후 `./Shellground`를 사용합니다.
-- **Windows x64:** 아래 PC 조립 안내에 따라 `Join-Windows.cmd`를 한 번 실행한 후, 완성된 폴더의 `Shellground.exe`를 엽니다. `_internal`과 `runtime` 폴더를 함께 보관하세요. WSL은 사용하지 않습니다. 실제 Windows PC 실행은 확인하지 않은 빌드입니다.
+- **Windows 10/11 x64:** `Shellground-Windows-Setup.exe`를 더블클릭하고 설치합니다. 이후에는 시작 메뉴나 바탕화면의 **Shellground**를 실행합니다.
+- **Linux x86-64:** `Shellground-Linux-Setup.run`을 열어 설치합니다. 필요하면 파일 속성에서 **프로그램으로 실행 허용**을 켜세요. 파일 관리자가 실행하지 않으면 `chmod +x Shellground-Linux-Setup.run` 후 `./Shellground-Linux-Setup.run`을 사용합니다. 이후 앱 메뉴에서 **Shellground**를 검색합니다. Linux 실습에는 접근 가능한 `/dev/kvm`이 필요합니다.
 - **Android:** APK를 휴대폰에 내려받거나 옮긴 다음 열어 설치합니다. 필요하면 파일을 연 앱의 ‘알 수 없는 앱 설치’를 허용합니다. 설치 후 PC 연결은 필요 없습니다. Python은 Android7 이상, Linux 기반 과정은 Android9 이상과 지원되는64비트 ABI가 필요하며 실휴대폰 호환성은 미검증입니다.
 
 Android APK는 약2.10GB입니다. Linux 최초 준비에 약2GB와 실습 파일 공간이 추가로 필요합니다. 설치·업데이트 임시 공간을 고려해 설치 전 최소10GB 여유를 권장합니다. Linux 실습은 Android와 앱 메모리 외에2GiB 게스트 메모리를 사용하므로6GB 이상 메모리의 기기를 권장합니다. 저사양 휴대폰의 원활한 사용을 보장하지 않습니다.
 
-PC판은 **해당 OS의 App 압축파일 + 공통 `PC-Guest.qcow2.part01`부터 마지막 조각까지 전부 + 해당 OS의 Join 파일**을 빈 폴더에 받습니다. Windows는 `Join-Windows.cmd`, Linux는 `sh Join-Linux.sh`를 실행합니다. 파일 검증·압축 해제·디스크 조합을 마치면 만들어진 `Shellground-Windows` 또는 `Shellground-Linux` 폴더에서 프로그램을 실행합니다. 이후에는 Join을 다시 실행할 필요가 없습니다. 공통 디스크는 두 OS에서 내용이 같아 한 번만 배포합니다. GitHub는 [첨부파일 한 개를2GiB 미만으로 제한](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases#storage-and-bandwidth-quotas)하므로 조각으로 제공합니다. 조립 완료 후 다운로드 조각은 삭제해도 되지만, 완성된 폴더의 `runtime`은 유지하세요. Android는 이 PC 파일들이 필요 없고 APK만 받습니다.
+**PC는 온라인 설치 프로그램입니다.** 사용자가 받는 파일은 하나이며, 설치창이 프로그램과 실습 자료 약 **8.1GB**를 자동으로 내려받고 검증합니다. 첫 설치에 인터넷과 약 **9GB 여유 공간**이 필요합니다. 설치 후 포함된 과정은 오프라인으로 사용할 수 있습니다. 완전한 오프라인 설치파일은 아닙니다.
+
+자료를 최종 디스크에 직접 기록하므로 조각을 고르거나 합치지 않습니다. 취소·연결 중단 후 같은 설치파일을 다시 실행하면 검증된 구간부터 이어 받습니다. 설치 후에는 `Setup` 파일을 매번 열지 말고 **Shellground** 바로가기를 실행하세요. 개인 Python·Docker·WSL 환경이나 학습 진도는 변경하지 않습니다. Windows는 현재 사용자에게 설치하며 Windows 설정에서 제거합니다. Linux 기본 설치 위치는 `~/.local/share/shellground-app`입니다.
+
+Windows 실기동과 Android 실휴대폰 검증은 미실시입니다. 설치 파일은 미서명/개발서명이므로 OS 경고가 표시될 수 있습니다.
 
 ## 학습 시작
 

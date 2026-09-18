@@ -1,0 +1,45 @@
+{
+  "version": "4.7.4",
+  "base_url": "https://github.com/kimwoo666/shellground/releases/download/v4.7.4-preview/",
+  "linux": {
+    "name": "Shellground-4.7.4-Linux-App.tar",
+    "bytes": 295557120,
+    "sha256": "6f5351ad40cf28a298a94b53fff2f78447b369757e9a5479f76097f754036993"
+  },
+  "windows": {
+    "name": "Shellground-4.7.4-Windows-App.zip",
+    "bytes": 280966723,
+    "sha256": "7d8593e7a005a7e4195ffa83bd1c8bff9765ce7f92adf01fe75024f271de7209"
+  },
+  "disk": {
+    "bytes": 7771535360,
+    "sha256": "cd7f3361dc0b2b1c66e88bfc3ab2ed037e21ee276f2ae3f20bd12efd8530e2e6",
+    "parts": [
+      {
+        "name": "Shellground-4.7.4-PC-Guest.qcow2.part01",
+        "bytes": 1900000000,
+        "sha256": "4689637813f1700303b10542c0df94b11d59c0097473f9a5dfd6d73cdc4ace46"
+      },
+      {
+        "name": "Shellground-4.7.4-PC-Guest.qcow2.part02",
+        "bytes": 1900000000,
+        "sha256": "f002c556d1e85ca5932f6df1959420a2ee7b51c57465e33733e9b8fc60f2fe39"
+      },
+      {
+        "name": "Shellground-4.7.4-PC-Guest.qcow2.part03",
+        "bytes": 1900000000,
+        "sha256": "21d5b1ead602fa0f7d027653cf9642aebc21e216caf14e0a4835e6f3fb41c50a"
+      },
+      {
+        "name": "Shellground-4.7.4-PC-Guest.qcow2.part04",
+        "bytes": 1900000000,
+        "sha256": "edf1ae3e20a0edd203779fb127aa6ed6c144ca383fbed2b84084065e9ab344a1"
+      },
+      {
+        "name": "Shellground-4.7.4-PC-Guest.qcow2.part05",
+        "bytes": 171535360,
+        "sha256": "ba2ff5d3bc533afed8f5dcc69b43ad03493e02d4aa19488a5987381329d9b442"
+      }
+    ]
+  }
+}

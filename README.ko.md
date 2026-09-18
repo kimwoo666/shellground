@@ -8,7 +8,7 @@
 
 [English](README.md) · **한국어**
 
-[다운로드](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-preview) · [시작하기](docs/GETTING_STARTED.ko.md) · [운영체제별 확인 범위](docs/PLATFORMS.md)
+[다운로드](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-setup.1) · [시작하기](docs/GETTING_STARTED.ko.md) · [운영체제별 확인 범위](docs/PLATFORMS.md)
 
 </div>
 
@@ -59,13 +59,13 @@
 
 ## 다운로드와 실행
 
-[릴리스](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-preview)에서 운영체제에 맞는 파일을 받으세요. PC용은 실행파일과 나머지 폴더를 함께 보관해야 합니다. 실행파일만 옮기면 Linux 실습 환경이 빠집니다.
+**내 OS의 파일 하나만 받으면 됩니다.** 설치파일을 열어 설치한 뒤 시작 메뉴·앱 메뉴의 **Shellground**를 실행하세요. 조각 파일이나 합치기 스크립트는 필요 없습니다. PC는 첫 설치에서 약 8.1GB의 자료를 자동으로 받으므로 인터넷과 약 9GB 여유 공간이 필요하며, 설치 후 포함된 과정은 오프라인 사용이 가능합니다. Android는 APK 하나로 설치합니다.
 
 | 운영체제 | 배포 형식 | 확인한 범위 |
 | --- | --- | --- |
-| Linux x86-64 | 압축 해제형 실행 묶음 | 개발 Linux 노트북에서 제작·실행 확인 |
-| Windows x64 | `Shellground.exe` 포함 ZIP | Wine을 이용해 Windows 실행파일 제작. **실제 Windows PC 실행은 미검증** |
-| Android | 단독 실행 APK | Android 에뮬레이터에서 변경 기능 확인. **ARM 실휴대폰은 미검증** |
+| Linux x86-64 | [Linux 설치파일.run](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-Linux-Setup.run) | 설치창·HTTPS 확인. 기존 학습 실행파일은 변경 없음 |
+| Windows x64 | [Windows 설치파일.exe](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-Windows-Setup.exe) | 설치파일 제작·C# 타입 검사. **Windows 실기동은 미검증** |
+| Android | [Android.apk](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-4.7.4-Android.apk) | 기존 검증 APK 유지. **ARM 실휴대폰은 미검증** |
 | macOS | 없음 | 이번 배포에 포함하지 않음 |
 
 일반 사용자가 Python·Docker·Conda·WSL·Termux·실습 서버를 따로 설치하지 않습니다. 포함된 Linux 환경은 부팅 시간이 필요하고 Python 전용 실습보다 메모리를 더 사용합니다. 인증서 서명/스토어 심사를 받은 제품은 아닙니다.

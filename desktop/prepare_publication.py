@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 IGNORED_DIRS={'build','__pycache__','tmp','ui-previews','node_modules'}
-SUFFIXES={'.py','.md','.json','.txt','.sh','.ps1','.java','.xml','.kts','.properties','.patch','.ttc'}
+SUFFIXES={'.py','.md','.json','.txt','.sh','.ps1','.java','.xml','.kts','.properties','.patch','.ttc','.cs','.nsi','.svg'}
 PRIVATE_DOCS={'RESUME_NOTES.md','WORK_STATUS.md','DEVELOPMENT_GOALS.md','CLEANUP_2026-09-18.md'}
 
 def included(path):

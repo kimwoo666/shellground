@@ -8,7 +8,7 @@ A native practice app for **Linux · Docker · ROS 2 · Python · Conda · Jupyt
 
 **English** · [한국어](README.ko.md)
 
-[Downloads](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-preview) · [Getting started](docs/GETTING_STARTED.md) · [Platform & verification notes](docs/PLATFORMS.md)
+[Downloads](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-setup.1) · [Getting started](docs/GETTING_STARTED.md) · [Platform & verification notes](docs/PLATFORMS.md)
 
 </div>
 
@@ -59,13 +59,13 @@ These are captures of the application, not concept mockups. Desktop captures are
 
 ## Download and run
 
-Get the versioned files from [Releases](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-preview). Keep the complete desktop package together: the executable alone does not contain the Linux practice disk.
+**One download per OS.** Open the installer, install, then launch **Shellground** from your applications/Start menu. No manual chunks or Join scripts. PC setup downloads about 8.1GB once and needs about 9GB free; included courses work offline afterwards. Android needs only the APK.
 
 | Platform | Package | Verification boundary |
 | --- | --- | --- |
-| Linux x86-64 | Portable bundle | Built and exercised on the development Linux laptop |
-| Windows x64 | Portable ZIP with `Shellground.exe` | Windows executable built using Wine; **not run on a native Windows PC** |
-| Android | Standalone APK | Changed functionality checked on an Android emulator; **physical ARM phones not verified** |
+| Linux x86-64 | [Linux Setup.run](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-Linux-Setup.run) | Native setup window and HTTPS checked; existing learning binary unchanged |
+| Windows x64 | [Windows Setup.exe](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-Windows-Setup.exe) | Installer built; C# helper type-checked; **native Windows execution unverified** |
+| Android | [Android.apk](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-4.7.4-Android.apk) | Unchanged standalone APK; **physical ARM phones unverified** |
 | macOS | — | Not included in this release |
 
 No separate Python, Docker, Conda, WSL, Termux or practice server is required for the bundled courses. Booting the included Linux environment takes time and uses more memory than the Python-only workspace. The packages are unsigned/development-signed; they are not store-certified releases.
