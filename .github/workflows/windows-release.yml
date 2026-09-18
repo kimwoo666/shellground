@@ -61,3 +61,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Cannot upload verified build outputs.' }
           gh release edit $tag --draft=false --latest
           if ($LASTEXITCODE -ne 0) { throw 'Cannot publish release.' }
+
+      - name: Remove the superseded Windows test release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $old = gh release view v4.7.4-windows.1 --json targetCommitish 2>$null | ConvertFrom-Json
+          if ($LASTEXITCODE -eq 0 -and $old.targetCommitish -eq '1b28744fd314f0e975beea742fcead432766f718') {
+            gh release delete v4.7.4-windows.1 --cleanup-tag --yes
+            if ($LASTEXITCODE -ne 0) { throw 'Could not remove the superseded test binaries.' }
+          }

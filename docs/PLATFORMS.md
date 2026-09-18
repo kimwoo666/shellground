@@ -1,6 +1,6 @@
 # Platform status / 운영체제별 상태
 
-Version 4.7.4 / Windows update 4.7.4-windows.1 · 2026-09-18
+Version 4.7.4 / Windows update 4.7.4-windows.2 · 2026-09-18
 
 [이번 배포의 구체적인 검증 기록 / Verification record](VERIFICATION_4.7.4.md)
 

@@ -1,4 +1,4 @@
-# Windows 4.7.4-windows.1 검증
+# Windows 4.7.4-windows.2 검증
 
 2026-09-18 · Windows 11 Pro x64, OS 10.0.26200, WHPX 사용.
 
