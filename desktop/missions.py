@@ -55,16 +55,16 @@ _BY_KEY.update({
 })
 _BY_KEY['pwdpaths'] = Unit('pwdpaths', 2, 'pwd 옵션 설명과 실습', 'pwd -L · pwd -P',
     '이번에는 pwd의 두 옵션만 비교합니다.\n\n-L: 들어온 바로가기 이름을 유지한 경로.\n-P: 바로가기가 가리키는 실제 경로.\n\n준비된 shortcut으로 들어가 두 출력을 비교하세요.',
-    'cd로 shortcut에 들어간 뒤 pwd -L과 pwd -P를 각각 실행하세요. 두 경로가 화면에 출력되면 F5로 채점합니다.')
+    'cd로 shortcut에 들어간 뒤 pwd -L과 pwd -P를 각각 실행해 두 경로를 화면에 출력하세요.')
 _BY_KEY['lsintro'] = Unit('lsintro', 1, 'ls 설명과 화면 실습', 'ls · ls -a',
     '이번에는 파일 목록을 화면으로만 확인합니다.\n\nls 경로: 그 폴더의 목록을 표시합니다.\nls -a 경로: 숨김 항목과 .·..까지 포함합니다.\n\n두 출력을 비교하세요.',
     'ls -a 목표경로로 숨김 항목까지 화면에 출력하세요.')
 _BY_KEY['report'] = Unit('report', 1, '출력 저장과 내용 확인', '> · cat',
     '이번에 새로 배울 것은 출력 저장입니다. cat은 앞에서 배운 내용을 복습합니다.\n\n명령 > 파일: 화면 대신 파일에 출력 저장. 기존 내용은 덮어씁니다.\ncat 파일: 저장된 내용을 화면에 표시합니다.\n\n이미 배운 pwd의 출력을 저장하고 cat으로 확인합니다.',
     'pwd > 보고서경로로 현재 위치를 저장하고 cat 보고서경로로 내용을 확인하세요.')
-_BY_KEY['mixed'] = Unit('mixed', 2, '혼합 실습 — 위치와 파일 목록', 'pwd · cd · ls -al',
-    '새 옵션은 없습니다. 앞에서 배운 것만 함께 사용합니다.\n\n① pwd로 현재 위치 확인\n② cd로 목표 폴더 이동\n③ ls -al로 숨김 포함 상세 목록 저장\n\n목표 폴더에 있는 상태와 보고서 내용을 함께 채점합니다.',
-    'cd 목표폴더로 이동한 뒤 ls -al > 보고서경로로 저장하세요. 다른 폴더로 이동하지 않고 채점하세요.')
+_BY_KEY['mixed'] = Unit('mixed', 2, '혼합 실습 — 위치와 파일 목록', 'cd · ls -al · >',
+    '새 옵션은 없습니다. 앞에서 배운 것만 함께 사용합니다.\n\n① cd로 목표 폴더 이동\n② ls -al로 숨김 포함 상세 목록 저장\n\n목표 폴더에 있는 상태와 보고서 내용을 함께 채점합니다.\n현재 위치가 궁금하면 이미 배운 pwd로 확인할 수 있지만, 이번 문제의 필수 작업은 아닙니다.',
+    'cd 목표폴더로 이동한 뒤 ls -al > 보고서경로로 저장하세요. 목표 폴더에 머무세요.')
 _BY_KEY['lsoptions'] = Unit('lsoptions', 2, 'ls 옵션 비교와 조합', 'ls -A · -alh · -S · -1',
     '옵션은 외워서 붙이는 장식이 아니라 출력 조건입니다. -a와 -A의 차이, -l과 -h의 조합, -S 정렬을 비교하고 서로 다른 세 보고서를 만듭니다.',
     '이름 목록은 ls -1A, 숨김 포함 읽기 쉬운 상세 목록은 ls -alh, 숨김 제외 큰 크기순 이름 목록은 ls -1S입니다.')
@@ -77,9 +77,23 @@ from sim_lessons import units as simulation_units
 UNITS += simulation_units(Unit)
 
 
-def lesson_text(unit):
-    if unit.key.startswith('sim_'):
+def lesson_text(unit, mode='simulation'):
+    if unit.key.startswith(('linux_', 'apt_', 'auth_', 'shell_', 'process_', 'io_', 'system_')):
         return unit.explanation + '\n\n직접 해볼 예시:\n' + make_mission(unit.key, 4242).solution
+    if unit.key.startswith(('sim_', 'ros_', 'admin_', 'docker_')):
+        example = make_mission(unit.key, 4242).solution
+        if mode == 'real':
+            from real_lessons import real_text
+            from docker_guides import REGISTRY_GUIDE
+            # The registry comparison intentionally includes the short public
+            # name. Convert executable examples, not that explanatory contrast.
+            explanation = real_text(unit.explanation.replace(REGISTRY_GUIDE, '').rstrip())
+            if unit.key == 'sim_images': explanation += '\n\n' + REGISTRY_GUIDE
+            return explanation + '\n\n직접 해볼 예시:\n' + real_text(example)
+        return unit.explanation + '\n\n직접 해볼 예시:\n' + example
+    if mode == 'real':
+        from real_lessons import real_text
+        return real_text(unit.explanation + '\n\n옵션별 의미와 비교 예시\n' + OPTION_GUIDES[unit.key])
     return unit.explanation + '\n\n옵션별 의미와 비교 예시\n' + OPTION_GUIDES[unit.key] + '\n\n참고: 설명에는 아직 시뮬레이터에 구현되지 않은 심화 옵션도 포함됩니다. 지원하지 않는 옵션은 오류로 표시하며, 성공한 것처럼 처리하지 않습니다.'
 
 
@@ -104,6 +118,49 @@ class Mission:
 
 
 def make_mission(kind, seed=None, practice=0):
+    if kind.startswith('system_'):
+        from system_course import make_mission as make_system_mission
+        return make_system_mission(kind, seed, practice)
+    if kind.startswith('io_'):
+        from io_course import make_mission as make_io_mission
+        return make_io_mission(kind, seed, practice)
+    if kind.startswith('process_'):
+        from process_course import make_mission as make_process_mission
+        return make_process_mission(kind, seed, practice)
+    if kind.startswith('shell_'):
+        from shell_course import make_mission as make_shell_mission
+        return make_shell_mission(kind, seed, practice)
+    if kind.startswith('auth_'):
+        from auth_course import make_mission as make_auth_mission
+        return make_auth_mission(kind, seed, practice)
+    if kind.startswith('apt_'):
+        from apt_course import make_mission as make_apt_mission
+        return make_apt_mission(kind, seed, practice)
+    if kind.startswith('linux_'):
+        from linux_course import make_linux_mission
+        return make_linux_mission(kind, seed, practice)
+    if kind.startswith('docker_runtime_'):
+        from docker_runtime_course import make_mission as make_runtime_mission
+        return make_runtime_mission(kind, seed, practice)
+    if kind.startswith('docker_sessions_'):
+        from docker_sessions_course import make_mission as make_session_mission
+        return make_session_mission(kind, seed, practice)
+    if kind.startswith('docker_'):
+        from docker_lessons import make_docker_mission
+        return make_docker_mission(kind, seed, practice)
+    if kind.startswith('admin_'):
+        from linux_course import NEW_KEYS
+        if kind in NEW_KEYS:
+            from admin_focus import make_focused_admin
+            return make_focused_admin(kind, seed, practice)
+        from admin_lessons import make_admin_mission
+        return make_admin_mission(kind, seed, practice)
+    if kind.startswith('ros_controls_'):
+        from ros_controls_course import make_mission as make_control_mission
+        return make_control_mission(kind, seed, practice)
+    if kind.startswith('ros_'):
+        from ros_lessons import make_ros_mission
+        return make_ros_mission(kind, seed, practice)
     if kind.startswith('sim_'):
         from sim_lessons import make_extension
         return make_extension(kind, seed, practice)
@@ -131,14 +188,14 @@ def make_mission(kind, seed=None, practice=0):
         'rename': (f'{target}/draft.txt를 같은 폴더의 final.txt로 이름을 바꾸세요. 내용은 그대로 유지하세요.', f'mv {target}/draft.txt {target}/final.txt'),
         'remove': (f'{target}/obsolete.txt만 삭제하세요. 같은 폴더의 draft.txt는 남겨 두세요.', f'ls {target}\nrm {target}/obsolete.txt'),
         'permissions': (f'{target}/local.sh의 내용을 읽고 소유자 실행 권한을 추가하세요. 파일 내용은 바꾸지 마세요.', f'cat {target}/local.sh\nchmod u+x {target}/local.sh\nls -l {target}/local.sh'),
-        "navigate": (f"시작 위치는 {start}입니다. pwd로 위치를 확인하고 {source}/docs 폴더로 이동한 상태로 채점하세요.", f"pwd\ncd {source}\ncd docs\npwd"),
-        "mixed": (f"{source} 폴더로 이동하세요. 그 폴더의 바로 아래 목록을 숨김 항목(.과 .. 포함)과 상세 정보까지 {report}에 저장하세요. 목표 폴더에 머문 상태로 채점하세요.", f"pwd\ncd {source}\nls -al > {report}\npwd"),
+        "navigate": (f"pwd로 위치를 확인하고 {source}/docs 폴더로 이동하세요. 작업을 마친 위치는 이 폴더여야 합니다.", f"pwd\ncd {source}\ncd docs\npwd"),
+        "mixed": (f"{source} 폴더로 이동하세요. 그 폴더의 바로 아래 목록을 숨김 항목(.과 .. 포함)과 상세 정보까지 {report}에 저장하세요. 목표 폴더에 머무세요.", f"cd {source}\nls -al > {report}"),
         "pwdpaths": (f"{start}/shortcut은 {source}/docs를 가리키는 바로가기입니다. 이 바로가기로 들어가 논리 경로와 실제 경로를 화면에 각각 출력하세요.", f"cd {start}/shortcut\npwd -L\npwd -P"),
-        "lsintro": (f"{source}의 바로 아래 목록을 숨김 항목과 .·..까지 포함해 화면에 출력하세요. 기본 목록과 비교하고 F5를 누르세요.", f"ls {source}\nls -a {source}"),
+        "lsintro": (f"{source}의 바로 아래 목록을 숨김 항목과 .·..까지 포함해 화면에 출력하고 기본 목록과 비교하세요.", f"ls {source}\nls -a {source}"),
         "report": (f"시작 위치 {start}에서 pwd의 출력을 {report}에 저장하세요. cat으로 파일 내용을 확인하세요. 저장 폴더는 준비되어 있습니다.", f"pwd > {report}\ncat {report}"),
         "lsoptions": (f"{source}를 조회해 세 보고서를 만드세요. ① {report}.names: 숨김 항목 포함, .과 .. 제외, 이름 한 줄씩. ② {report}.sizes: .과 .. 포함 전체 상세 목록, 크기는 1024 단위 K/M 등 읽기 쉬운 형식. ③ {report}.largest: 숨김 제외 바로 아래 항목을 큰 크기순으로, 이름만 한 줄씩. 하위 폴더 안까지 펼치지 마세요.", f"ls -1A {source} > {report}.names\nls -alh {source} > {report}.sizes\nls -1S {source} > {report}.largest\ncat {report}.names {report}.sizes {report}.largest"),
         "workspace": (f"{target}/daily notes 폴더를 만들고 그 안에 빈 done.txt 파일을 만드세요.", f"mkdir -p {q(target + '/daily notes')}\ntouch {q(target + '/daily notes/done.txt')}"),
-        "copy": (f"{source}/guide.txt 원본을 보존하며 {target}/manual.txt로 복사하세요. {target}/draft.txt는 final.txt로 이름을 바꾸고 {target}/obsolete.txt는 삭제하세요.", f"cp {source}/guide.txt {target}/manual.txt\nmv {target}/draft.txt {target}/final.txt\nrm {target}/obsolete.txt"),
+        "copy": (f"{source}/guide.txt 원본을 보존하며 {target}/manual.txt로 복사하세요.\n{target}/draft.txt를 같은 폴더의 {target}/final.txt로 이름을 바꾸세요.\n{target}/obsolete.txt만 삭제하세요.", f"cp {source}/guide.txt {target}/manual.txt\nmv {target}/draft.txt {target}/final.txt\nrm {target}/obsolete.txt"),
         "list": (f"{source}의 바로 아래 목록을 .과 .. 및 숨김 파일까지 모두 포함해 {report}에 한 줄에 하나씩 저장하세요. 하위 폴더 안까지 나열하지는 마세요.", f"ls {source}\nls -a {source} > {report}\ncat {report}"),
         "long": (f"{source}의 바로 아래 목록을 숨김 항목(.과 .. 포함), 권한·소유자·크기·시간을 포함한 상세 형식으로 {report}에 저장하세요.", f"ls -l {source}\nls -al {source} > {report}\ncat {report}"),
         "recursive": (f"{source}의 파일 목록을 모든 하위 폴더까지 재귀적으로 조사하세요. 숨김 항목(.과 .. 포함)과 권한·소유자·크기·시간이 있는 상세 목록을 {report}에 저장하세요. 현재 위치는 대상 폴더가 아닙니다.", f"ls -alR {source} > {report}\ncat {report}"),
@@ -151,7 +208,7 @@ def make_mission(kind, seed=None, practice=0):
         "deb": (f"{url}을 {downloaded}에 내려받으세요. 패키지 정보를 확인하고 설치하지 말고 {target}/unpacked에 내용을 풀어 usr/share/shellground/message.txt를 복원하세요.", f"curl -fL -o {downloaded} {url}\ndpkg-deb --info {downloaded}\ndpkg-deb --extract {downloaded} {target}/unpacked"),
     }
     prompt, solution = prompts[kind]
-    interaction = '편집기 조작: Ctrl+K로 현재 줄 삭제 → 문제의 새 내용 입력 → Ctrl+O, Enter로 저장 → Ctrl+X로 종료. 이후 F5로 채점하세요.' if kind == 'edit' else ''
+    interaction = '편집기 조작: Ctrl+K로 현재 줄 삭제 → 문제의 새 내용 입력 → Ctrl+O, Enter로 저장 → Ctrl+X로 종료.' if kind == 'edit' else ''
     mission = Mission(kind, seed, start, source, report, target, url, artifact, prompt, solution, interaction, practice)
     if practice == 2:
         from practice_variants import review_mission
@@ -159,8 +216,8 @@ def make_mission(kind, seed=None, practice=0):
     return natural_paths(mission)
 
 
-def random_mission(completed, previous=None):
-    pool = [u.key for u in UNITS if u.key in completed]
+def random_mission(completed, previous=None, units=None):
+    pool = [u.key for u in (UNITS if units is None else units) if u.key in completed]
     if not pool:
         raise ValueError("완료한 단계가 없습니다.")
     choices = [key for key in pool if key != previous] or pool

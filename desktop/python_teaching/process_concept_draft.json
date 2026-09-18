@@ -1,0 +1,174 @@
+{
+  "schema": 1,
+  "kind": "process-concept-draft",
+  "status": "draft_not_integrated",
+  "date": "2026-09-18",
+  "title": "Linux 프로세스: 식별자·시간·대기·작업 제어",
+  "scope": {
+    "platform": "Linux procps-ng의 ps와 작업 제어가 켜진 대화형 Bash",
+    "question_count": 6,
+    "execution_completion": false,
+    "completion_equivalence": false,
+    "evidence": "공식 매뉴얼의 의미를 확인한 개념 초안이다. 표·PID·시간은 독자적으로 만든 문제 자료이며 실제 프로세스나 VM의 관측 결과가 아니다.",
+    "not_performed": ["실제 프로세스 생성·조회·신호 전송", "VM 실행", "기존 과정·코드·진도 변경"]
+  },
+  "assessment_contract": {
+    "type": "single_choice",
+    "answer": "0부터 시작하는 정답 보기 인덱스",
+    "choice_feedback": "보기와 같은 순서의 정답 근거 또는 오답 이유",
+    "prerequisites": "이 파일의 concepts에 정의된 개념 id. 해당 설명을 응시 전에 제시한다.",
+    "presentation": "answer와 choice_feedback은 제출 전 숨긴다. 문제의 가정된 표를 실제 명령 출력이나 실행 증거로 표시하지 않는다.",
+    "pass_scope": "개념 확인만 통과한다. 조회·중지·재개·종료 실습은 실제 상태를 별도로 확인해야 한다.",
+    "future_practice_rule": "앱 소유의 준비된 프로세스만 대상으로 실제 식별자·상태·파일 보존을 확인한다. 고정 PID나 무관한 프로세스 종료를 요구하지 않고, 대기 상태를 실패나 실행 미완료로 단정하지 않는다."
+  },
+  "sources": {
+    "ps": {
+      "title": "procps-ng ps(1) — 프로젝트 매뉴얼의 man7 공개본",
+      "url": "https://man7.org/linux/man-pages/man1/ps.1.html",
+      "checked": "2026-09-18",
+      "sections": ["PROCESS SELECTION BY LIST: -U, -u", "THREAD DISPLAY: -L", "STANDARD FORMAT SPECIFIERS: pid, ppid, lwp, nlwp, time", "PROCESS STATE CODES: S, T"]
+    },
+    "bash_jobs": {
+      "title": "GNU Bash Manual — Job Control Basics",
+      "url": "https://www.gnu.org/s/bash/manual/html_node/Job-Control-Basics.html",
+      "checked": "2026-09-18",
+      "sections": ["파이프라인과 작업 번호", "전경 프로세스 그룹", "일반적인 Ctrl+Z 일시정지"]
+    },
+    "bash_resume": {
+      "title": "GNU Bash Manual — Job Control Builtins",
+      "url": "https://www.gnu.org/software/bash/manual/html_node/Job-Control-Builtins.html",
+      "checked": "2026-09-18",
+      "sections": ["bg", "fg", "jobs"]
+    },
+    "signals": {
+      "title": "Linux man-pages — signal(7)",
+      "url": "https://man7.org/linux/man-pages/man7/signal.7.html",
+      "checked": "2026-09-18",
+      "sections": ["신호의 기본 동작·무시·처리 함수", "SIGTERM", "SIGKILL과 SIGSTOP은 처리·차단·무시할 수 없음"]
+    }
+  },
+  "concepts": [
+    {
+      "id": "process.real_effective_uid",
+      "title": "조회 기준이 되는 UID를 구별합니다",
+      "explanation": "실제 UID(RUID)와 권한 판단에 쓰이는 유효 UID(EUID)는 다를 수 있습니다. procps-ng의 ps -U는 실제 UID, ps -u는 유효 UID로 선택합니다. 대소문자와 하이픈을 구별하세요."
+    },
+    {
+      "id": "process.thread_columns",
+      "title": "행 수가 곧 프로세스 수는 아닙니다",
+      "explanation": "이 표에서 PID는 프로세스, PPID는 부모 프로세스, LWP는 스레드의 식별자입니다. NLWP는 그 프로세스의 스레드 수입니다. 다중 스레드라는 정보만으로 속도 향상을 보장할 수는 없습니다."
+    },
+    {
+      "id": "process.cpu_time",
+      "title": "TIME과 경과 시간을 나누어 읽습니다",
+      "explanation": "ps의 time 항목(TIME)은 누적 CPU 시간입니다. 시작 후 시계로 흐른 시간과 다릅니다. 오래 기다린 프로세스는 경과 시간이 길어도 CPU 시간은 작을 수 있습니다."
+    },
+    {
+      "id": "process.wait_stop",
+      "title": "기다림과 일시정지는 다릅니다",
+      "explanation": "S는 이벤트를 기다리는 인터럽트 가능한 대기 상태이며 정상 동작에서도 나타납니다. T는 작업 제어 신호로 정지된 상태입니다. S만으로 정상·고장을 확정하거나 T를 종료 완료로 읽지 않습니다."
+    },
+    {
+      "id": "process.shell_jobs",
+      "title": "Bash의 작업 번호와 PID를 구별합니다",
+      "explanation": "jobs의 [1]은 현재 셸의 작업 번호입니다. 여러 프로세스로 된 파이프라인도 한 작업일 수 있고 프로세스 그룹으로 제어됩니다. %1은 작업 1을 가리키며 PID 1과 다릅니다. 일반적인 Ctrl+Z는 전경 작업을 일시정지합니다. bg %1은 뒤에서, fg %1은 전경에서 재개합니다."
+    },
+    {
+      "id": "process.termination_signals",
+      "title": "종료 요청과 강제 종료의 정리 기회가 다릅니다",
+      "explanation": "프로그램은 SIGTERM을 처리하거나 무시할 수 있어 정리 후 종료하도록 설계할 수 있습니다. SIGKILL은 프로그램이 처리·차단·무시할 수 없으므로 그 신호를 받아 정리 코드를 실행하는 방식은 불가능합니다. 신호 전송과 실제 종료 확인은 별개입니다."
+    }
+  ],
+  "questions": [
+    {
+      "id": "process_ps_uppercase_u_real_owner",
+      "topic": "ps -U의 실제 UID",
+      "prerequisites": ["process.real_effective_uid"],
+      "scenario": {
+        "rows": [
+          {"PID": 5101, "RUID": 1100, "EUID": 0},
+          {"PID": 5102, "RUID": 0, "EUID": 1100}
+        ],
+        "assumptions": "두 행 모두 조회 가능한 같은 PID 네임스페이스의 프로세스입니다. 다른 선택 옵션 없이 ps -U 1100으로 고릅니다."
+      },
+      "prompt": "제시된 두 행 중 어떤 프로세스가 선택되나요?",
+      "choices": ["EUID가 1100인 PID 5102만 선택됩니다.", "RUID가 1100인 PID 5101만 선택됩니다.", "둘 중 어느 UID라도 1100이면 선택되므로 두 행 모두입니다.", "-U의 숫자는 UID가 아니라 PID이므로 두 행 모두 아닙니다."],
+      "answer": 1,
+      "choice_feedback": ["이는 소문자 -u의 기준과 혼동한 판단입니다.", "맞습니다. 대문자 -U는 실제 UID를 기준으로 선택합니다.", "이 옵션은 두 UID를 합쳐 검사하지 않습니다.", "여기서 1100은 선택할 실제 UID입니다."],
+      "practical_difference": "실제 계정·프로세스 조회는 하지 않습니다. 실습에서는 RUID와 EUID가 다른 준비 상태에서도 선택 기준을 확인해야 합니다.",
+      "source_ids": ["ps"]
+    },
+    {
+      "id": "process_read_pid_lwp_nlwp",
+      "topic": "PID·PPID·LWP·NLWP",
+      "prerequisites": ["process.thread_columns"],
+      "scenario": {
+        "rows": [
+          {"PID": 6200, "PPID": 4000, "LWP": 6200, "NLWP": 2},
+          {"PID": 6200, "PPID": 4000, "LWP": 6213, "NLWP": 2}
+        ],
+        "assumptions": "스레드를 표시한 표의 한 시점 자료입니다. 두 행은 같은 프로세스의 모든 스레드를 보여 줍니다."
+      },
+      "prompt": "표의 의미로 올바른 것은 무엇인가요?",
+      "choices": ["두 행이므로 독립 프로세스가 두 개입니다.", "NLWP를 더하면 이 프로세스의 스레드는 네 개입니다.", "스레드가 두 개이므로 한 개일 때보다 반드시 두 배 빠릅니다.", "PID 6200인 프로세스에 스레드 두 개가 있고 부모 PID는 4000입니다."],
+      "answer": 3,
+      "choice_feedback": ["스레드 표시에서는 같은 PID가 여러 행에 나타납니다.", "NLWP는 각 행에서 같은 프로세스의 총수를 보여 줍니다.", "식별자 표는 실행 성능이나 병렬화 효과를 증명하지 않습니다.", "맞습니다. 프로세스 관계와 내부 스레드를 구별했습니다."],
+      "practical_difference": "스레드를 생성하거나 성능을 측정한 것은 아닙니다. 실제 실습에서도 행 수만 세거나 고정 속도 향상을 통과 조건으로 삼지 않습니다.",
+      "source_ids": ["ps"]
+    },
+    {
+      "id": "process_time_is_cpu_not_elapsed",
+      "topic": "TIME과 벽시계 시간",
+      "prerequisites": ["process.cpu_time"],
+      "scenario": {"elapsed": "시작 후 실제로 15분이 지남", "TIME": "00:00:02", "assumptions": "TIME 열은 ps의 time 형식입니다."},
+      "prompt": "경과 시간과 TIME이 다른 이유를 가장 정확하게 설명한 것은 무엇인가요?",
+      "choices": ["TIME은 누적 CPU 사용 2초를 뜻합니다. 15분의 경과 시간과 측정 대상이 다릅니다.", "TIME이 2초이므로 프로세스가 시작된 지 반드시 2초입니다.", "두 값이 다르면 시스템 시계가 반드시 잘못됐습니다.", "프로세스는 살아 있는 동안 매초 CPU 시간도 정확히 1초씩 늘어납니다."],
+      "answer": 0,
+      "choice_feedback": ["맞습니다. 기다리는 시간과 CPU를 사용한 시간을 구별했습니다.", "시작 후 경과 시간을 TIME으로 읽었습니다.", "서로 다른 양을 비교한 것이므로 시계 오류의 증거가 아닙니다.", "대기 중에는 경과 시간처럼 CPU 시간이 늘지 않을 수 있습니다."],
+      "practical_difference": "실제 사용량을 관측한 것은 아닙니다. 실습에서는 경과 시간과 CPU 시간을 각각 읽고, 고정 비율을 요구하지 않아야 합니다.",
+      "source_ids": ["ps"]
+    },
+    {
+      "id": "process_sleep_is_not_job_stop",
+      "topic": "S와 T 상태",
+      "prerequisites": ["process.wait_stop"],
+      "scenario": {"rows": [{"name": "worker", "STAT": "S"}, {"name": "paused_task", "STAT": "T"}]},
+      "prompt": "두 상태를 보고 바로 결론 낼 수 있는 것은 무엇인가요?",
+      "choices": ["S와 T는 모두 이미 종료된 프로세스입니다.", "S는 프로그램 고장이고 T는 정상적인 이벤트 대기입니다.", "S는 이벤트 대기, T는 작업 제어에 의한 정지입니다. 서로 같은 상태가 아닙니다.", "두 상태 모두 CPU를 계속 사용 중이라는 뜻입니다."],
+      "answer": 2,
+      "choice_feedback": ["대기와 정지는 종료 완료를 뜻하지 않습니다.", "의미를 뒤바꿨으며 S만으로 고장을 단정할 수도 없습니다.", "맞습니다. 잠시 CPU를 쓰지 않는 이유를 구별했습니다.", "상태의 의미가 실행 중 CPU 소비를 보장하지 않습니다."],
+      "practical_difference": "실제 중지·재개는 하지 않습니다. 재개된 작업이 다시 정상 대기 S가 되었다고 재개 실패로 판정하면 안 됩니다.",
+      "source_ids": ["ps"]
+    },
+    {
+      "id": "process_resume_pipeline_by_job_number",
+      "topic": "jobs·프로세스 그룹·fg/bg·Ctrl+Z",
+      "prerequisites": ["process.thread_columns", "process.wait_stop", "process.shell_jobs"],
+      "scenario": {
+        "job_number": 1,
+        "process_group": 7300,
+        "process_ids": [7300, 7301],
+        "state": "앞에서 실행하던 파이프라인을 Ctrl+Z로 멈추어 jobs에 [1] Stopped로 표시했습니다.",
+        "assumptions": "작업 제어와 기본 일시정지 처리가 적용된 상황입니다. 작업은 재개 후 키보드 입력을 요구하지 않습니다."
+      },
+      "prompt": "같은 파이프라인 전체를 재개하면서 터미널에서는 다른 명령을 입력하고 싶습니다. 가장 알맞은 판단은 무엇인가요?",
+      "choices": ["fg %1로 재개하면 작업은 항상 백그라운드에서 실행됩니다.", "bg %1로 작업 번호 1을 백그라운드 재개합니다. 1을 PID로 해석하지 않습니다.", "bg %7301을 쓰면 PID 7301이 속한 작업을 자동으로 찾습니다.", "Ctrl+Z는 작업을 종료했으므로 기존 작업을 재개할 수 없습니다."],
+      "answer": 1,
+      "choice_feedback": ["fg는 작업을 전경에 두는 동작입니다.", "맞습니다. 셸의 작업과 개별 프로세스 식별자를 구별했습니다.", "% 뒤 숫자는 여기서 작업 번호이지 PID가 아닙니다.", "이 상황의 Ctrl+Z는 종료가 아니라 일시정지입니다."],
+      "practical_difference": "실제 PTY의 전경 그룹이나 재개 상태를 바꾸지 않았습니다. 실습은 해당 작업만 재개됐는지와 다른 작업 보존을 확인해야 합니다.",
+      "source_ids": ["bash_jobs", "bash_resume"]
+    },
+    {
+      "id": "process_term_cleanup_not_kill_handler",
+      "topic": "SIGTERM과 SIGKILL",
+      "prerequisites": ["process.termination_signals"],
+      "scenario": "앱 전용 작업은 SIGTERM을 처리해 진행 내용을 정리한 뒤 종료하도록 작성되어 있습니다. 종료를 요청하고 실제 정리 결과도 확인하려 합니다.",
+      "prompt": "두 신호를 비교한 올바른 설명은 무엇인가요?",
+      "choices": ["SIGKILL을 보내면 프로그램의 SIGKILL 처리 함수가 먼저 정리합니다.", "SIGTERM을 전송했다는 사실만으로 정리와 종료를 완료 처리할 수 있습니다.", "SIGTERM은 정리 기회를 줄 수 있지만 SIGKILL은 처리할 수 없습니다. 요청 뒤 실제 결과를 확인해야 합니다.", "SIGTERM과 SIGKILL은 이름만 다르므로 정리 동작도 항상 같습니다."],
+      "answer": 2,
+      "choice_feedback": ["프로그램은 SIGKILL을 처리·차단·무시할 수 없습니다.", "신호 전달과 정리 완료·프로세스 종료는 별도 확인 대상입니다.", "맞습니다. 처리 가능성과 완료 증거를 나누어 판단했습니다.", "프로그램이 대응할 수 있는 방식이 서로 다릅니다."],
+      "practical_difference": "어떤 프로세스에도 신호를 보내지 않았습니다. 실습에서는 준비된 대상과 실제 정리 결과만 확인하며 무조건 SIGKILL부터 사용하게 하지 않습니다.",
+      "source_ids": ["signals"]
+    }
+  ]
+}

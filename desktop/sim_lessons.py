@@ -1,5 +1,6 @@
 """Small Linux/Docker state-based lessons, never command-string grading."""
 import random
+from docker_guides import expanded_explanation
 
 
 SPECS = (
@@ -21,7 +22,7 @@ SPECS = (
 
 
 def units(Unit):
-    return tuple(Unit('sim_' + key, 5 if i < 4 else 6, title, commands, explanation,
+    return tuple(Unit('sim_' + key, 5 if i < 4 else 6, title, commands, expanded_explanation(key, explanation),
                       '필요하면 F3에서 설명과 예시를 확인하세요.') for i, (key, title, commands, explanation) in enumerate(SPECS))
 
 

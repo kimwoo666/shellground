@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "guest_arch": "aarch64",
+  "release": "Ubuntu 22.04 LTS / 20260913",
+  "checksums": "https://cloud-images.ubuntu.com/releases/jammy/release-20260913/SHA256SUMS",
+  "boot_checksums": "https://cloud-images.ubuntu.com/releases/jammy/release-20260913/unpacked/SHA256SUMS",
+  "files": {
+    "image": {
+      "name": "ubuntu-22.04-server-cloudimg-arm64.img",
+      "url": "https://cloud-images.ubuntu.com/releases/jammy/release-20260913/ubuntu-22.04-server-cloudimg-arm64.img",
+      "sha256": "ab5fcc80611a98bf999018045119d87b3a0e7c78f3b43b254b93d5c22bae3ff6"
+    },
+    "kernel": {
+      "name": "ubuntu-22.04-server-cloudimg-arm64-vmlinuz-generic",
+      "url": "https://cloud-images.ubuntu.com/releases/jammy/release-20260913/unpacked/ubuntu-22.04-server-cloudimg-arm64-vmlinuz-generic",
+      "sha256": "3d61a3fc6c50ad4724de8149847204d601443c86ef3b494a95d49baf9a7b1605"
+    },
+    "initrd": {
+      "name": "ubuntu-22.04-server-cloudimg-arm64-initrd-generic",
+      "url": "https://cloud-images.ubuntu.com/releases/jammy/release-20260913/unpacked/ubuntu-22.04-server-cloudimg-arm64-initrd-generic",
+      "sha256": "9c827b22e5b98be89cf8c408732a066cd111ba8614adf949c9349c968dd3b65f"
+    },
+    "host_qemu": {
+      "name": "qemu-system-arm_8.2.2+ds-0ubuntu1.18_amd64.deb",
+      "url": "https://archive.ubuntu.com/ubuntu/pool/main/q/qemu/qemu-system-arm_8.2.2+ds-0ubuntu1.18_amd64.deb",
+      "sha256": "06184a21b9c8dc573ab6d255e9826cc4732df90e56bd65c52e92ad640af4d60a",
+      "note": "Developer Linux x86_64 build host only; Ubuntu apt metadata. Extracted without installation. Not the Android executable."
+    }
+  }
+}

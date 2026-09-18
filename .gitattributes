@@ -1,6 +1,12 @@
-* text=auto
+# Keep guest shell scripts and source-bound acceptance hashes unchanged on Windows.
 *.py text eol=lf
 *.sh text eol=lf
-*.ps1 text eol=crlf
-Dockerfile text eol=lf
-*.ttc binary
+*.json text eol=lf
+*.md text eol=lf
+*.ps1 text eol=lf
+*.txt text eol=lf
+desktop/guest/bashrc text eol=lf
+*.qcow2 binary
+*.exe binary
+*.dll binary
+*.whl binary

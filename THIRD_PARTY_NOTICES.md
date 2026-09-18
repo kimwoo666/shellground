@@ -1,14 +1,31 @@
-# 외부 구성요소 안내
+# Third-party components
 
-이 저장소에서 사용하는 주요 외부 구성요소입니다. 애플리케이션 자체에 새로운 라이선스를 임의로 부여하지 않았으며, 아래 고지는 각 외부 구성요소의 라이선스를 대체하지 않습니다.
+Shellground combines independently licensed components. Their authors retain their copyrights; Shellground does not claim authorship of those components. Public source availability does not remove third-party license conditions.
 
-| 구성요소 | 사용 방식 | 확인 위치 |
-| --- | --- | --- |
-| Noto Sans CJK | 한글 표시용 글꼴 파일 포함 | [동봉된 저작권/OFL 고지](desktop/assets/Noto-COPYRIGHT.txt) |
-| Qt for Python / PySide6 | Python 의존성으로 설치 | [Qt for Python](https://doc.qt.io/qtforpython-6/), 설치 패키지의 라이선스 문서 |
-| pyte, wcwidth | 터미널 상태와 문자 너비 처리 | 설치 패키지의 라이선스 문서 |
-| PyInstaller | 운영체제별 실행 파일 패키징 | [PyInstaller](https://pyinstaller.org/), 설치 패키지의 라이선스 문서 |
-| libxcb-cursor | 일부 Linux 빌드에서 커서 라이브러리로 사용 | [저작권 고지](desktop/assets/libxcb-cursor-COPYRIGHT.txt); 라이브러리 바이너리는 이 소스 저장소에 포함하지 않음 |
-| Ubuntu 및 GNU/Linux 도구 | Dockerfile을 통해 설치 | 각 배포 패키지의 저작권/라이선스 문서 |
+| Component | License/source information |
+| --- | --- |
+| Python / CPython | PSF License; package license metadata is retained |
+| Qt / PySide6 | LGPL/GPL/commercial upstream licensing; distributed as dynamically linked libraries on desktop |
+| NumPy, pandas, SciPy, Matplotlib, Seaborn, scikit-learn and dependencies | Respective upstream licenses, included in package metadata and desktop license files |
+| Chaquopy | Its upstream license and bundled Python/package notices |
+| GNU/Linux guest packages | Package copyright notices under `/usr/share/doc` inside the guest; Ubuntu package source repositories |
+| QEMU | GPL-2.0 with component exceptions; original COPYING files, sources and build patches retained |
+| GLib / proxy-libintl | LGPL family; see pinned upstream source archives |
+| libffi / PCRE2 / libfdt | MIT / BSD family as specified by each upstream component |
+| FreeType | FreeType Project License, with attribution; [upstream](https://freetype.org/) |
+| Noto Sans CJK | SIL Open Font License1.1; [copyright](desktop/assets/Noto-COPYRIGHT.txt) |
+| Miniconda and included Conda packages | Anaconda and each package's own license/terms; app installation lessons show the source, license and checksum before batch installation |
 
-글꼴은 수정하지 않은 파일을 고지와 함께 포함합니다. Python 의존성 자체, 시스템 패키지, Docker 이미지, 빌드된 실행 파일은 Git 소스 이력에 포함하지 않습니다.
+## Android native runtime source
+
+The release includes a `Shellground-4.7.4-Native-Sources.tar` companion containing the exact pinned QEMU/GLib/libffi/PCRE2/libfdt/proxy-libintl source archives, Shellground Android patches, build instructions and license texts. This is corresponding source material, not a VM cache or an old executable. It is deliberately kept alongside the APK.
+
+The exact versions, official URLs and SHA-256 hashes are in [native-sources.json](android/runtime/native-sources.json). Android-specific changes are in [runtime/patches](android/runtime/patches); build scripts are in [android/runtime](android/runtime). FreeType is built from unmodified upstream source with NDKr27c and16KB ELF load alignment; its source, notices and script are included in the companion.
+
+## Desktop runtime source
+
+Windows QEMU11.1.0 is the vendor's2026-08-11 Windows distribution, not a new Shellground QEMU fork: [vendor downloads, version history and build instructions](https://qemu.weilnetz.de/w64/), [vendor source repository and build scripts](https://github.com/stweil/qemu/tree/ar7). Its identity and original URL are recorded in the runtime's `assembly.json`. This differs from the Android-specific QEMU version in the native-source companion. Linux QEMU is from the pinned Ubuntu packages described by the desktop runtime metadata. Their COPYING, COPYING.LIB and firmware notices remain in the runtime bundle.
+
+PySide/Qt source: [PySide6.8.3](https://code.qt.io/cgit/pyside/pyside-setup.git/?h=v6.8.3) for this Windows build; the Linux package records its own version. Desktop bundles expose the dynamically linked Qt libraries rather than changing their license. See the distributed `licenses` directory and upstream notices for details.
+
+Lecture PDFs, personal study notes, private signing keys and user progress are not redistributed in the source repository.

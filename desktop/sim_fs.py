@@ -23,6 +23,8 @@ class FS:
     def __init__(self):
         self.nodes = {'/': Node('dir', mode=0o755, uid=0, gid=0)}
         self.uid = 1100
+        self.gid = 1100
+        self.groups = {1100, 27}
 
     def norm(self, path, cwd='/'):
         return p.normpath(p.join(cwd, str(path)))
@@ -45,7 +47,7 @@ class FS:
         return here
 
     def allowed(self, node, bit):
-        return self.uid == 0 or ((node.mode >> (6 if node.uid == self.uid else 3 if node.gid == 1100 else 0)) & bit) == bit
+        return self.uid == 0 or ((node.mode >> (6 if node.uid == self.uid else 3 if node.gid in self.groups else 0)) & bit) == bit
 
     def get(self, path, follow=True):
         key = self.resolve(path, follow)
@@ -70,7 +72,7 @@ class FS:
             if exist_ok and self.nodes[key].kind == 'dir': return
             raise FileExistsError(errno.EEXIST, 'File exists', path)
         self.writable_parent(key)
-        self.put(key, Node('dir', mode=0o755, uid=self.uid))
+        self.put(key, Node('dir', mode=0o755, uid=self.uid, gid=self.gid))
 
     def put(self, path, node):
         if len(self.nodes) >= 10000 and path not in self.nodes: raise OSError('Simulator filesystem limit: 10000 entries')
@@ -89,7 +91,7 @@ class FS:
             updated.data = (node.data if append else b'') + data
         else:
             self.writable_parent(key)
-            updated = Node(data=data, uid=self.uid)
+            updated = Node(data=data, uid=self.uid, gid=self.gid)
         self.put(key, updated)
 
     def read(self, path):
@@ -130,7 +132,9 @@ class FS:
             return
         additions = {dst + k[len(src):]: copy.deepcopy(v) for k, v in self.nodes.items() if k == src or (node.kind == 'dir' and k.startswith(src + '/'))}
         if node.kind == 'file': self.read(src)
-        for k, v in additions.items(): self.put(k, v)
+        for k, v in additions.items():
+            if not move: v.uid, v.gid = self.uid, self.gid
+            self.put(k, v)
         if move: self.remove(src, True)
 
     def glob(self, pattern):

@@ -1,0 +1,1379 @@
+{
+  "schema": 1,
+  "kind": "conda-pip-course-spec",
+  "language": "ko",
+  "status": "IMPLEMENTATION_SPEC_PENDING_LINUX_GUEST_ACCEPTANCE",
+  "title": "16·17단원: 같은 Python의 pip로 설치하고 복구하기",
+  "design_date": "2026-09-17",
+  "counts": {
+    "lessons": 2,
+    "reviews": 0,
+    "problems": 6,
+    "learning_steps": 8,
+    "negative_test_designs": 23,
+    "equivalent_solution_designs": 12
+  },
+  "append_contract": {
+    "after_key": "review_conda_03",
+    "new_lesson_numbers": [
+      16,
+      17
+    ],
+    "existing_order": [
+      "conda_identity",
+      "conda_env_list",
+      "conda_create",
+      "conda_activate",
+      "conda_interpreter",
+      "review_conda_01",
+      "conda_package_list",
+      "conda_install",
+      "conda_versions",
+      "conda_update",
+      "conda_remove_package",
+      "review_conda_02",
+      "conda_isolation",
+      "conda_export_intent",
+      "conda_recreate",
+      "conda_export_snapshot",
+      "conda_remove_environment",
+      "review_conda_03"
+    ],
+    "preserve_existing_lesson_numbers": true,
+    "preserve_existing_progress_keys": true,
+    "create_no_new_review": true,
+    "meaning": "기존15단원·3복습의 뒤에만 추가합니다. 기존 단원과 완료 상태를 바꾸지 않으며 이번 두 단원만으로 새5단원 복습을 만들지 않습니다."
+  },
+  "background_sources": [
+    {
+      "file": "pip_course_draft.json",
+      "role": "2단원·6문제·8소단계의 원 설계 및 23음성/12동등풀이 메모"
+    },
+    {
+      "file": "course_spec.json",
+      "role": "기존 Conda 과정의 단원·fixture·criteria 필드 계약"
+    }
+  ],
+  "official_sources": [
+    {
+      "id": "pip_running",
+      "url": "https://pip.pypa.io/en/stable/user_guide/#running-pip",
+      "scope": "python -m pip는 지정한 Python으로 pip를 실행함",
+      "verified_on": "2026-09-17"
+    },
+    {
+      "id": "pip_install",
+      "url": "https://pip.pypa.io/en/stable/cli/pip_install/",
+      "scope": "버전 요청, 로컬 배포 파일, --no-index와 --find-links",
+      "verified_on": "2026-09-17"
+    },
+    {
+      "id": "pip_show",
+      "url": "https://pip.pypa.io/en/stable/cli/pip_show/",
+      "scope": "설치된 배포 패키지의 Name·Version·Location 확인",
+      "verified_on": "2026-09-17"
+    },
+    {
+      "id": "pip_uninstall",
+      "url": "https://pip.pypa.io/en/stable/cli/pip_uninstall/",
+      "scope": "현재 Python의 패키지 제거와 확인 질문",
+      "verified_on": "2026-09-17"
+    }
+  ],
+  "runtime_contract": {
+    "platform": "Linux x86_64 actual app-owned guest only",
+    "python_series": [
+      3,
+      12
+    ],
+    "envroot": "/home/learner/conda-envs",
+    "protected_base": "/opt/shellground/miniconda",
+    "asset": {
+      "distribution": "numpy",
+      "version": "2.3.5",
+      "filename": "numpy-2.3.5-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "sha256": "0d8163f43acde9a73c2a33605353a4f1bc4798745a8b1d73183b28e5b435ae28",
+      "url": "https://files.pythonhosted.org/packages/b6/23/2a1b231b8ff672b4c450dac27164a8b2ca7d9b7144f9c02d2396518352eb/numpy-2.3.5-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "tags": [
+        "cp312-cp312-manylinux_2_27_x86_64",
+        "cp312-cp312-manylinux_2_28_x86_64"
+      ],
+      "directory": "/opt/shellground/wheels",
+      "path": "/opt/shellground/wheels/numpy-2.3.5-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl",
+      "official_payload_files": 899,
+      "record_entries": 900,
+      "requires_python": ">=3.11",
+      "requires_dist": [],
+      "compatibility_note": "이 파일은 CPython3.12/cp312용 Linux x86_64 바이너리 wheel입니다. Requires-Python 범위만으로 모든 Python3.11 이상에서 쓸 수 있다고 해석하지 않습니다. NumPy2.3.5 고정 실습이며 최신 버전이라는 주장은 하지 않습니다."
+    },
+    "display_gate": {
+      "required_before_showing_learning_materials": [
+        "실제 guest에 검증된 wheel이 위 경로에 읽기 전용으로 준비되고 SHA·manifest·플랫폼 호환성이 확인됨",
+        "문제별 실제 Conda 환경과 그 환경 자체의 Python3.12·pip가 준비되며 host/관리 base와 구분됨",
+        "실제 지속 Bash, 학습자 권한, pip 설정 격리 및 오프라인 실행이 준비됨",
+        "참조 actions의 실제 PTY 질문 응답과 명령별 예상 종료 코드 지원이 Linux에서 검증됨",
+        "의도된 손상 fixture가 실제 import 실패이고 Python/pip/기존 Conda 도구는 정상임을 확인함",
+        "실제 결과 채점과 같은 세션 수정·재채점이 준비됨"
+      ],
+      "on_failure": "본문·소단계가 준비 완료를 전제하므로 준비가 완료되지 않으면 해당 학습 화면과 실습 실행을 차단하고 실제 준비 오류를 표시합니다. 명세 파일 존재를 runtime 지원 증거로 사용하지 않습니다.",
+      "current_claim": "이 파일 자체는 실제 guest 준비·통합 검증 완료를 선언하지 않습니다. 부모 구현의 준비 게이트 결과에 따라 표시합니다."
+    },
+    "internal_invariants_not_student_exam": [
+      "보호 base, root 소유 설치 자산, guest 설정과 개인 host 환경은 엔진이 보호합니다. root/sudo, 소유권 조정, 셸 초기화, base 갱신은 학생 과제가 아닙니다.",
+      "문제별 학습 환경에 실제 Python 3.12 계열과 동작하는 pip를 미리 준비합니다. pip 설치 또는 정확한 pip patch 버전 암기는 요구하지 않습니다.",
+      "기본적으로 NumPy의 Conda 패키지 기록이 없는 독립 환경을 사용합니다. 같은 NumPy 설치를 Conda와 pip가 번갈아 관리하도록 가르치지 않습니다.",
+      "pip의 외부 인덱스 설정·사용자 site·임의 target 설치 설정이 이 실습에 섞이지 않도록 엔진이 격리합니다. --no-index 자체를 모든 네트워크 차단 기능이라고 가르치지 않습니다.",
+      "wheel 자산과 pip 실행 준비가 없으면 준비 오류로 차단합니다. 모의 설치 결과, 온라인 다운로드, host pip로 대체하지 않습니다.",
+      "보호 환경 침해는 내부 안전 게이트 위반으로 별도 표시합니다. 학생이 어떤 보호 설정 명령을 입력하지 않았다는 이유로 학습 목표를 오답 처리하지 않습니다. 명시된 다른 학습 환경 보존은 해당 문제의 교육 목표로 채점합니다."
+    ],
+    "readonly_student_diagnostics": "제공된 Python 진단식은 암기 시험이 아닙니다. 학습자가 선택한 환경에서 직접 실행하며 출력 문자열이 아니라 독립 실제 관찰로 채점합니다.",
+    "activation_policy": "초기 activation_stack을 유지하는 실제 Bash입니다. 문제에서 최종 선택을 명시한 경우만 active 기준을 적용하며 다른 문제에 숨은 최종 선택 조건을 추가하지 않습니다.",
+    "fixture_policy": "소단계는 그 단원의 example fixture에서 같은 세션으로 순서대로 실행합니다. 다음 소단계 이동만으로 초기화하지 않습니다. 각 활용은 별도 fixture입니다.",
+    "submission_policy": "goal·fixture_summary·answer_fields의 key/label·provided_diagnostics·diagnostic_note를 학습자에게 연결해야 합니다. reference_commands/reference_actions/grade_criteria/오답 메모는 채점·검증 자료이며 정답으로 자동 입력하지 않습니다."
+  },
+  "action_contract": {
+    "fields": {
+      "command": "한 번 직접 실행할 기존 실제 셸 명령",
+      "exit_codes": "이 참조 흐름에서 예상하는 실제 종료 코드의 목록",
+      "responses": "실제 PTY 질문이 관찰된 뒤 보낼 prompt/reply 쌍",
+      "expectation_reason": "비성공 종료가 해당 관찰에서 예상되는 이유"
+    },
+    "exact_prompt": "Proceed (Y/n)?",
+    "prompt_policy": "prompt는 실제 출력의 리터럴 부분문자열이며 정규식이 아닙니다. 앞뒤 공백·터미널 제어 문자는 실행 계층에서 처리하되 질문을 모사하지 않습니다. 질문 관찰 전 응답을 보내거나 y를 독립 명령으로 실행하지 않습니다.",
+    "learning_policy": "학습 화면에는 실제 제거 계획을 읽고 y로 답하도록 설명합니다. responses는 참조 검증용 구조이며 학생 대신 조용히 승인하는 기능이 아닙니다.",
+    "expected_failure_policy": "기본은 exit_codes=[0]입니다. 제거 후 show/import의 명시된 관찰만 [1]로 둡니다. [1] 자체가 올바른 제거의 증거는 아니며 실제 부재 판정은 별도로 수행합니다.",
+    "learner_equivalence_policy": "actions는 준비된 fixture의 참조 풀이와 단계 검증에만 적용합니다. 다른 올바른 명령이나 최종 상태를 실행 이력 때문에 거부하지 않습니다. 빈 numpy/·dist-info와 무해한 캐시를 허용하는 부재 채점 정책을 임의의 참조 exit 코드로 덮어쓰지 않습니다.",
+    "no_simulation": "실제 Python/pip 및 실제 PTY를 사용합니다. 가짜 출력·pip 래퍼·명령 이력 강제 검사로 대체하지 않습니다."
+  },
+  "observer_contract": {
+    "numpy_present": {
+      "arguments": [
+        "environment",
+        "version"
+      ],
+      "evidence": "대상 prefix의 실제 distribution metadata Name/Version, 해당 prefix 안의 Location, 검증된 wheel과 핵심 설치 파일의 일관성, 대상의 fresh Python으로 NumPy 실제 import를 함께 확인합니다. pip show 출력 문자열이나 INSTALLER 파일 하나만 믿지 않습니다.",
+      "runtime_probe": "fresh Python을 격리된 cwd와 -I로 시작해 sys.prefix/executable, numpy.__version__/__file__, 실제 ndarray 생성·덧셈·합계를 확인합니다. 기본 입력 [2,5]의 합계 7 외 [1,-1,3]의 합계 3도 검사합니다. 학생이 이 함수를 작성하는 과제가 아니라 진짜 NumPy 확인입니다.",
+      "not_evidence": "numpy.py의 모사, 기대 버전/합계 인쇄, .dist-info만 생성, 다른 환경의 NumPy, metadata는 남았지만 import 실패하는 설치"
+    },
+    "numpy_absent": {
+      "arguments": [
+        "environment"
+      ],
+      "evidence": "대상 fresh Python에서 실제 NumPy metadata·모듈의 부재와 공식 배포 파일·native library·명령 스크립트의 제거를 함께 확인합니다. ModuleNotFoundError(name=numpy)는 부재 근거이지만 그것만으로 통과하지 않습니다. 빈 dist-info 또는 빈 numpy/·무해한 __pycache__만 남아 Python namespace로 보이는 경우는 허용합니다. 경로 차단·깨진 공유 라이브러리·권한 오류로 import가 실패하는 것은 제거 성공이 아닙니다. 같은 환경의 Python과 pip는 정상 실행되어야 합니다."
+    },
+    "preservation": "preserved_except_numpy와 environment_preserved는 최초의 실제 환경 상태와 비교합니다. Python/pip 및 기존 training 도구의 metadata·파일·기능을 보존하고 pycache/접근시각/무해한 캐시는 제외합니다.",
+    "answer_selectors": [
+      "envs.<name>.pip.numpy.version",
+      "envs.<name>.pip.numpy.location"
+    ],
+    "answer_policy": "각 answer_ref를 해당 실제 환경에서 채점 시점에 관찰한 값과 비교합니다. Location은 설치된 배포 패키지 디렉터리이며 wheel 보관 폴더나 numpy/__init__.py가 아닙니다. 경로의 무의미한 끝 슬래시는 정규화합니다.",
+    "error_separation": "자산 누락·pip 미준비·guest 실행 실패는 준비 오류입니다. 학습자가 만든 패키지 부재·손상·잘못된 환경 상태는 미완료로 표시하고 같은 세션에서 수정·재채점을 허용합니다. 17단원 활용2의 의도된 손상은 정상 fixture 정의이며 준비 오류로 오인하지 않습니다."
+  },
+  "grading_operations": {
+    "numpy_present": {
+      "args": [
+        "environment",
+        "version"
+      ],
+      "meaning": "대상 prefix의 실제 distribution metadata Name/Version, 해당 prefix 안의 Location, 검증된 wheel과 핵심 설치 파일의 일관성, 대상의 fresh Python으로 NumPy 실제 import를 함께 확인합니다. pip show 출력 문자열이나 INSTALLER 파일 하나만 믿지 않습니다.",
+      "evidence": [
+        "verified_official_wheel_manifest",
+        "installed_distribution_metadata_and_RECORD",
+        "fresh_isolated_python_probe"
+      ]
+    },
+    "numpy_absent": {
+      "args": [
+        "environment"
+      ],
+      "meaning": "대상 fresh Python에서 실제 NumPy metadata·모듈의 부재와 공식 배포 파일·native library·명령 스크립트의 제거를 함께 확인합니다. ModuleNotFoundError(name=numpy)는 부재 근거이지만 그것만으로 통과하지 않습니다. 빈 dist-info 또는 빈 numpy/·무해한 __pycache__만 남아 Python namespace로 보이는 경우는 허용합니다. 경로 차단·깨진 공유 라이브러리·권한 오류로 import가 실패하는 것은 제거 성공이 아닙니다. 같은 환경의 Python과 pip는 정상 실행되어야 합니다.",
+      "evidence": [
+        "owned_distribution_files_absence",
+        "actual_distribution_metadata_absence",
+        "fresh_isolated_python_absence"
+      ]
+    },
+    "preserved_except_numpy": {
+      "args": [
+        "environment"
+      ],
+      "meaning": "해당 환경은 남아 있고 Python/pip 및 NumPy 이외의 준비된 패키지와 기존 사용자 파일이 보존되어야 합니다. NumPy 설치·제거에 따라 바뀌는 해당 배포 파일은 비교에서 제외합니다.",
+      "evidence": [
+        "before_after_verified_environment_state",
+        "actual_python_and_pip",
+        "preserved_package_files_and_functions"
+      ]
+    },
+    "environment_preserved": {
+      "args": [
+        "environment"
+      ],
+      "meaning": "준비 후 기록한 실제 Python/pip 및 설치 배포 패키지·Conda 패키지의 버전·필수 파일·기능이 보존되어야 합니다. pycache·접근 시각·pip 캐시·무해한 이력 줄 차이는 실패 이유로 삼지 않습니다.",
+      "evidence": [
+        "before_after_verified_environment_state",
+        "actual_python_and_pip",
+        "preserved_package_files_and_functions"
+      ]
+    },
+    "active": {
+      "args": [
+        "environment"
+      ],
+      "meaning": "같은 지속 Bash의 실제 활성 prefix; 프롬프트 글자만 비교하지 않음",
+      "evidence": [
+        "persistent_bash_active_prefix"
+      ]
+    },
+    "answer_ref": {
+      "args": [
+        "field",
+        "live_selector"
+      ],
+      "meaning": "실제 관찰된 NumPy 버전/설치 Location과 비교합니다. 경로는 실제 전체 경로를 정규화해 비교하며 무의미한 끝 슬래시는 허용합니다. Python/pip 버전을 NumPy 버전으로 대신 적으면 실패합니다.",
+      "evidence": [
+        "learner_answer_fields",
+        "trusted_live_pip_numpy_observation"
+      ]
+    }
+  },
+  "common_grade_gates": [
+    "실제 준비 게이트와 선언된 fixture가 일치해야 합니다. 초기 상태와 빈 답칸은 각 문제에서 미완료여야 합니다.",
+    "환경 목록은 initial_fixture의 created_envs/removed_envs 허용 범위와 일치해야 합니다. 이번 문제는 새 환경 생성·환경 삭제를 요구하지 않습니다.",
+    "패키지 변경은 mutable_envs 안에서만 허용하며 선택 변경은 패키지 변경으로 보지 않습니다. 목표에 명시된 다른 환경과 기존 도구 보존은 학습 채점, 보호 base/root/host 보존은 별도 내부 안전 게이트입니다.",
+    "NumPy는 공식 pip wheel의 metadata·RECORD·파일 및 fresh Python을 대조합니다. Conda 교육 패키지는 실제 conda-meta와 설치 파일·기능으로 확인하며 두 관리자의 기록을 혼동하지 않습니다.",
+    "모든 grade_criteria를 함께 평가합니다. 정상 NumPy 하나만 확인하고 Python/pip·다른 환경·기존 도구·답칸·명시된 활성 상태를 생략하지 않습니다.",
+    "명령 문자열·실행 순서·uninstall 횟수·관측하지 않은 설치 종료 이력은 학습자 정답 조건이 아닙니다. 설치 명령의 성공 종료나 Already satisfied 출력만으로 정상 설치·복구를 판정하지 않습니다.",
+    "자산 누락과 runtime 준비 실패는 준비 오류입니다. 학습자의 미완료 설치·잘못된 선택·손상은 같은 세션에서 고칠 수 있게 안내합니다."
+  ],
+  "units": [
+    {
+      "key": "pip_install",
+      "number": 16,
+      "kind": "lesson",
+      "topic": "Conda",
+      "title": "선택한 Python에 pip로 NumPy 준비하기",
+      "source": "supplement",
+      "pages": [],
+      "prerequisites": [
+        "conda_interpreter",
+        "conda_install",
+        "conda_isolation",
+        "review_conda_03"
+      ],
+      "new_concepts": [
+        "python -m pip의 소속",
+        "로컬 wheel에서 설치",
+        "pip show의 설치 정보"
+      ],
+      "explanation": "Conda는 환경과 그 안의 도구를 관리합니다. pip는 선택한 Python에 Python 배포 패키지를 설치하는 도구입니다. python -m pip는 지금 python으로 실행되는 인터프리터의 pip를 사용하므로 어느 환경인지 먼저 확인합니다. install은 파일을 준비하고 import는 그 Python에서 불러옵니다. 이번에는 기존의 작은 Conda 교육 패키지 대신 실제 NumPy를 설치합니다.",
+      "prerequisite_reminder": "conda activate와 sys.executable/sys.prefix 확인은 이미 배웠습니다. 먼저 준비된 학습 환경을 고릅니다. pip가 준비되지 않았다면 학생이 base에 설치할 문제가 아니라 실습 준비 오류입니다.",
+      "syntax": "python -m pip --version\npython -m pip install --no-index --find-links /opt/shellground/wheels numpy==2.3.5\npython -m pip show numpy",
+      "pitfall": "pip라는 명령 이름만 보고 어느 Python의 pip인지 추측하지 마세요. --find-links 뒤 폴더는 설치 파일을 찾는 출처이지 설치 목적지가 아닙니다. 설치 목적지는 선택한 Python 환경입니다.",
+      "real_world_difference": "실무에서는 PyPI나 조직의 승인된 저장소에서 설치할 수 있습니다. 여기서는 인터넷 없이 같은 결과를 확인하려고 검증된 로컬 wheel과 NumPy 2.3.5를 지정합니다. 2.3.5가 모든 시점의 최신이라는 뜻은 아닙니다. 일반적인 환경에서도 Conda로 관리 중인 같은 패키지를 pip로 무작정 덮어쓰지 않습니다.",
+      "learning_steps": [
+        {
+          "title": "pip를 실행할 Python부터 고르기",
+          "explanation": "이 예시에 준비된 sg-pip-lab을 선택합니다. -m pip는 해당 Python으로 pip 모듈을 실행한다는 뜻입니다. pip --version 출력에는 pip 버전과 설치 경로가 나오며 이것은 NumPy 버전이 아닙니다.",
+          "commands": [
+            "conda activate sg-pip-lab",
+            "python -c \"import sys; print(sys.executable); print(sys.prefix)\"",
+            "python -m pip --version"
+          ],
+          "observe": "Python 경로와 pip 경로가 sg-pip-lab에 속하는지 봅니다. Python이 3.12라고만 확인해서는 다른 환경과 구별되지 않습니다.",
+          "actions": [
+            {
+              "command": "conda activate sg-pip-lab",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -c \"import sys; print(sys.executable); print(sys.prefix)\"",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -m pip --version",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            }
+          ]
+        },
+        {
+          "title": "설치 파일을 어디서 찾을지 지정하기",
+          "explanation": "wheel은 설치할 배포 파일입니다. 이 실습에는 /opt/shellground/wheels에 검증된 실제 NumPy 2.3.5 wheel이 준비되어 있습니다. --no-index는 패키지 인덱스를 조회하지 않게 하고, --find-links는 배포 파일을 찾을 로컬 폴더를 알려 줍니다. 폴더에 파일이 있다는 사실만으로 현재 환경에 설치된 것은 아닙니다.",
+          "commands": [],
+          "observe": "설치 자산 안내에서 실제 경로·NumPy 2.3.5·검증 상태를 확인합니다. 경로를 외우거나 직접 다운로드할 필요는 없습니다.",
+          "actions": []
+        },
+        {
+          "title": "패키지 이름과 요청 버전으로 설치하기",
+          "explanation": "install은 설치 작업, numpy는 배포 패키지 이름, ==2.3.5는 이번에 요청할 정확한 버전입니다. np는 이후 코드에서 쓸 수 있는 별칭이지 설치할 이름이 아닙니다. 아래 한 줄은 2단계에서 설명한 로컬 출처만 사용합니다. pip install은 이 예시에서 Conda처럼 y 승인 질문을 하지 않습니다. 프롬프트가 돌아오고 오류가 없는지 확인합니다.",
+          "commands": [
+            "python -m pip install --no-index --find-links /opt/shellground/wheels numpy==2.3.5"
+          ],
+          "observe": "설치 완료와 오류를 구별합니다. Already satisfied가 나오면 이미 그 Python에 요구 버전이 있는지 다음 단계에서 확인하며, 무조건 재설치하지 않습니다.",
+          "actions": [
+            {
+              "command": "python -m pip install --no-index --find-links /opt/shellground/wheels numpy==2.3.5",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            }
+          ]
+        },
+        {
+          "title": "설치 정보와 실제 import를 함께 확인하기",
+          "explanation": "show numpy는 설치된 배포 패키지 정보를 읽습니다. Name은 패키지 이름, Version은 NumPy 버전, Location은 설치 정보의 기본 위치입니다. Location은 Python 실행 파일 자체나 wheel 보관 폴더가 아닙니다. 제공된 Python 진단식은 NumPy를 실제로 불러와 버전·파일 위치·작은 계산을 확인합니다. 식을 외우거나 NumPy 코드를 새로 작성할 필요는 없습니다.",
+          "commands": [
+            "python -m pip show numpy",
+            "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\""
+          ],
+          "observe": "Version 2.3.5와 sg-pip-lab 안의 설치 위치를 보고, 실제 import 및 합계 7을 확인합니다. 출력 숫자만 직접 인쇄하는 것은 설치 확인이 아닙니다.",
+          "actions": [
+            {
+              "command": "python -m pip show numpy",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\"",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            }
+          ]
+        }
+      ],
+      "problems": [
+        {
+          "id": "pip_install_example",
+          "role": "example",
+          "goal": "sg-pip-lab에 제공된 wheel로 NumPy 2.3.5를 설치하세요. 그 환경의 설치 정보와 실제 import·계산이 정상이어야 합니다. Python과 pip는 보존하세요.",
+          "fixture_summary": "sg-pip-lab에는 Python 3.12와 pip가 준비되어 있고 NumPy는 없습니다. 아직 학습 환경을 선택하지 않았습니다. 검증된 NumPy wheel은 /opt/shellground/wheels에 있습니다.",
+          "initial_fixture": {
+            "active_env": null,
+            "activation_stack": [],
+            "environments": [
+              {
+                "name": "sg-pip-lab",
+                "pip_distributions": [],
+                "requested_specs": [
+                  "python=3.12",
+                  "pip"
+                ],
+                "real_creation_required": true
+              }
+            ],
+            "mutable_envs": [
+              "sg-pip-lab"
+            ],
+            "files": [],
+            "numpy_absent": [
+              "sg-pip-lab"
+            ],
+            "execution_surface": "persistent_guest_bash",
+            "workspace": "{{problem_workspace}}",
+            "absent_envs": [],
+            "created_envs": [],
+            "removed_envs": [],
+            "fixture_method": "requested_specs는 실제 Conda로 준비하고 pip_distributions는 검증된 공식 wheel을 실제 pip로 설치합니다. 의도된 결손은 검증된 별도 fixture에서만 적용하며 패키지 metadata나 명령 출력을 모사하지 않습니다.",
+            "setup_notice": "준비된 환경·현재 선택·패키지·파일을 fixture_summary와 함께 표시합니다. 자산이나 Python/pip 준비 실패는 과제 오답이 아니라 실행 준비 오류입니다."
+          },
+          "answer_fields": [],
+          "provided_diagnostics": [
+            "python -m pip --version",
+            "python -m pip show numpy",
+            "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\""
+          ],
+          "reference_commands": [
+            "conda activate sg-pip-lab",
+            "python -m pip install --no-index --find-links /opt/shellground/wheels numpy==2.3.5",
+            "python -m pip show numpy",
+            "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\""
+          ],
+          "grade_criteria": [
+            {
+              "operation": "numpy_present",
+              "arguments": [
+                "sg-pip-lab",
+                "2.3.5"
+              ]
+            },
+            {
+              "operation": "preserved_except_numpy",
+              "arguments": [
+                "sg-pip-lab"
+              ]
+            }
+          ],
+          "hint": "선택한 Python이 설치 대상입니다. wheel 폴더의 위치와 설치된 NumPy의 Location은 다릅니다.",
+          "negative_tests": [
+            "아무 명령도 실행하지 않은 초기 상태는 NumPy 부재로 미완료",
+            "버전과 7을 직접 출력해도 metadata/import가 없으면 실패",
+            "작업 폴더에 numpy.py를 만들어 흉내 내도 fresh 격리 import·진위 검증에서 실패",
+            "pip 설치 대신 Python 또는 pip까지 제거하면 보존 조건 실패"
+          ],
+          "equivalent_solutions": [
+            "화면에 제공된 대상 Python의 전체 경로로 -m pip를 실행해 같은 설치를 만들면 허용",
+            "동일한 검증 wheel의 전체 경로를 직접 지정해 같은 실제 설치가 되면 허용; 아직 가르치지 않은 경로 암기를 요구하지 않음"
+          ],
+          "reference_actions": [
+            {
+              "command": "conda activate sg-pip-lab",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -m pip install --no-index --find-links /opt/shellground/wheels numpy==2.3.5",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -m pip show numpy",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\"",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            }
+          ],
+          "reference_confirmation": "이 문제의 설치·읽기 명령에는 y 응답을 주입하지 않습니다. 실제 출력과 대상 환경을 확인합니다.",
+          "diagnostic_note": "현재 선택한 Python에서 설치 정보와 실제 import를 확인하는 읽기 진단식입니다. 아직 NumPy를 설치하지 않았다면 show/import가 실패할 수 있으며, 이를 설치 완료로 처리하지 않습니다.",
+          "representative_wrong_answers": [
+            "아무 명령도 실행하지 않은 초기 상태는 NumPy 부재로 미완료",
+            "버전과 7을 직접 출력해도 metadata/import가 없으면 실패",
+            "작업 폴더에 numpy.py를 만들어 흉내 내도 fresh 격리 import·진위 검증에서 실패",
+            "pip 설치 대신 Python 또는 pip까지 제거하면 보존 조건 실패"
+          ],
+          "grading_notes": "최종 활성 환경이나 명령 옵션의 글자 순서는 이 문제의 채점 조건이 아닙니다. 설치됨을 실제 상태로 검증하며 pip CLI를 과거에 직접 실행했다고 주장하지 않습니다. 모든 grade_criteria와 준비/보존 게이트를 함께 적용합니다. reference_actions는 특정 참조 경로의 실행 검증용이며 학습자의 명령 이력·문자열·종료 코드 일치를 정답 조건으로 삼지 않습니다."
+        },
+        {
+          "id": "pip_install_target_selection",
+          "role": "application_1",
+          "goal": "sg-pip-archive의 설치 상태를 보존하면서 sg-pip-work에 NumPy 2.3.5를 준비하세요. 두 환경의 Python과 pip를 보존하고, 마지막에는 sg-pip-work를 선택하여 실제 import·계산이 정상이어야 합니다.",
+          "fixture_summary": "선택된 sg-pip-archive에는 Python 3.12, pip, NumPy 2.3.5, Conda training-text 1.0이 있습니다. sg-pip-work에는 Python 3.12와 pip만 있고 NumPy가 없습니다.",
+          "initial_fixture": {
+            "active_env": "sg-pip-archive",
+            "activation_stack": [
+              "sg-pip-archive"
+            ],
+            "environments": [
+              {
+                "name": "sg-pip-archive",
+                "pip_distributions": [
+                  {
+                    "name": "numpy",
+                    "version": "2.3.5",
+                    "source": "verified_official_wheel"
+                  }
+                ],
+                "requested_specs": [
+                  "python=3.12",
+                  "pip",
+                  "training-text==1.0"
+                ],
+                "real_creation_required": true
+              },
+              {
+                "name": "sg-pip-work",
+                "pip_distributions": [],
+                "requested_specs": [
+                  "python=3.12",
+                  "pip"
+                ],
+                "real_creation_required": true
+              }
+            ],
+            "mutable_envs": [
+              "sg-pip-work"
+            ],
+            "files": [],
+            "numpy_absent": [
+              "sg-pip-work"
+            ],
+            "execution_surface": "persistent_guest_bash",
+            "workspace": "{{problem_workspace}}",
+            "absent_envs": [],
+            "created_envs": [],
+            "removed_envs": [],
+            "fixture_method": "requested_specs는 실제 Conda로 준비하고 pip_distributions는 검증된 공식 wheel을 실제 pip로 설치합니다. 의도된 결손은 검증된 별도 fixture에서만 적용하며 패키지 metadata나 명령 출력을 모사하지 않습니다.",
+            "setup_notice": "준비된 환경·현재 선택·패키지·파일을 fixture_summary와 함께 표시합니다. 자산이나 Python/pip 준비 실패는 과제 오답이 아니라 실행 준비 오류입니다."
+          },
+          "answer_fields": [],
+          "provided_diagnostics": [
+            "python -c \"import sys; print(sys.executable); print(sys.prefix)\"",
+            "python -m pip --version",
+            "python -m pip show numpy",
+            "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\""
+          ],
+          "reference_commands": [
+            "conda activate sg-pip-work",
+            "python -m pip --version",
+            "python -m pip install --no-index --find-links /opt/shellground/wheels numpy==2.3.5",
+            "python -m pip show numpy",
+            "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\""
+          ],
+          "grade_criteria": [
+            {
+              "operation": "numpy_present",
+              "arguments": [
+                "sg-pip-work",
+                "2.3.5"
+              ]
+            },
+            {
+              "operation": "preserved_except_numpy",
+              "arguments": [
+                "sg-pip-work"
+              ]
+            },
+            {
+              "operation": "environment_preserved",
+              "arguments": [
+                "sg-pip-archive"
+              ]
+            },
+            {
+              "operation": "active",
+              "arguments": [
+                "sg-pip-work"
+              ]
+            }
+          ],
+          "hint": "Already satisfied가 어느 환경에 관한 말인지 먼저 확인하세요. NumPy가 이미 있는 보관용 환경과 이번 작업 대상을 구별합니다.",
+          "negative_tests": [
+            "보관용에서 install이 Already satisfied로 끝났지만 작업용은 비어 있으면 실패",
+            "작업용 설치가 맞아도 보관용 training-text나 NumPy를 없애면 실패",
+            "작업용에 설치만 하고 최종 선택을 보관용에 두면 명시된 활성 목표 실패"
+          ],
+          "equivalent_solutions": [
+            "대상 Python의 전체 경로로 먼저 설치하고 마지막에 작업용 환경을 활성화해도 허용",
+            "보관용의 읽기 조회만 추가해도 무해한 캐시 변화 때문에 보존 실패로 처리하지 않음"
+          ],
+          "reference_actions": [
+            {
+              "command": "conda activate sg-pip-work",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -m pip --version",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -m pip install --no-index --find-links /opt/shellground/wheels numpy==2.3.5",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -m pip show numpy",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\"",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            }
+          ],
+          "reference_confirmation": "이 문제의 설치·읽기 명령에는 y 응답을 주입하지 않습니다. 실제 출력과 대상 환경을 확인합니다.",
+          "diagnostic_note": "Python 경로로 작업 대상을 먼저 확인합니다. NumPy 진단식은 작업용 sg-pip-work에서 확인하세요. 보관용의 설치 성공 출력만으로 작업용 설치가 증명되지는 않습니다.",
+          "representative_wrong_answers": [
+            "보관용에서 install이 Already satisfied로 끝났지만 작업용은 비어 있으면 실패",
+            "작업용 설치가 맞아도 보관용 training-text나 NumPy를 없애면 실패",
+            "작업용에 설치만 하고 최종 선택을 보관용에 두면 명시된 활성 목표 실패"
+          ],
+          "grading_notes": "예시와 달리 두 환경의 같은 버전·현재 선택 때문에 잘못된 성공 판단을 할 수 있는 문제입니다. 설치 개수나 명령 실행 횟수를 시험하지 않습니다. 모든 grade_criteria와 준비/보존 게이트를 함께 적용합니다. reference_actions는 특정 참조 경로의 실행 검증용이며 학습자의 명령 이력·문자열·종료 코드 일치를 정답 조건으로 삼지 않습니다."
+        },
+        {
+          "id": "pip_install_read_existing",
+          "role": "application_2",
+          "goal": "sg-pip-ready의 설치와 현재 환경 선택을 유지하면서, NumPy의 Version과 Location을 읽어 두 답칸에 기록하세요. 이 환경에서 NumPy가 실제로 불러와지는지도 확인하세요.",
+          "fixture_summary": "sg-pip-ready가 선택되어 있고 Python 3.12, pip, 정상적인 NumPy 설치가 준비되어 있습니다. 버전과 설치 위치는 직접 읽어 답칸에 적습니다. 새 설치나 환경 선택 변경은 필요하지 않습니다.",
+          "initial_fixture": {
+            "active_env": "sg-pip-ready",
+            "activation_stack": [
+              "sg-pip-ready"
+            ],
+            "environments": [
+              {
+                "name": "sg-pip-ready",
+                "pip_distributions": [
+                  {
+                    "name": "numpy",
+                    "version": "2.3.5",
+                    "source": "verified_official_wheel"
+                  }
+                ],
+                "requested_specs": [
+                  "python=3.12",
+                  "pip"
+                ],
+                "real_creation_required": true
+              }
+            ],
+            "mutable_envs": [],
+            "files": [],
+            "execution_surface": "persistent_guest_bash",
+            "workspace": "{{problem_workspace}}",
+            "absent_envs": [],
+            "created_envs": [],
+            "removed_envs": [],
+            "fixture_method": "requested_specs는 실제 Conda로 준비하고 pip_distributions는 검증된 공식 wheel을 실제 pip로 설치합니다. 의도된 결손은 검증된 별도 fixture에서만 적용하며 패키지 metadata나 명령 출력을 모사하지 않습니다.",
+            "setup_notice": "준비된 환경·현재 선택·패키지·파일을 fixture_summary와 함께 표시합니다. 자산이나 Python/pip 준비 실패는 과제 오답이 아니라 실행 준비 오류입니다."
+          },
+          "answer_fields": [
+            {
+              "key": "numpy_version",
+              "label": "NumPy의 Version",
+              "expected_ref": "envs.sg-pip-ready.pip.numpy.version"
+            },
+            {
+              "key": "numpy_location",
+              "label": "NumPy의 Location",
+              "expected_ref": "envs.sg-pip-ready.pip.numpy.location"
+            }
+          ],
+          "provided_diagnostics": [
+            "python -m pip show numpy",
+            "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\""
+          ],
+          "reference_commands": [
+            "python -m pip show numpy",
+            "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\""
+          ],
+          "grade_criteria": [
+            {
+              "operation": "numpy_present",
+              "arguments": [
+                "sg-pip-ready",
+                "2.3.5"
+              ]
+            },
+            {
+              "operation": "environment_preserved",
+              "arguments": [
+                "sg-pip-ready"
+              ]
+            },
+            {
+              "operation": "active",
+              "arguments": [
+                "sg-pip-ready"
+              ]
+            },
+            {
+              "operation": "answer_ref",
+              "arguments": [
+                "numpy_version",
+                "envs.sg-pip-ready.pip.numpy.version"
+              ]
+            },
+            {
+              "operation": "answer_ref",
+              "arguments": [
+                "numpy_location",
+                "envs.sg-pip-ready.pip.numpy.location"
+              ]
+            }
+          ],
+          "hint": "pip의 버전, NumPy의 버전, Python 실행 파일, wheel 폴더, 설치된 배포 패키지의 Location은 서로 다릅니다.",
+          "negative_tests": [
+            "설치 상태가 맞아도 빈 답칸의 초기 상태는 미완료",
+            "Python 3.12 또는 pip의 버전을 NumPy Version으로 적으면 실패",
+            "wheel 폴더나 numpy/__init__.py 파일 자체를 Location으로 적으면 실패",
+            "정답을 적었지만 환경을 제거하거나 선택을 바꾸면 보존·활성 조건 실패"
+          ],
+          "equivalent_solutions": [
+            "동일한 실제 절대 Location의 끝 슬래시·불필요한 경로 구분 차이는 정규화해 허용",
+            "실제 관찰값과 일치하는 답은 다른 읽기 방법으로 구했어도 허용"
+          ],
+          "reference_actions": [
+            {
+              "command": "python -m pip show numpy",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\"",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            }
+          ],
+          "reference_confirmation": "이 문제의 설치·읽기 명령에는 y 응답을 주입하지 않습니다. 실제 출력과 대상 환경을 확인합니다.",
+          "diagnostic_note": "선택된 sg-pip-ready에서 읽은 NumPy Version과 Location을 답칸에 옮기세요. NumPy의 __file__은 모듈 파일 경로이며 pip show의 Location 디렉터리와 구별합니다. Python·pip 버전을 대신 적지 않습니다.",
+          "representative_wrong_answers": [
+            "설치 상태가 맞아도 빈 답칸의 초기 상태는 미완료",
+            "Python 3.12 또는 pip의 버전을 NumPy Version으로 적으면 실패",
+            "wheel 폴더나 numpy/__init__.py 파일 자체를 Location으로 적으면 실패",
+            "정답을 적었지만 환경을 제거하거나 선택을 바꾸면 보존·활성 조건 실패"
+          ],
+          "grading_notes": "설치가 필요한지 판단하고 불필요한 변경 없이 정보를 읽는 문제입니다. 정확한 답만으로 학생이 pip show를 직접 실행했다고 증명하거나 import 조회 이력을 요구하지 않습니다. 모든 grade_criteria와 준비/보존 게이트를 함께 적용합니다. reference_actions는 특정 참조 경로의 실행 검증용이며 학습자의 명령 이력·문자열·종료 코드 일치를 정답 조건으로 삼지 않습니다."
+        }
+      ],
+      "concept": "선택한 Python의 pip로 설치하고 실제 import 확인",
+      "source_note": "강의의 패키지 설치·환경 준비 소개를 실제 pip 실습으로 확장한 보충입니다. 명령 전체가 PDF에 실렸다는 뜻은 아니며 Linux 전용 준비 게이트 이후 제공합니다.",
+      "references": [
+        "pip_running",
+        "pip_install",
+        "pip_show"
+      ],
+      "microsteps": [
+        "pip를 실행할 Python부터 고르기 — Python 경로와 pip 경로가 sg-pip-lab에 속하는지 봅니다. Python이 3.12라고만 확인해서는 다른 환경과 구별되지 않습니다.",
+        "설치 파일을 어디서 찾을지 지정하기 — 설치 자산 안내에서 실제 경로·NumPy 2.3.5·검증 상태를 확인합니다. 경로를 외우거나 직접 다운로드할 필요는 없습니다.",
+        "패키지 이름과 요청 버전으로 설치하기 — 설치 완료와 오류를 구별합니다. Already satisfied가 나오면 이미 그 Python에 요구 버전이 있는지 다음 단계에서 확인하며, 무조건 재설치하지 않습니다.",
+        "설치 정보와 실제 import를 함께 확인하기 — Version 2.3.5와 sg-pip-lab 안의 설치 위치를 보고, 실제 import 및 합계 7을 확인합니다. 출력 숫자만 직접 인쇄하는 것은 설치 확인이 아닙니다."
+      ]
+    },
+    {
+      "key": "pip_remove_repair",
+      "number": 17,
+      "kind": "lesson",
+      "topic": "Conda",
+      "title": "pip 패키지를 제거하고 잘못된 설치 복구하기",
+      "source": "supplement",
+      "pages": [],
+      "prerequisites": [
+        "pip_install",
+        "conda_remove_package",
+        "conda_isolation"
+      ],
+      "new_concepts": [
+        "pip uninstall",
+        "패키지 부재와 실행 오류 구별",
+        "제거와 기존 설치 명령의 조합으로 복구"
+      ],
+      "explanation": "python -m pip uninstall numpy는 그 Python에 pip로 준비한 NumPy 배포 패키지를 제거합니다. Python 환경 전체를 지우는 명령이 아니며 다른 환경의 NumPy도 자동으로 지우지 않습니다. 이번에는 NumPy만 pip로 관리하고 기존 training-text·training-math는 Conda 설치 그대로 보존합니다. 잘못된 환경에 설치했다면 그쪽에서 제거하고 올바른 환경에 16단원의 방법으로 설치합니다. 설치 기록이 남아 있으면 실제 파일이 손상되어도 같은 버전 install이 Already satisfied로 끝날 수 있습니다. 이때는 실제 import 실패를 확인한 뒤 이번 단원의 uninstall과 16단원의 install을 차례로 사용해 정상 파일로 다시 준비할 수 있습니다. 활용2 전에 마지막 소단계에서 이 복구 판단을 읽습니다.",
+      "prerequisite_reminder": "16단원의 Python 선택, 로컬 wheel 설치, show와 실제 import를 다시 사용합니다. 같은 버전이 설치됐다는 기록과 실제 파일의 정상 동작은 다른 증거입니다. pip show의 부재 경고는 제거 후 예상할 수 있는 결과이지 Python 환경 삭제를 뜻하지 않습니다.",
+      "syntax": "python -m pip uninstall numpy\npython -m pip show numpy\npython -m pip install --no-index --find-links /opt/shellground/wheels numpy==2.3.5",
+      "pitfall": "삭제할 대상을 읽은 뒤 확인 질문에 응답하세요. pip 자체나 Python, 환경 전체를 제거하지 않습니다. numpy.py를 직접 지우거나 metadata를 손으로 고치는 방법을 요구하지 않습니다.",
+      "repair_explanation": "설치 기록이 남아 있으면 같은 버전 install이 Already satisfied로 끝날 수 있습니다. 실제 파일이 빠져 import가 실패하는 복구 연습에서는 방금 배운 uninstall로 NumPy 배포 패키지를 정리한 뒤 16단원의 install로 다시 준비할 수 있습니다. 과거 제거 명령 이력 자체는 채점하지 않고, 마지막 실제 설치가 정상인지 봅니다.",
+      "real_world_difference": "이 연습은 NumPy에 의존하는 다른 패키지가 없는 작은 별도 환경입니다. 실무에서는 제거 대상이 다른 프로그램에 필요한지도 먼저 확인해야 합니다. 여기서 NumPy를 지운다고 모든 의존성이나 환경까지 자동 정리된다고 일반화하지 않습니다.",
+      "learning_steps": [
+        {
+          "title": "제거할 패키지와 남길 도구 구별하기",
+          "explanation": "sg-pip-clean은 이미 활성이고 pip로 설치한 NumPy 2.3.5와 Conda로 설치한 training-text가 있습니다. NumPy만 제거하고 Python·pip·문장 도구는 남기는 예시입니다. 설치 방법이 다른 두 도구를 한꺼번에 pip로 정리하지 않습니다.",
+          "commands": [
+            "python -m pip --version",
+            "python -m pip show numpy"
+          ],
+          "observe": "pip와 NumPy Location이 sg-pip-clean에 속하는지 확인하고 제거할 이름 numpy를 구별합니다.",
+          "actions": [
+            {
+              "command": "python -m pip --version",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -m pip show numpy",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            }
+          ]
+        },
+        {
+          "title": "현재 Python의 NumPy만 제거하기",
+          "explanation": "uninstall 뒤에는 제거할 배포 패키지 이름을 씁니다. 실제 화면의 NumPy 이름·버전·제거 경로를 읽고 이번 대상이 맞으면 확인 질문에 y로 응답합니다. --no-index와 --find-links는 설치할 파일을 찾는 옵션이므로 이 제거 명령에는 붙이지 않습니다.",
+          "commands": [
+            "python -m pip uninstall numpy"
+          ],
+          "observe": "제거 작업이 완료될 때까지 기다립니다. 거절하거나 중단하면 상태를 다시 확인해야 하며 성공으로 가정하지 않습니다.",
+          "actions": [
+            {
+              "command": "python -m pip uninstall numpy",
+              "exit_codes": [
+                0
+              ],
+              "responses": [
+                {
+                  "prompt": "Proceed (Y/n)?",
+                  "reply": "y"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "부재 확인과 예상된 오류 읽기",
+          "explanation": "제거 후 show numpy는 패키지를 찾지 못했다고 알릴 수 있습니다. 아래 새 Python의 import도 ModuleNotFoundError로 끝나는 것이 이번에는 예상 결과입니다. 모든 오류가 제거 성공은 아닙니다. 다른 의존 파일이 깨진 ImportError나 Python 자체 실행 실패는 별개입니다.",
+          "commands": [
+            "python -m pip show numpy",
+            "python -c \"import numpy\""
+          ],
+          "observe": "설치 기록의 부재와 실제 NumPy 부재를 함께 확인합니다. 실패한 import를 앱이 자동 수정하거나 가짜 성공 출력으로 바꾸지 않습니다.",
+          "actions": [
+            {
+              "command": "python -m pip show numpy",
+              "exit_codes": [
+                1
+              ],
+              "responses": [],
+              "expectation_reason": "NumPy 제거 뒤 설치 정보가 없으므로 pip show numpy의 부재 경고와 종료 코드 1이 예상됩니다. 실제 제거 여부는 metadata·공식 소유 파일·새 Python 관찰을 함께 채점합니다."
+            },
+            {
+              "command": "python -c \"import numpy\"",
+              "exit_codes": [
+                1
+              ],
+              "responses": [],
+              "expectation_reason": "이 예시의 제거 후 새 Python에는 NumPy가 없으므로 import numpy가 ModuleNotFoundError(name='numpy')와 종료 코드 1로 끝나는 것이 예상 결과입니다. 깨진 의존성이나 Python 실행 실패를 제거 성공으로 바꾸지 않습니다."
+            }
+          ]
+        },
+        {
+          "title": "환경이 살아 있고 남길 도구가 작동하는지 확인하기",
+          "explanation": "제거한 것은 NumPy이지 환경 전체가 아닙니다. Python·pip·기존 문장 도구가 그대로 동작하는지 확인합니다. 다음 복구 활용에서는 설치 기록이 남아 install이 Already satisfied라고 해도 실제 파일 손상으로 import가 실패할 수 있습니다. 그때는 방금 배운 uninstall 후 16단원의 로컬 install을 다시 실행해 정상 파일로 준비합니다. 이번 예시는 제거가 목표이므로 NumPy를 다시 설치하지 않습니다.",
+          "commands": [
+            "python --version",
+            "python -m pip --version",
+            "python -c \"import training_text; print(training_text.normalize('  draft  '))\""
+          ],
+          "observe": "Python 3.12 계열과 pip가 실행되고 문장 도구가 DRAFT를 반환하는지 확인합니다. 여기에 새 패키지 설치나 환경 삭제는 필요하지 않습니다.",
+          "actions": [
+            {
+              "command": "python --version",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -m pip --version",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -c \"import training_text; print(training_text.normalize('  draft  '))\"",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            }
+          ]
+        }
+      ],
+      "problems": [
+        {
+          "id": "pip_remove_example",
+          "role": "example",
+          "goal": "sg-pip-clean에서 pip로 설치한 NumPy만 제거하세요. 환경 자체와 Python·pip·기존 training-text 1.0은 보존하여 정상 실행되게 하세요.",
+          "fixture_summary": "sg-pip-clean이 선택되어 있고 Python 3.12, pip, NumPy 2.3.5, Conda training-text 1.0이 준비되어 있습니다. NumPy만 제거 대상입니다.",
+          "initial_fixture": {
+            "active_env": "sg-pip-clean",
+            "activation_stack": [
+              "sg-pip-clean"
+            ],
+            "environments": [
+              {
+                "name": "sg-pip-clean",
+                "pip_distributions": [
+                  {
+                    "name": "numpy",
+                    "version": "2.3.5",
+                    "source": "verified_official_wheel"
+                  }
+                ],
+                "requested_specs": [
+                  "python=3.12",
+                  "pip",
+                  "training-text==1.0"
+                ],
+                "real_creation_required": true
+              }
+            ],
+            "mutable_envs": [
+              "sg-pip-clean"
+            ],
+            "files": [],
+            "execution_surface": "persistent_guest_bash",
+            "workspace": "{{problem_workspace}}",
+            "absent_envs": [],
+            "created_envs": [],
+            "removed_envs": [],
+            "fixture_method": "requested_specs는 실제 Conda로 준비하고 pip_distributions는 검증된 공식 wheel을 실제 pip로 설치합니다. 의도된 결손은 검증된 별도 fixture에서만 적용하며 패키지 metadata나 명령 출력을 모사하지 않습니다.",
+            "setup_notice": "준비된 환경·현재 선택·패키지·파일을 fixture_summary와 함께 표시합니다. 자산이나 Python/pip 준비 실패는 과제 오답이 아니라 실행 준비 오류입니다."
+          },
+          "answer_fields": [],
+          "provided_diagnostics": [
+            "python -m pip show numpy",
+            "python --version",
+            "python -m pip --version",
+            "python -c \"import training_text; print(training_text.normalize('  draft  '))\""
+          ],
+          "reference_commands": [
+            "python -m pip uninstall numpy",
+            "python -m pip show numpy",
+            "python --version",
+            "python -m pip --version",
+            "python -c \"import training_text; print(training_text.normalize('  draft  '))\""
+          ],
+          "grade_criteria": [
+            {
+              "operation": "numpy_absent",
+              "arguments": [
+                "sg-pip-clean"
+              ]
+            },
+            {
+              "operation": "preserved_except_numpy",
+              "arguments": [
+                "sg-pip-clean"
+              ]
+            }
+          ],
+          "hint": "NumPy를 찾을 수 없는 것과 Python 자체가 사라진 것은 다릅니다. 남길 도구도 확인하세요.",
+          "negative_tests": [
+            "초기 상태는 NumPy가 남아 있어 미완료",
+            "환경 전체를 없애서 import가 안 되면 Python/pip 보존 조건 실패",
+            ".dist-info만 지워 show를 속이거나 모듈 파일만 지워 import를 깨뜨리면 두 증거가 일치하지 않아 실패",
+            "NumPy 제거와 함께 training-text를 없애면 실패"
+          ],
+          "equivalent_solutions": [
+            "검증된 대상 Python의 전체 경로로 uninstall해도 최종 상태가 같으면 허용",
+            "같은 상태에서 채점을 반복해도 제거 명령을 다시 실행하도록 강제하지 않음"
+          ],
+          "reference_actions": [
+            {
+              "command": "python -m pip uninstall numpy",
+              "exit_codes": [
+                0
+              ],
+              "responses": [
+                {
+                  "prompt": "Proceed (Y/n)?",
+                  "reply": "y"
+                }
+              ]
+            },
+            {
+              "command": "python -m pip show numpy",
+              "exit_codes": [
+                1
+              ],
+              "responses": [],
+              "expectation_reason": "NumPy 제거 뒤 설치 정보가 없으므로 pip show numpy의 부재 경고와 종료 코드 1이 예상됩니다. 실제 제거 여부는 metadata·공식 소유 파일·새 Python 관찰을 함께 채점합니다."
+            },
+            {
+              "command": "python --version",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -m pip --version",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -c \"import training_text; print(training_text.normalize('  draft  '))\"",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            }
+          ],
+          "reference_confirmation": "uninstall의 실제 제거 대상·버전·경로를 읽고 맞으면 실제 Proceed (Y/n)? 질문에 y로 응답합니다. y는 다음 독립 명령이 아닙니다. 설치·읽기 명령에는 응답을 주입하지 않습니다.",
+          "diagnostic_note": "제거 후 pip show의 부재 경고는 예상 결과입니다. Python·pip·training_text 진단은 계속 성공해야 합니다. 실제 부재와 다른 도구 보존을 함께 확인하며 임의의 오류를 제거 성공으로 보지 않습니다.",
+          "representative_wrong_answers": [
+            "초기 상태는 NumPy가 남아 있어 미완료",
+            "환경 전체를 없애서 import가 안 되면 Python/pip 보존 조건 실패",
+            ".dist-info만 지워 show를 속이거나 모듈 파일만 지워 import를 깨뜨리면 두 증거가 일치하지 않아 실패",
+            "NumPy 제거와 함께 training-text를 없애면 실패"
+          ],
+          "grading_notes": "부재 확인 명령의 예상 비성공 종료를 테스트 인프라 오류로 오인하지 않습니다. 최종 셸 활성 상태는 이 문제에서 제한하지 않습니다. 모든 grade_criteria와 준비/보존 게이트를 함께 적용합니다. reference_actions는 특정 참조 경로의 실행 검증용이며 학습자의 명령 이력·문자열·종료 코드 일치를 정답 조건으로 삼지 않습니다."
+        },
+        {
+          "id": "pip_repair_wrong_environment",
+          "role": "application_1",
+          "goal": "sg-pip-writing에서 NumPy를 제거하고 sg-pip-analysis에 NumPy 2.3.5를 준비하세요. 두 환경의 Python·pip와 기존 Conda 도구는 모두 보존합니다. 마지막에는 sg-pip-analysis를 선택하세요.",
+          "fixture_summary": "선택된 sg-pip-writing에는 Python 3.12, pip, NumPy 2.3.5, Conda training-text 1.0이 있습니다. sg-pip-analysis에는 Python 3.12, pip, Conda training-math 1.0이 있고 NumPy는 없습니다.",
+          "initial_fixture": {
+            "active_env": "sg-pip-writing",
+            "activation_stack": [
+              "sg-pip-writing"
+            ],
+            "environments": [
+              {
+                "name": "sg-pip-writing",
+                "pip_distributions": [
+                  {
+                    "name": "numpy",
+                    "version": "2.3.5",
+                    "source": "verified_official_wheel"
+                  }
+                ],
+                "requested_specs": [
+                  "python=3.12",
+                  "pip",
+                  "training-text==1.0"
+                ],
+                "real_creation_required": true
+              },
+              {
+                "name": "sg-pip-analysis",
+                "pip_distributions": [],
+                "requested_specs": [
+                  "python=3.12",
+                  "pip",
+                  "training-math==1.0"
+                ],
+                "real_creation_required": true
+              }
+            ],
+            "mutable_envs": [
+              "sg-pip-writing",
+              "sg-pip-analysis"
+            ],
+            "files": [],
+            "numpy_absent": [
+              "sg-pip-analysis"
+            ],
+            "execution_surface": "persistent_guest_bash",
+            "workspace": "{{problem_workspace}}",
+            "absent_envs": [],
+            "created_envs": [],
+            "removed_envs": [],
+            "fixture_method": "requested_specs는 실제 Conda로 준비하고 pip_distributions는 검증된 공식 wheel을 실제 pip로 설치합니다. 의도된 결손은 검증된 별도 fixture에서만 적용하며 패키지 metadata나 명령 출력을 모사하지 않습니다.",
+            "setup_notice": "준비된 환경·현재 선택·패키지·파일을 fixture_summary와 함께 표시합니다. 자산이나 Python/pip 준비 실패는 과제 오답이 아니라 실행 준비 오류입니다."
+          },
+          "answer_fields": [],
+          "provided_diagnostics": [
+            "python -c \"import sys; print(sys.executable); print(sys.prefix)\"",
+            "python -m pip show numpy",
+            "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\"",
+            "python -c \"import training_text; print(training_text.normalize('  draft  '))\"",
+            "python -c \"import training_math; print(training_math.total([2, 5]))\""
+          ],
+          "diagnostic_note": "NumPy 진단은 분석용, training_text 진단은 문장용, training_math 진단은 분석용에서 사용합니다. 다른 환경에서 모듈이 없다는 출력만으로 전체 작업을 실패라고 판단하지 않습니다.",
+          "reference_commands": [
+            "python -m pip uninstall numpy",
+            "python -c \"import training_text; print(training_text.normalize('  draft  '))\"",
+            "conda activate sg-pip-analysis",
+            "python -m pip install --no-index --find-links /opt/shellground/wheels numpy==2.3.5",
+            "python -m pip show numpy",
+            "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\"",
+            "python -c \"import training_math; print(training_math.total([2, 5]))\""
+          ],
+          "grade_criteria": [
+            {
+              "operation": "numpy_absent",
+              "arguments": [
+                "sg-pip-writing"
+              ]
+            },
+            {
+              "operation": "numpy_present",
+              "arguments": [
+                "sg-pip-analysis",
+                "2.3.5"
+              ]
+            },
+            {
+              "operation": "preserved_except_numpy",
+              "arguments": [
+                "sg-pip-writing"
+              ]
+            },
+            {
+              "operation": "preserved_except_numpy",
+              "arguments": [
+                "sg-pip-analysis"
+              ]
+            },
+            {
+              "operation": "active",
+              "arguments": [
+                "sg-pip-analysis"
+              ]
+            }
+          ],
+          "hint": "두 환경의 목표는 반대입니다. 한쪽의 오설치를 없애는 작업과 다른 쪽의 필요한 설치를 구분하세요. 환경 자체를 지우지 않습니다.",
+          "negative_tests": [
+            "분석용에 설치했지만 문장용 NumPy를 남기면 복구 미완료",
+            "문장용에서만 제거하고 분석용은 빈 상태이면 미완료",
+            "분석용의 training-math나 문장용의 training-text를 잃으면 보존 실패",
+            "두 설치 상태가 맞아도 최종 선택이 문장용이면 명시된 활성 목표 실패"
+          ],
+          "equivalent_solutions": [
+            "분석용 설치를 먼저 하고 문장용 제거를 나중에 해도 최종 상태와 선택이 맞으면 허용",
+            "대상별 Python 전체 경로를 사용해 작업하고 마지막에 분석용만 활성화해도 허용"
+          ],
+          "reference_actions": [
+            {
+              "command": "python -m pip uninstall numpy",
+              "exit_codes": [
+                0
+              ],
+              "responses": [
+                {
+                  "prompt": "Proceed (Y/n)?",
+                  "reply": "y"
+                }
+              ]
+            },
+            {
+              "command": "python -c \"import training_text; print(training_text.normalize('  draft  '))\"",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "conda activate sg-pip-analysis",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -m pip install --no-index --find-links /opt/shellground/wheels numpy==2.3.5",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -m pip show numpy",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\"",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -c \"import training_math; print(training_math.total([2, 5]))\"",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            }
+          ],
+          "reference_confirmation": "uninstall의 실제 제거 대상·버전·경로를 읽고 맞으면 실제 Proceed (Y/n)? 질문에 y로 응답합니다. y는 다음 독립 명령이 아닙니다. 설치·읽기 명령에는 응답을 주입하지 않습니다.",
+          "representative_wrong_answers": [
+            "분석용에 설치했지만 문장용 NumPy를 남기면 복구 미완료",
+            "문장용에서만 제거하고 분석용은 빈 상태이면 미완료",
+            "분석용의 training-math나 문장용의 training-text를 잃으면 보존 실패",
+            "두 설치 상태가 맞아도 최종 선택이 문장용이면 명시된 활성 목표 실패"
+          ],
+          "grading_notes": "16단원 활용1은 잘못된 현재 선택만 고치는 문제였고, 이 문제는 이미 잘못된 환경에 생긴 실제 NumPy 설치를 제거해야 합니다. 이름만 바꾼 설치 반복이 아닙니다. 모든 grade_criteria와 준비/보존 게이트를 함께 적용합니다. reference_actions는 특정 참조 경로의 실행 검증용이며 학습자의 명령 이력·문자열·종료 코드 일치를 정답 조건으로 삼지 않습니다."
+        },
+        {
+          "id": "pip_repair_broken_installation",
+          "role": "application_2",
+          "goal": "sg-pip-repair의 NumPy를 제공된 공식 wheel로 정상적인 2.3.5 설치로 복구하세요. 실제 import·계산이 동작해야 하며 Python·pip·기존 training-math 1.1은 보존하세요.",
+          "fixture_summary": "sg-pip-repair가 선택되어 있습니다. Python 3.12, pip, Conda training-math 1.1은 정상입니다. NumPy 2.3.5 설치 기록은 남았지만 실제 NumPy 파일 일부에 의도된 결손이 있어 첫 import 진단은 실패합니다.",
+          "initial_fixture": {
+            "active_env": "sg-pip-repair",
+            "activation_stack": [
+              "sg-pip-repair"
+            ],
+            "environments": [
+              {
+                "name": "sg-pip-repair",
+                "pip_distributions": [
+                  {
+                    "name": "numpy",
+                    "version": "2.3.5",
+                    "source": "verified_official_wheel",
+                    "expected_integrity": "intentionally_broken_for_repair"
+                  }
+                ],
+                "requested_specs": [
+                  "python=3.12",
+                  "pip",
+                  "training-math==1.1"
+                ],
+                "real_creation_required": true
+              }
+            ],
+            "mutable_envs": [
+              "sg-pip-repair"
+            ],
+            "files": [],
+            "intentional_fault": {
+              "status": "DECLARED_INTENTIONAL_FAULT_REQUIRES_RUNTIME_PREPARATION",
+              "method": "먼저 실제 wheel 설치와 정상 import를 검증한 뒤, 해당 wheel RECORD가 소유한 NumPy 필수 확장 모듈 파일 하나를 이 문제의 disposable prefix 안에서만 제거합니다. 정확한 파일 경로는 실제 wheel manifest에서 선택하고 정규화·prefix 포함을 검증합니다. NumPy 소스·실행 출력을 모사하지 않습니다.",
+              "before_student": "pip metadata의 Name/Version과 pip show는 남아 있어야 하며 fresh NumPy import는 실제로 실패해야 합니다. Python/pip/training-math는 정상이어야 합니다. 실패 원인이 이 의도된 결손임을 확인한 fixture만 제공합니다."
+            },
+            "execution_surface": "persistent_guest_bash",
+            "workspace": "{{problem_workspace}}",
+            "absent_envs": [],
+            "created_envs": [],
+            "removed_envs": [],
+            "fixture_method": "requested_specs는 실제 Conda로 준비하고 pip_distributions는 검증된 공식 wheel을 실제 pip로 설치합니다. 의도된 결손은 검증된 별도 fixture에서만 적용하며 패키지 metadata나 명령 출력을 모사하지 않습니다.",
+            "setup_notice": "준비된 환경·현재 선택·패키지·파일을 fixture_summary와 함께 표시합니다. 자산이나 Python/pip 준비 실패는 과제 오답이 아니라 실행 준비 오류입니다."
+          },
+          "answer_fields": [],
+          "provided_diagnostics": [
+            "python -m pip show numpy",
+            "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\"",
+            "python -c \"import training_math; print(training_math.__version__); print(training_math.mean([2, 8]))\""
+          ],
+          "diagnostic_note": "첫 NumPy 진단 실패는 제공된 복구 과제의 출발 상태입니다. 오류의 전체 영어 문장을 외우거나 내부 확장 모듈 이름을 맞히는 시험이 아닙니다. 복구 후 같은 진단이 성공해야 합니다.",
+          "reference_commands": [
+            "python -m pip uninstall numpy",
+            "python -m pip install --no-index --find-links /opt/shellground/wheels numpy==2.3.5",
+            "python -m pip show numpy",
+            "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\"",
+            "python -c \"import training_math; print(training_math.__version__); print(training_math.mean([2, 8]))\""
+          ],
+          "grade_criteria": [
+            {
+              "operation": "numpy_present",
+              "arguments": [
+                "sg-pip-repair",
+                "2.3.5"
+              ]
+            },
+            {
+              "operation": "preserved_except_numpy",
+              "arguments": [
+                "sg-pip-repair"
+              ]
+            }
+          ],
+          "hint": "버전 기록이 있다는 사실과 실제 파일이 정상이라는 사실은 다릅니다. 17단원의 제거와 16단원의 설치를 연결하면 내부 파일을 직접 고치지 않고 다시 준비할 수 있습니다.",
+          "negative_tests": [
+            "초기 metadata의 2.3.5만 읽고 제출하면 실제 import·무결성 실패",
+            "같은 버전 install이 Already satisfied라고 끝났지만 결손 파일이 그대로면 실패",
+            "작업 폴더의 가짜 numpy.py나 출력 숫자로 정상 NumPy를 대신하면 실패",
+            "새 환경처럼 보이게 전체를 지우고 training-math를 잃으면 보존 실패"
+          ],
+          "equivalent_solutions": [
+            "이미 알고 있는 다른 pip 재설치 방법으로 같은 공식 NumPy 파일·실행·보존 상태를 만들면 허용하되 그 옵션을 문제의 필수 선수 지식으로 삼지 않음",
+            "정상 복구 후 같은 세션에서 재채점할 때 제거·설치를 반복하도록 강제하지 않음"
+          ],
+          "reference_actions": [
+            {
+              "command": "python -m pip uninstall numpy",
+              "exit_codes": [
+                0
+              ],
+              "responses": [
+                {
+                  "prompt": "Proceed (Y/n)?",
+                  "reply": "y"
+                }
+              ]
+            },
+            {
+              "command": "python -m pip install --no-index --find-links /opt/shellground/wheels numpy==2.3.5",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -m pip show numpy",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -c \"import numpy as np; print(np.__version__); print(np.__file__); print(np.array([2, 5]).sum())\"",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            },
+            {
+              "command": "python -c \"import training_math; print(training_math.__version__); print(training_math.mean([2, 8]))\"",
+              "exit_codes": [
+                0
+              ],
+              "responses": []
+            }
+          ],
+          "reference_confirmation": "uninstall의 실제 제거 대상·버전·경로를 읽고 맞으면 실제 Proceed (Y/n)? 질문에 y로 응답합니다. y는 다음 독립 명령이 아닙니다. 설치·읽기 명령에는 응답을 주입하지 않습니다.",
+          "representative_wrong_answers": [
+            "초기 metadata의 2.3.5만 읽고 제출하면 실제 import·무결성 실패",
+            "같은 버전 install이 Already satisfied라고 끝났지만 결손 파일이 그대로면 실패",
+            "작업 폴더의 가짜 numpy.py나 출력 숫자로 정상 NumPy를 대신하면 실패",
+            "새 환경처럼 보이게 전체를 지우고 training-math를 잃으면 보존 실패"
+          ],
+          "grading_notes": "동일 버전의 기록과 실제 설치 무결성을 구분하는 문제입니다. uninstall 실행 이력, 설치 횟수, 특정 오류 문구, 새 파일의 생성 시각은 채점 조건이 아닙니다. 모든 grade_criteria와 준비/보존 게이트를 함께 적용합니다. reference_actions는 특정 참조 경로의 실행 검증용이며 학습자의 명령 이력·문자열·종료 코드 일치를 정답 조건으로 삼지 않습니다."
+        }
+      ],
+      "concept": "패키지만 제거하고 환경을 보존하며 오설치·손상 복구",
+      "source_note": "강의의 패키지 설치·환경 준비 소개를 실제 pip 실습으로 확장한 보충입니다. 명령 전체가 PDF에 실렸다는 뜻은 아니며 Linux 전용 준비 게이트 이후 제공합니다.",
+      "references": [
+        "pip_running",
+        "pip_install",
+        "pip_show",
+        "pip_uninstall"
+      ],
+      "microsteps": [
+        "제거할 패키지와 남길 도구 구별하기 — pip와 NumPy Location이 sg-pip-clean에 속하는지 확인하고 제거할 이름 numpy를 구별합니다.",
+        "현재 Python의 NumPy만 제거하기 — 제거 작업이 완료될 때까지 기다립니다. 거절하거나 중단하면 상태를 다시 확인해야 하며 성공으로 가정하지 않습니다.",
+        "부재 확인과 예상된 오류 읽기 — 설치 기록의 부재와 실제 NumPy 부재를 함께 확인합니다. 실패한 import를 앱이 자동 수정하거나 가짜 성공 출력으로 바꾸지 않습니다.",
+        "환경이 살아 있고 남길 도구가 작동하는지 확인하기 — Python 3.12 계열과 pip가 실행되고 문장 도구가 DRAFT를 반환하는지 확인합니다. 여기에 새 패키지 설치나 환경 삭제는 필요하지 않습니다."
+      ]
+    }
+  ],
+  "integration_validation_plan": {
+    "status": "PENDING_ACTUAL_LINUX_GUEST_VALIDATION",
+    "required": [
+      "6개 실제 초기 fixture 및 빈 답칸 미완료",
+      "6개 reference_actions의 실제 PTY·종료 코드 처리 후 모든 목표 통과",
+      "8개 소단계를 각 example fixture의 같은 Bash에서 순차 실행하여 예시 목표 통과",
+      "23개 음성 메모와12개 동등풀이 메모를 위험에 맞춰 실제 사례로 구체화·검증",
+      "손상 설치에서 같은 버전 install만으로 미복구→실제 uninstall/install 복구",
+      "실제 자체 pip·기존 Conda 도구·다른 환경 보존 및 무해한 캐시 차이 허용",
+      "빈 디렉터리/캐시와 실제 잔존 NumPy 파일·고장난 import를 구별하는 부재 판정",
+      "제거 승인 거절/중단 후 같은 세션 재시도와 오답 후 수정 재채점",
+      "Linux 화면의 본문·진단식·소단계·답칸·목표 연결 및 기존 진도 무변경"
+    ],
+    "release_policy": "Linux 구현·검증 후 실행 가능한 검토판을 사용자에게 전달합니다. 다른 플랫폼 포팅은 사용자 명시 승인 이후의 별도 범위입니다."
+  }
+}

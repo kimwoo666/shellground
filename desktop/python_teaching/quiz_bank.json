@@ -1,0 +1,1892 @@
+{
+  "schema": 1,
+  "questions": [
+    {
+      "id": "notebook-execution-order",
+      "topic": "notebook.kernel",
+      "prerequisites": [],
+      "source": {
+        "document": "Week 1_1.pdf",
+        "pages": [
+          11
+        ]
+      },
+      "prompt": "노트북에서 A 셀 `price = 8`, B 셀 `total = price * 3`을 실행했다. A를 `price = 10`으로 수정하고 A만 다시 실행했다. 아직 다시 실행하지 않은 B의 total은? ",
+      "choices": [
+        "30으로 자동 갱신된다.",
+        "24이며, B를 다시 실행하면 30이 된다.",
+        "변수 이름이 달라져 오류가 난다.",
+        "화면의 셀 순서만으로 값을 알 수 있다."
+      ],
+      "answer": 1,
+      "explanation": "커널에는 마지막으로 실행한 결과가 남는다. 코드 편집이나 다른 변수의 재대입이 이미 계산한 total을 다시 계산하지 않는다.",
+      "misconception": "노트북 셀을 스프레드시트 수식처럼 자동 연동된다고 생각함.",
+      "practical_followup": {
+        "goal": "실행 순서에 따른 값의 변화를 기록하고 처음부터 재실행해 재현한다.",
+        "starter_code": "price = 8\ntotal = price * 3\nprice = 10\nprint(total)\n# TODO: total을 새 price로 다시 계산하고 출력",
+        "expected": "첫 출력 24, 재계산 후 30. 새 커널에서 위에서 아래로 실행해도 같은 결과.",
+        "grading_notes": "두 값과 이유가 모두 맞아야 통과. 화면에 30만 인쇄하거나 오래된 셀 출력만 제시하면 거부."
+      }
+    },
+    {
+      "id": "cloud-session-storage",
+      "topic": "notebook.persistence",
+      "prerequisites": [
+        "notebook.kernel"
+      ],
+      "source": {
+        "document": "Week 1_1.pdf",
+        "pages": [
+          12,
+          14
+        ]
+      },
+      "prompt": "Colab 런타임의 임시 작업 폴더에 CSV를 업로드했다. 다음 주에도 원본을 사용하려면 어떤 계획이 적절한가?",
+      "choices": [
+        "노트북 코드만 저장하면 업로드한 모든 파일도 영구 보존된다.",
+        "브라우저 북마크만 만들면 런타임이 유지된다.",
+        "임시 런타임을 영구 저장소로 간주하지 않고 원본을 별도 보관한다.",
+        "GPU로 전환하면 임시 파일이 영구 파일로 바뀐다."
+      ],
+      "answer": 2,
+      "explanation": "노트북 파일, 실행 커널, 런타임의 임시 파일은 서로 다르다. 다시 실행할 때 원본을 제공할 경로를 준비한다.",
+      "misconception": "노트북 저장과 런타임 파일 보존을 같은 동작으로 생각함.",
+      "practical_followup": {
+        "goal": "원본 위치, 세션 초기화 후 재입력 방법, 결과 보관 위치를 계획한다.",
+        "starter_code": "plan = {\n    'source_backup': '',\n    'restore_steps': '',\n    'result_destination': ''\n}\n# TODO: 실제 계정 연결 없이 계획 문자열만 작성",
+        "expected": "세 필드에 임시 런타임과 분리된 원본 보관, 재업로드 또는 허가된 저장소 연결, 결과 보관 설명.",
+        "grading_notes": "임시 파일이 반드시 남는다는 주장 거부. Google Drive 연결을 수행했거나 권한을 받았다고 가정하지 않는다."
+      }
+    },
+    {
+      "id": "install-versus-import",
+      "topic": "environment.packages",
+      "prerequisites": [
+        "notebook.kernel"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          29,
+          30,
+          34
+        ]
+      },
+      "prompt": "NumPy를 설치한 터미널에서는 import가 되지만 노트북에서는 ModuleNotFoundError가 난다. 먼저 확인할 것은?",
+      "choices": [
+        "노트북과 터미널이 같은 Python 환경을 사용하는지 확인한다.",
+        "import를 열 번 반복한다.",
+        "np라는 별칭을 다른 글자로 바꾸면 설치된다.",
+        "노트북 제목을 numpy로 바꾼다."
+      ],
+      "answer": 0,
+      "explanation": "설치는 특정 환경에 패키지를 준비하고 import는 현재 Python 프로세스에서 불러온다. 서로 다른 인터프리터라면 설치 상태도 다를 수 있다.",
+      "misconception": "패키지를 한 번 설치하면 모든 Python 커널에 자동으로 설치된다고 생각함.",
+      "practical_followup": {
+        "goal": "실행 중인 Python의 위치를 확인하고 설치와 import의 역할을 구분한다.",
+        "starter_code": "import sys\nprint(sys.executable)\n# TODO: 출력 경로가 가리키는 환경과 패키지 설치 환경을 비교하는 절차를 주석으로 작성",
+        "expected": "실제 인터프리터 경로와 동일 환경 여부 확인 계획. 설치가 이 실습에서 자동 수행되지는 않는다.",
+        "grading_notes": "실제 출력 근거 없이 '설치 완료'라고 쓰면 거부. import 문을 설치 명령으로 설명하면 거부."
+      }
+    },
+    {
+      "id": "conda-project-isolation",
+      "topic": "environment.conda",
+      "prerequisites": [
+        "environment.packages"
+      ],
+      "source": {
+        "document": "supplement",
+        "pages": []
+      },
+      "prompt": "두 과제가 서로 다른 pandas 버전을 요구한다. Conda를 사용하는 이유에 가장 가까운 설명은?",
+      "choices": [
+        "conda activate는 코드를 자동으로 고쳐 준다.",
+        "하나의 환경에서는 어떤 버전 충돌도 발생하지 않는다.",
+        "conda라는 이름을 파일에 붙이면 환경이 생성된다.",
+        "과제별 환경을 만들어 Python과 패키지 구성을 분리한다."
+      ],
+      "answer": 3,
+      "explanation": "환경은 프로젝트의 실행 도구와 의존성을 분리하는 단위다. 생성, 활성화, 패키지 확인은 각각 별도 단계다.",
+      "misconception": "환경 생성, 활성화, 패키지 설치를 하나의 동작으로 생각함.",
+      "practical_followup": {
+        "goal": "실행하지 않는 계획으로 환경 생성부터 확인까지 올바른 순서를 적는다.",
+        "starter_code": "steps = []\n# TODO: 예: conda create -n ml-practice python=3.12\n# 명령을 실행하지 말고 생성, 활성화, 설치, 확인 순서의 문자열을 넣기",
+        "expected": "create → activate → 필요한 패키지 설치 → 현재 Python 경로와 import 확인 순서.",
+        "grading_notes": "명령 문자열 계획만 채점. 실제 Conda 설치 또는 환경 생성 성공으로 표시하지 않는다. create만으로 모든 패키지가 설치된다는 답 거부."
+      }
+    },
+    {
+      "id": "conda-android-platform",
+      "topic": "environment.platform",
+      "prerequisites": [
+        "environment.conda"
+      ],
+      "source": {
+        "document": "supplement",
+        "pages": []
+      },
+      "prompt": "Android 휴대전화에서 Conda 학습을 시작한다. 공식 설치 지원 범위를 고려한 안내로 적절한 것은?",
+      "choices": [
+        "Linux라는 글자가 있으므로 Android의 모든 셸에서 공식 설치가 보장된다.",
+        "공식 Conda 설치 대상은 Windows, macOS, Linux이며 Android 네이티브 설치 성공을 보장하면 안 된다. 브라우저 노트북이나 별도 지원 PC를 선택할 수 있다.",
+        "휴대전화 모델명만 입력하면 Conda가 이미 설치된 것으로 처리한다.",
+        "브라우저에서 Python을 실행하면 Android에 Conda가 설치되었다는 뜻이다."
+      ],
+      "answer": 1,
+      "explanation": "Android의 Linux 커널 사용 여부와 데스크톱 Linux용 Conda 설치 지원은 같은 조건이 아니다. 원격 또는 브라우저 실행과 기기 자체 설치를 구분한다.",
+      "misconception": "브라우저 실행, 에뮬레이션, 네이티브 설치를 동일시함.",
+      "practical_followup": {
+        "goal": "자신의 실행 위치를 Android 기기, 브라우저 런타임, 지원 PC 중 하나로 명확히 기록한다.",
+        "starter_code": "environment_plan = {'device': 'Android', 'execution_location': '', 'conda_status': ''}\n# TODO: 실제 상태에 맞게 문자열 작성",
+        "expected": "지원하지 않는 Android 네이티브 설치 성공을 꾸며내지 않고 대안의 실행 위치를 정확히 설명.",
+        "grading_notes": "OS별 명령 분기 누락, Linux 설치 파일의 무조건 성공 주장, 모의 성공 메시지는 거부."
+      }
+    },
+    {
+      "id": "python-assignment-rebind",
+      "topic": "python.assignment",
+      "prerequisites": [],
+      "source": {
+        "document": "supplement",
+        "pages": []
+      },
+      "prompt": "`count = 4; doubled = count * 2; count = 7` 실행 후 `(count, doubled)`는?",
+      "choices": [
+        "(7, 14)",
+        "(4, 8)",
+        "(7, 8)",
+        "(4, 14)"
+      ],
+      "answer": 2,
+      "explanation": "대입의 오른쪽을 그 시점에 계산한 뒤 왼쪽 이름에 연결한다. doubled는 count를 계속 추적하는 수식이 아니다.",
+      "misconception": "변수에 식을 대입하면 다른 변수의 변화가 자동 전파된다고 생각함.",
+      "practical_followup": {
+        "goal": "단가와 수량을 바꾼 뒤 총액을 명시적으로 다시 계산한다.",
+        "starter_code": "unit_price = 1200\nquantity = 2\namount = unit_price * quantity\nquantity = 3\n# TODO: amount를 다시 계산하고 출력",
+        "expected": "amount가 3600. 재계산 전 값은 2400이라는 설명.",
+        "grading_notes": "3600이라는 상수 출력만으로 통과시키지 않고 변수 연산을 확인."
+      }
+    },
+    {
+      "id": "python-slice-exclusive-stop",
+      "topic": "python.sequences",
+      "prerequisites": [
+        "python.assignment"
+      ],
+      "source": {
+        "document": "supplement",
+        "pages": []
+      },
+      "prompt": "`names = ['봄', '여름', '가을', '겨울']`에서 `names[1:3]`은?",
+      "choices": [
+        "['여름', '가을']",
+        "['봄', '여름', '가을']",
+        "['여름', '가을', '겨울']",
+        "['가을', '겨울']"
+      ],
+      "answer": 0,
+      "explanation": "위치는 0부터 센다. 슬라이스의 시작은 포함하고 끝 위치는 포함하지 않는다.",
+      "misconception": "사람의 순번과 0 기반 위치를 혼동하거나 stop을 포함함.",
+      "practical_followup": {
+        "goal": "앞뒤 원소를 제외한 가운데 두 원소를 슬라이스로 고른다.",
+        "starter_code": "names = ['봄', '여름', '가을', '겨울']\n# TODO: middle에 슬라이스 결과 저장",
+        "expected": "middle == ['여름', '가을']; 원본 names 길이는 4 유지.",
+        "grading_notes": "정답 문자열을 새 리스트로 작성하면 슬라이스 학습 목표 미달. [1:2]와 [1:4]는 거부."
+      }
+    },
+    {
+      "id": "python-function-loop",
+      "topic": "python.control",
+      "prerequisites": [
+        "python.assignment",
+        "python.sequences"
+      ],
+      "source": {
+        "document": "supplement",
+        "pages": []
+      },
+      "prompt": "함수 `def total(values):`에서 각 숫자를 합해 호출한 곳으로 돌려주려 한다. 올바른 구조는?",
+      "choices": [
+        "반복문 안에서 누적 변수를 매번 0으로 바꾼다.",
+        "합을 print하면 호출한 곳에 반드시 숫자가 반환된다.",
+        "첫 번째 원소를 더한 직후 반복문 안에서 return한다.",
+        "반복문 전에 합을 0으로 두고, 반복이 끝난 뒤 return한다."
+      ],
+      "answer": 3,
+      "explanation": "초기화는 한 번, 누적은 각 원소마다, 반환은 모든 누적 후에 한다. print와 return의 역할은 다르다.",
+      "misconception": "누적 초기화 위치나 return 들여쓰기가 결과에 영향이 없다고 생각함.",
+      "practical_followup": {
+        "goal": "빈 목록도 처리하는 합계 함수를 완성한다.",
+        "starter_code": "def total(values):\n    result = 0\n    # TODO: for 반복으로 누적한 뒤 반환\n\n# 확인 입력: [3, 8, -2], []",
+        "expected": "total([3, 8, -2]) == 9; total([]) == 0.",
+        "grading_notes": "여러 입력에서 확인. 첫 원소 반환, 마지막 원소만 반환, print만 하는 함수 거부."
+      }
+    },
+    {
+      "id": "python-method-sort",
+      "topic": "python.objects",
+      "prerequisites": [
+        "python.sequences"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          24,
+          25
+        ]
+      },
+      "prompt": "`scores = [7, 2, 5]; result = scores.sort()` 후 상태는?",
+      "choices": [
+        "scores는 그대로이고 result가 [2, 5, 7]이다.",
+        "scores는 [2, 5, 7]이고 result는 None이다.",
+        "scores와 result가 모두 [7, 2, 5]이다.",
+        "sort는 문자열에만 사용할 수 있다."
+      ],
+      "answer": 1,
+      "explanation": "리스트의 sort 메서드는 해당 리스트를 바꾸며 반환값은 None이다. 반환값과 객체의 변경을 따로 확인한다.",
+      "misconception": "모든 메서드는 새 객체를 반환한다고 생각함.",
+      "practical_followup": {
+        "goal": "리스트를 정렬한 뒤 원본과 메서드 반환값을 각각 관찰한다.",
+        "starter_code": "scores = [7, 2, 5]\nresult = scores.sort()\nprint(scores)\nprint(result)",
+        "expected": "[2, 5, 7]과 None. scores.sort()를 다시 scores에 대입하지 않음.",
+        "grading_notes": "반환값이 정렬된 리스트라는 설명 거부. None을 오류로 분류하지 않음."
+      }
+    },
+    {
+      "id": "python-import-namespace",
+      "topic": "python.imports",
+      "prerequisites": [
+        "python.assignment"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          26,
+          27,
+          28,
+          29,
+          30
+        ]
+      },
+      "prompt": "`import math as m`만 실행했다. π/2의 사인 값을 구하는 올바른 표현은?",
+      "choices": [
+        "math.sin(math.pi / 2)",
+        "sin(pi / 2)",
+        "m.sin(m.pi / 2)",
+        "m[sin](pi / 2)"
+      ],
+      "answer": 2,
+      "explanation": "as는 현재 코드에서 사용할 이름을 지정한다. 이 import 뒤에는 m을 통해 모듈의 sin과 pi에 접근한다.",
+      "misconception": "별칭을 만들면 원래 이름과 모든 함수 이름도 자동으로 생긴다고 생각함.",
+      "practical_followup": {
+        "goal": "별칭 import와 선택 import를 각각 사용해 같은 값을 계산한다.",
+        "starter_code": "import math as m\n# TODO: first에 π/2의 사인 값 저장\nfrom math import fabs\n# TODO: second에 -6의 절댓값 저장",
+        "expected": "first는 1.0에 가까움, second는 6.0.",
+        "grading_notes": "별칭과 선택 import의 이름 사용을 확인. fabs를 math.fabs로 바꾸려면 math import가 별도 필요함."
+      }
+    },
+    {
+      "id": "data-science-small-sample",
+      "topic": "data.science",
+      "prerequisites": [],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          2,
+          3,
+          7,
+          8,
+          10
+        ]
+      },
+      "prompt": "동아리의 20건 대여 기록으로 반납 지연 원인을 탐색한다. 가장 적절한 설명은?",
+      "choices": [
+        "작은 자료도 질문을 세우고 분석해 지식을 얻으면 데이터 과학 활동이 될 수 있다.",
+        "수익이 나지 않으므로 데이터 분석이 아니다.",
+        "페타바이트 규모가 되어야 분석을 시작할 수 있다.",
+        "코드를 쓰기만 하면 질문과 근거 없이 결론이 확정된다."
+      ],
+      "answer": 0,
+      "explanation": "데이터 과학, 데이터 사업, 빅데이터는 목적과 조건이 다르다. 자료의 크기만으로 분석의 가치를 결정하지 않는다.",
+      "misconception": "데이터 과학은 반드시 빅데이터나 상업 활동이어야 한다고 생각함.",
+      "practical_followup": {
+        "goal": "대여 기록에서 확인할 질문, 필요한 변수, 가능한 교란 요인을 한 가지씩 적는다.",
+        "starter_code": "analysis_plan = {'question': '', 'variables': [], 'alternative_explanation': ''}",
+        "expected": "질문과 변수 연결이 타당하고 대체 설명을 하나 이상 제시.",
+        "grading_notes": "근거 없는 인과 결론, 존재하지 않는 관측 결과 생성은 거부. 의료 사례의 역사적 세부사항 암기는 요구하지 않음."
+      }
+    },
+    {
+      "id": "bigdata-three-vs",
+      "topic": "data.three_vs",
+      "prerequisites": [
+        "data.science"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          4
+        ]
+      },
+      "prompt": "센서가 초당 수천 건의 새 측정값을 보낸다. 저장된 총량보다 유입 속도 때문에 즉시 처리하기 어렵다. 주로 어떤 V인가?",
+      "choices": [
+        "Variety",
+        "Volume",
+        "Visualization",
+        "Velocity"
+      ],
+      "answer": 3,
+      "explanation": "Velocity는 데이터 생성과 유입, 처리에 요구되는 속도다. Volume은 양, Variety는 자료 형태의 다양성이다.",
+      "misconception": "센서 자료라는 이유만으로 모든 사례를 Volume으로 분류함.",
+      "practical_followup": {
+        "goal": "양, 속도, 형태의 다양성에 각각 다른 사례를 대응한다.",
+        "starter_code": "examples = {'Volume': '', 'Velocity': '', 'Variety': ''}",
+        "expected": "각 항목에 서로 구별되는 사례 하나와 이유.",
+        "grading_notes": "동일 사례를 이유 없이 세 칸에 복사하면 거부. 문제에 없는 fourth V를 암기할 필요 없음."
+      }
+    },
+    {
+      "id": "data-versus-information",
+      "topic": "data.information",
+      "prerequisites": [
+        "data.science"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          11
+        ]
+      },
+      "prompt": "식당의 주문 시각과 메뉴 기록에서 '점심 한 시간의 메뉴별 판매 비중'을 계산했다. 이 과정의 설명은?",
+      "choices": [
+        "기록을 종이에서 파일로 옮기기만 한 것이다.",
+        "목적에 맞게 원자료를 처리해 의사결정에 쓸 정보를 만들었다.",
+        "정보를 만들면 원자료의 단위는 확인할 필요가 없다.",
+        "자료를 숫자로 표시했으므로 누락은 있을 수 없다."
+      ],
+      "answer": 1,
+      "explanation": "같은 원자료에서도 목적에 따라 다른 집계와 정보가 나온다. 디지털 형식 자체가 해석이나 품질을 보장하지 않는다.",
+      "misconception": "디지털 파일이 되면 자동으로 유용한 정보가 된다고 생각함.",
+      "practical_followup": {
+        "goal": "정해진 네 주문에서 메뉴 비중을 계산하고 분석 목적을 한 문장으로 쓴다.",
+        "starter_code": "orders = ['밥', '면', '밥', '밥']\n# TODO: 밥 주문 수 / 전체 주문 수 계산",
+        "expected": "밥 비중 0.75 또는 75%, 분모가 전체 4건이라는 설명.",
+        "grading_notes": "3을 비중으로 보고하거나 주문 수와 사람 수를 동일시하면 거부."
+      }
+    },
+    {
+      "id": "digital-sample-quantize-encode",
+      "topic": "data.digitization",
+      "prerequisites": [
+        "data.information"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          12,
+          13
+        ]
+      },
+      "prompt": "온도를 1초마다 읽고, 읽은 값을 정수 단계로 반올림한 다음 이진수로 저장했다. 단계의 순서는?",
+      "choices": [
+        "양자화 → 표본화 → 부호화",
+        "부호화 → 양자화 → 표본화",
+        "표본화 → 양자화 → 부호화",
+        "표본화 → 부호화 → 양자화"
+      ],
+      "answer": 2,
+      "explanation": "표본화는 언제 읽는지, 양자화는 어떤 값 단계로 표현하는지, 부호화는 그 값을 어떤 기호로 기록하는지 정한다.",
+      "misconception": "시간 간격 선택과 값의 반올림을 같은 단계로 생각함.",
+      "practical_followup": {
+        "goal": "관측 시각과 값의 단계를 따로 설명하고 6을 3자리 이진수로 나타낸다.",
+        "starter_code": "times = [0, 1, 2]\nreadings = [2.2, 5.8, 6.1]\n# TODO: nearest integer 단계 값과 6의 3비트 표현 기록",
+        "expected": "단계 값 [2, 6, 6], 6의 이진 표현 '110'.",
+        "grading_notes": "시각을 양자화 값으로 답하거나 이진 문자열을 십진수 백십으로 해석하면 거부."
+      }
+    },
+    {
+      "id": "image-representation-storage",
+      "topic": "data.images",
+      "prerequisites": [
+        "data.digitization"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          14,
+          15,
+          16,
+          17,
+          18
+        ]
+      },
+      "prompt": "압축과 파일 헤더를 제외한 4×6 픽셀의 8비트 회색조 영상은 픽셀 값 저장에 몇 바이트가 필요한가?",
+      "choices": [
+        "24바이트",
+        "192바이트",
+        "6바이트",
+        "256바이트"
+      ],
+      "answer": 0,
+      "explanation": "픽셀 수는 24개이고 각 픽셀이 8비트=1바이트이므로 24바이트다. 256은 밝기 값의 종류 수다.",
+      "misconception": "비트와 바이트, 픽셀 수와 표현 가능한 값의 수를 혼동함.",
+      "practical_followup": {
+        "goal": "비트맵과 벡터 표현을 구분하고 12×10 회색조의 원시 크기를 계산한다.",
+        "starter_code": "width, height, bits_per_pixel = 12, 10, 8\n# TODO: payload_bytes 계산\n# TODO: 벡터 그림이 좌표·곡선으로 표현된다는 설명 한 줄",
+        "expected": "payload_bytes == 120; 단위는 byte. 실제 압축 파일 용량과 같다고 단정하지 않음.",
+        "grading_notes": "비트 수 960을 바이트로 보고하거나 RGB 3채널을 임의로 가정하면 거부. KB 단위는 강의 관례와 KiB를 구분."
+      }
+    },
+    {
+      "id": "science-four-paradigms",
+      "topic": "data.paradigms",
+      "prerequisites": [
+        "data.science"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          21,
+          22,
+          23
+        ]
+      },
+      "prompt": "기상 방정식을 컴퓨터로 반복 계산해 폭풍 경로를 예측하는 활동은 네 과학 패러다임 중 어디에 가장 직접적으로 대응하는가?",
+      "choices": [
+        "관찰 자료를 손으로 기록하는 경험 과학",
+        "방정식 자체만 유도하는 이론 과학",
+        "자료 규모만 보고 결론 내리는 활동",
+        "모델의 동작을 시뮬레이션하는 계산 과학"
+      ],
+      "answer": 3,
+      "explanation": "계산 과학은 모델을 컴퓨터로 시뮬레이션한다. 자료에서 패턴을 찾는 데이터 중심 접근과 구분하면서 함께 사용할 수 있다.",
+      "misconception": "새 패러다임이 나오면 이전 방법은 쓸모없어진다고 생각함.",
+      "practical_followup": {
+        "goal": "관찰, 법칙 유도, 시뮬레이션, 자료 패턴 탐색에 각각 활동을 분류한다.",
+        "starter_code": "activities = {'관찰': '', '이론': '', '계산': '', '데이터 중심': ''}",
+        "expected": "네 가지를 구별하고 둘 이상을 함께 사용하는 연구 예를 한 문장으로 설명.",
+        "grading_notes": "컴퓨터를 사용한 모든 활동을 계산 과학으로 단정하면 거부."
+      }
+    },
+    {
+      "id": "package-roles",
+      "topic": "environment.library_roles",
+      "prerequisites": [
+        "python.imports",
+        "data.science"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          30,
+          31,
+          32,
+          33
+        ]
+      },
+      "prompt": "이름 붙은 표를 정리하고 수치 배열을 계산한 뒤 그래프를 그리려 한다. 역할 연결이 올바른 것은?",
+      "choices": [
+        "pandas는 웹 브라우저, NumPy는 패키지 설치기, Matplotlib은 표 데이터베이스다.",
+        "pandas는 표 데이터, NumPy는 수치 배열, Matplotlib은 시각화를 주로 담당한다.",
+        "세 패키지는 Python 표준 라이브러리여서 별도 환경 차이가 없다.",
+        "패키지는 항상 .py 파일 하나이고 모듈은 항상 패키지 묶음이다."
+      ],
+      "answer": 1,
+      "explanation": "각 패키지의 주된 역할을 구별하면 자료 구조와 도구를 고르기 쉽다. pyplot은 matplotlib 안의 모듈이며 별칭 plt는 관례다. Seaborn은 통계 시각화를 돕고 scikit-learn은 여러 머신러닝 모델·평가 도구, TensorFlow는 딥러닝 모델과 수치 계산을 위한 도구를 제공한다. 앞으로 다룰 모델 전체의 원리 암기는 이 단원의 범위가 아니다.",
+      "misconception": "라이브러리, 모듈, 패키지, 패키지 관리자를 같은 말로 취급함.",
+      "practical_followup": {
+        "goal": "학습 환경에서 NumPy·pandas·Matplotlib의 import와 실제 버전 정보를 확인할 코드를 작성한다. 이어 NumPy, pandas, Matplotlib, Seaborn, scikit-learn, TensorFlow의 주된 역할을 각각 한 줄로 설명한다. TensorFlow 설치는 필요하지 않다.",
+        "starter_code": "import numpy as np\nimport pandas as pd\nimport matplotlib\n# TODO: 각 패키지 __version__을 출력",
+        "expected": "설치된 환경에서는 각 패키지 버전 3개가 실제로 출력됨. 없으면 설치 환경 확인 과제로 돌아감. NumPy, pandas, Matplotlib, Seaborn, scikit-learn, TensorFlow의 주된 역할을 여섯 줄로 설명한다. TensorFlow 설치는 이 역할 확인 실습의 조건이 아니다.",
+        "grading_notes": "가짜 버전 문자열과 import 실패를 성공 처리하는 코드는 거부. 설치 명령은 이 실습의 실행 대상 아님."
+      }
+    },
+    {
+      "id": "numpy-list-array-add",
+      "topic": "numpy.elementwise",
+      "prerequisites": [
+        "python.sequences",
+        "python.imports"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          2,
+          3,
+          4,
+          6
+        ]
+      },
+      "prompt": "`a = [2, 5]; b = [4, 1]`이다. `a + b`와 `np.array(a) + np.array(b)`의 차이는?",
+      "choices": [
+        "둘 다 [6, 6]이다.",
+        "둘 다 [2, 5, 4, 1]이다.",
+        "리스트는 [2, 5, 4, 1], 배열은 [6, 6]이다.",
+        "리스트만 더할 수 있고 배열은 더할 수 없다."
+      ],
+      "answer": 2,
+      "explanation": "리스트의 +는 연결, 수치 배열의 +는 대응 원소 연산이다. 같은 기호라도 객체 종류에 따라 의미가 다르다.",
+      "misconception": "파이썬의 +는 모든 자료 구조에서 숫자 덧셈이라고 생각함.",
+      "practical_followup": {
+        "goal": "두 센서의 읽음값을 원소별로 합하고 평균을 구한다.",
+        "starter_code": "import numpy as np\nleft = np.array([2, 5])\nright = np.array([4, 1])\n# TODO: combined와 pair_mean 계산",
+        "expected": "combined == [6, 6]; pair_mean == [3, 3], 둘 다 shape (2,).",
+        "grading_notes": "리스트 연결 결과 길이 4 또는 전체 평균 한 숫자만 내면 거부."
+      }
+    },
+    {
+      "id": "numpy-dtype-memory",
+      "topic": "numpy.metadata",
+      "prerequisites": [
+        "numpy.elementwise"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          5,
+          7
+        ]
+      },
+      "prompt": "`a = np.array([3, 6, 9], dtype=np.int32)`의 원소 데이터 크기는? 객체 관리 비용은 제외한다.",
+      "choices": [
+        "3바이트",
+        "32바이트",
+        "96바이트",
+        "12바이트"
+      ],
+      "answer": 3,
+      "explanation": "int32는 원소당 32비트=4바이트다. 3원소의 데이터는 12바이트이며 dtype과 itemsize로 확인한다.",
+      "misconception": "dtype의 32를 바이트 수 또는 배열 전체 크기로 읽음.",
+      "practical_followup": {
+        "goal": "명시적 dtype으로 배열의 dtype, itemsize, size를 확인한다.",
+        "starter_code": "import numpy as np\na = np.array([3, 6, 9], dtype=np.int32)\n# TODO: dtype, itemsize, size, size * itemsize 출력",
+        "expected": "int32, 4, 3, 12. int 기본값의 크기를 운영체제와 무관하게 단정하지 않음.",
+        "grading_notes": "문자열 출력만 맞추지 말고 속성값을 사용. ndarray는 모든 경우 연속 메모리라는 일반화는 요구하지 않음."
+      }
+    },
+    {
+      "id": "numpy-shape-dimensions",
+      "topic": "numpy.shape",
+      "prerequisites": [
+        "numpy.metadata"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          7,
+          8,
+          9
+        ]
+      },
+      "prompt": "`a=np.array([8, 9, 10])`, `b=np.array([[8, 9, 10]])`이다. 올바른 설명은?",
+      "choices": [
+        "a는 shape (3,), ndim 1이고 b는 shape (1, 3), ndim 2이다.",
+        "두 배열은 숫자가 같으므로 shape도 같다.",
+        "a는 행 3개, 열 1개인 2차원 배열이다.",
+        "b의 size는 1이다."
+      ],
+      "answer": 0,
+      "explanation": "shape는 축별 길이, ndim은 축 개수, size는 전체 원소 수다. 같은 세 숫자라도 축 구조가 다를 수 있다.",
+      "misconception": "한 줄로 출력되면 모두 같은 차원이라고 생각함.",
+      "practical_followup": {
+        "goal": "같은 3개 값을 1차원, 한 행, 한 열로 표현한다.",
+        "starter_code": "import numpy as np\nvalues = [8, 9, 10]\n# TODO: shapes (3,), (1, 3), (3, 1)의 배열 세 개 만들기",
+        "expected": "세 shape와 ndim 1, 2, 2; size는 모두 3.",
+        "grading_notes": "(3,)와 (3,1)를 동일한 것으로 취급하면 거부."
+      }
+    },
+    {
+      "id": "numpy-broadcast-column-offsets",
+      "topic": "numpy.broadcast",
+      "prerequisites": [
+        "numpy.shape",
+        "numpy.elementwise"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          10,
+          11,
+          13
+        ]
+      },
+      "prompt": "두 날짜의 세 센서값 `a=[[1,4,7],[2,5,8]]`에 각 센서 보정값 `[10,20,30]`을 더한다. NumPy 결과는?",
+      "choices": [
+        "[[11,14,17],[22,25,28]]",
+        "[[11,24,37],[12,25,38]]",
+        "[11,24,37,12,25,38]",
+        "shape가 달라 항상 오류다."
+      ],
+      "answer": 1,
+      "explanation": "(2,3)과 (3,)를 오른쪽 축부터 비교한다. 길이 3이 맞아 보정값 한 행이 각 날짜에 적용된다.",
+      "misconception": "브로드캐스팅이 첫 축부터 맞추거나 결과를 자동 평탄화한다고 생각함.",
+      "practical_followup": {
+        "goal": "열별 보정 후 값과 shape를 확인한다.",
+        "starter_code": "import numpy as np\na = np.array([[1, 4, 7], [2, 5, 8]])\noffset = np.array([10, 20, 30])\n# TODO: corrected 계산",
+        "expected": "corrected.tolist() == [[11,24,37],[12,25,38]]; shape (2,3).",
+        "grading_notes": "각 행에 10,20을 더하는 계산이나 임의 reshape로 뜻을 바꾼 결과 거부."
+      }
+    },
+    {
+      "id": "numpy-broadcast-outer-grid",
+      "topic": "numpy.broadcast",
+      "prerequisites": [
+        "numpy.broadcast",
+        "numpy.shape"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          12,
+          13
+        ]
+      },
+      "prompt": "`np.array([[100],[200]]) + np.array([1,3,5,7])`의 결과 shape는?",
+      "choices": [
+        "(2,)",
+        "(4,)",
+        "(2, 4)",
+        "(4, 2)"
+      ],
+      "answer": 2,
+      "explanation": "(2,1)과 (4,)는 (2,1), (1,4)처럼 정렬되어 양쪽의 길이 1인 축을 확장한다. 결과는 어느 입력보다 클 수 있다.",
+      "misconception": "브로드캐스팅은 항상 큰 입력의 기존 shape만 유지한다고 생각함.",
+      "practical_followup": {
+        "goal": "두 기본요금과 네 추가요금의 모든 조합을 만든다.",
+        "starter_code": "import numpy as np\nbase = np.array([[100], [200]])\nextra = np.array([1, 3, 5, 7])\n# TODO: price_grid 계산",
+        "expected": "[[101,103,105,107],[201,203,205,207]], shape (2,4).",
+        "grading_notes": "행·열을 바꾼 shape나 대응하는 두 쌍만 계산하면 거부."
+      }
+    },
+    {
+      "id": "numpy-broadcast-incompatible",
+      "topic": "numpy.broadcast",
+      "prerequisites": [
+        "numpy.broadcast",
+        "numpy.shape"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          13,
+          14,
+          15
+        ]
+      },
+      "prompt": "`a`의 shape가 (2,3)이고 날짜별 보정값 `delta`의 shape가 (2,)이다. 각 행에 보정값 하나를 더하려면?",
+      "choices": [
+        "delta.reshape(2,1)로 열 모양을 만든 뒤 더한다.",
+        "delta를 그대로 더하면 NumPy가 날짜 의미를 알아낸다.",
+        "a를 문자열로 바꾸고 더한다.",
+        "a를 평탄화하면 길이 2와 길이 6이 자동으로 맞는다."
+      ],
+      "answer": 0,
+      "explanation": "(2,3)+(2,)는 마지막 축 3과 2가 맞지 않는다. (2,1)은 각 행 안에서 같은 보정값을 세 열에 적용한다.",
+      "misconception": "데이터의 의미를 라이브러리가 알아서 해석한다고 생각함.",
+      "practical_followup": {
+        "goal": "오류를 예측한 뒤 의미를 보존하는 reshape로 고친다.",
+        "starter_code": "import numpy as np\na = np.array([[2, 4, 6], [1, 3, 5]])\ndelta = np.array([10, 20])\n# TODO: 날짜별 corrected 계산",
+        "expected": "[[12,14,16],[21,23,25]]. 원래 a + delta는 ValueError.",
+        "grading_notes": "원소를 삭제하거나 a를 전치해서 문제의 날짜·센서 뜻을 바꾸면 거부."
+      }
+    },
+    {
+      "id": "numpy-array-constructors",
+      "topic": "numpy.creation",
+      "prerequisites": [
+        "numpy.shape"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          16
+        ]
+      },
+      "prompt": "세 좌석의 서로 같은 좌석 연결만 1이고 나머지는 0인 3×3 표를 만들려 한다. 적절한 함수는?",
+      "choices": [
+        "np.ones((3,3))",
+        "np.full((3,3), 1)",
+        "np.zeros((3,3))",
+        "np.eye(3)"
+      ],
+      "answer": 3,
+      "explanation": "eye는 주대각선이 1인 배열을 만든다. zeros, ones, full은 모든 원소를 같은 값으로 채우는 용도다.",
+      "misconception": "shape가 같으면 배열 내용도 같다고 생각함.",
+      "practical_followup": {
+        "goal": "영 배열, 상수 배열, 단위행렬의 쓰임을 구별해 생성한다.",
+        "starter_code": "import numpy as np\n# TODO: zeros (2,3), 값 -1의 full (2,3), eye (3,3) 만들기",
+        "expected": "각 shape가 맞고 각각 전부 0, 전부 -1, 주대각선 1/나머지 0.",
+        "grading_notes": "배열 전체 합만 비교하지 말고 원소 패턴도 확인."
+      }
+    },
+    {
+      "id": "numpy-range-spacing",
+      "topic": "numpy.creation",
+      "prerequisites": [
+        "numpy.shape"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          17,
+          18
+        ]
+      },
+      "prompt": "0부터 1까지 양 끝을 포함해 정확히 5개 점이 필요하다. 가장 직접적인 표현은?",
+      "choices": [
+        "np.arange(0, 1, 5)",
+        "np.linspace(0, 1, 5)",
+        "np.arange(0, 1, 0.2)",
+        "np.linspace(0, 1, 0.2)"
+      ],
+      "answer": 1,
+      "explanation": "linspace의 세 번째 인수는 점 개수이고 기본적으로 끝점을 포함한다. arange의 세 번째 인수는 간격이다.",
+      "misconception": "점의 개수와 간격을 혼동하고 소수 arange의 끝점이 항상 기대대로라고 가정함.",
+      "practical_followup": {
+        "goal": "서로 다른 요구에 맞게 arange와 linspace를 각각 사용한다.",
+        "starter_code": "import numpy as np\n# TODO: 0 이상 10 미만 짝수 배열\n# TODO: 0~1의 끝점 포함 5개 점 배열",
+        "expected": "[0,2,4,6,8]과 [0,0.25,0.5,0.75,1].",
+        "grading_notes": "출력 길이와 끝점 모두 검사. 소수점 문자 형태의 차이는 허용."
+      }
+    },
+    {
+      "id": "numpy-logarithmic-spacing",
+      "topic": "numpy.creation",
+      "prerequisites": [
+        "numpy.creation"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          18
+        ]
+      },
+      "prompt": "`np.logspace(0, 3, 4)`의 값은? 기본 밑은 10이다.",
+      "choices": [
+        "[0,1,2,3]",
+        "[0,10,20,30]",
+        "[1,10,100,1000]",
+        "[1,250,500,1000]"
+      ],
+      "answer": 2,
+      "explanation": "균등하게 나누는 것은 0,1,2,3이라는 지수다. 실제 값은 10의 거듭제곱으로 증가한다.",
+      "misconception": "logspace가 실제 값 사이의 차이를 일정하게 만든다고 생각함.",
+      "practical_followup": {
+        "goal": "차이가 일정한 표본과 비율이 일정한 표본을 비교한다.",
+        "starter_code": "import numpy as np\nlinear = np.linspace(1, 1000, 4)\nlogarithmic = np.logspace(0, 3, 4)\n# TODO: 이웃 값의 차이/비율 중 무엇이 일정한지 설명",
+        "expected": "linear 차이 333 일정; logarithmic 비율 10 일정.",
+        "grading_notes": "두 결과가 같은 간격이라는 답 거부. 로그 이론을 선행 설명 없이 추가 시험하지 않음."
+      }
+    },
+    {
+      "id": "numpy-axis-insert-flip",
+      "topic": "numpy.axes",
+      "prerequisites": [
+        "numpy.shape"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          19,
+          20
+        ]
+      },
+      "prompt": "`a=np.array([[1,2,3],[4,5,6]])`에 `np.flip(a, axis=0)`을 적용하면?",
+      "choices": [
+        "[[4,5,6],[1,2,3]]",
+        "[[3,2,1],[6,5,4]]",
+        "[[6,5,4],[3,2,1]]",
+        "[[1,4],[2,5],[3,6]]"
+      ],
+      "answer": 0,
+      "explanation": "axis=0의 순서를 뒤집으면 행 순서가 바뀐다. axis=1은 각 행 안에서 열 순서를 바꾼다.",
+      "misconception": "axis가 바뀌는 방향이 아니라 유지할 방향이라고 생각함.",
+      "practical_followup": {
+        "goal": "행 뒤집기와 열 삽입을 각각 실행하고 shape를 비교한다.",
+        "starter_code": "import numpy as np\na = np.array([[1,2,3],[4,5,6]])\n# TODO: reversed_rows = ...\n# TODO: inserted_column = np.insert로 위치 1에 값 0인 열 삽입",
+        "expected": "reversed_rows [[4,5,6],[1,2,3]]; inserted_column [[1,0,2,3],[4,0,5,6]], shape (2,4).",
+        "grading_notes": "전치와 뒤집기 혼동, 원래 a 자체가 자동으로 커졌다는 설명 거부."
+      }
+    },
+    {
+      "id": "numpy-chained-slice",
+      "topic": "numpy.indexing",
+      "prerequisites": [
+        "python.sequences",
+        "numpy.shape"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          21,
+          22,
+          23
+        ]
+      },
+      "prompt": "`a=np.arange(12).reshape(4,3)`일 때 `a[1:][0:2]`가 고르는 영역은?",
+      "choices": [
+        "원본의 1행 이후에서 앞 두 열",
+        "원본의 0행과 2행",
+        "원본의 첫 두 행과 마지막 열",
+        "원본의 1행과 2행 전체"
+      ],
+      "answer": 3,
+      "explanation": "첫 대괄호로 행 1~3을 얻고, 두 번째로 그 결과의 첫 두 행을 얻는다. 열을 고르려면 한 대괄호 안에서 쉼표를 사용한다.",
+      "misconception": "대괄호를 두 번 쓰면 자동으로 행과 열을 순서대로 선택한다고 생각함.",
+      "practical_followup": {
+        "goal": "연속 행 슬라이스와 행·열 동시 슬라이스의 결과를 비교한다.",
+        "starter_code": "import numpy as np\na = np.arange(12).reshape(4,3)\nfirst = a[1:][0:2]\nsecond = a[1:,0:2]\n# TODO: 두 결과와 shape 출력",
+        "expected": "first [[3,4,5],[6,7,8]], (2,3); second [[3,4],[6,7],[9,10]], (3,2).",
+        "grading_notes": "원소 몇 개가 우연히 맞아도 shape가 틀리면 거부."
+      }
+    },
+    {
+      "id": "numpy-index-versus-slice-rank",
+      "topic": "numpy.indexing",
+      "prerequisites": [
+        "numpy.indexing",
+        "numpy.shape"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          24,
+          26,
+          27
+        ]
+      },
+      "prompt": "shape (4,3)인 a에서 `a[:,1]`과 `a[:,1:2]`의 차이는?",
+      "choices": [
+        "둘 다 shape (4,1)이다.",
+        "각각 (4,), (4,1)이며 정수 선택은 그 축을 없앤다.",
+        "각각 (1,4), (4,1)이다.",
+        "첫 표현만 열을 고르고 둘째는 행을 고른다."
+      ],
+      "answer": 1,
+      "explanation": "정수 인덱스는 해당 축을 제거한다. 슬라이스는 원소가 하나여도 축을 남긴다.",
+      "misconception": "원소 수가 같으면 shape도 같아야 한다고 생각함.",
+      "practical_followup": {
+        "goal": "두 번째 열을 한 축과 두 축 형태로 각각 선택한다.",
+        "starter_code": "import numpy as np\na = np.arange(12).reshape(4,3)\n# TODO: column_vector_1d와 column_matrix_2d 선택",
+        "expected": "값 [1,4,7,10], 각 shape (4,), (4,1).",
+        "grading_notes": "단순 출력 모양만 보지 말고 shape 비교. 둘 다 reshape로 새 상수 생성하면 선택 목표 미달."
+      }
+    },
+    {
+      "id": "numpy-boolean-selection",
+      "topic": "numpy.mask",
+      "prerequisites": [
+        "numpy.indexing",
+        "numpy.elementwise"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          25
+        ]
+      },
+      "prompt": "`a=np.array([[3,8],[10,1]])`일 때 `a[a >= 5]`는?",
+      "choices": [
+        "[[False,True],[True,False]]",
+        "[[0,8],[10,0]]",
+        "[8,10]인 1차원 배열",
+        "[3,1]인 1차원 배열"
+      ],
+      "answer": 2,
+      "explanation": "조건식은 같은 shape의 불리언 마스크를 만든다. 그 마스크를 인덱스로 쓰면 참인 위치의 값만 선택한다.",
+      "misconception": "마스크 자체와 마스크로 선택한 값, 또는 거짓 원소를 0으로 대체하는 일을 혼동함.",
+      "practical_followup": {
+        "goal": "기준 이상 값을 선택하고 개수와 평균을 구한다.",
+        "starter_code": "import numpy as np\na = np.array([[3,8],[10,1]])\n# TODO: mask, selected, selected_count, selected_mean 계산",
+        "expected": "mask [[False,True],[True,False]], selected [8,10], count 2, mean 9.",
+        "grading_notes": "마스크의 평균 0.5를 선택값 평균으로 보고하면 거부."
+      }
+    },
+    {
+      "id": "numpy-append-reshape",
+      "topic": "numpy.reshape",
+      "prerequisites": [
+        "numpy.shape",
+        "numpy.indexing"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          28,
+          29
+        ]
+      },
+      "prompt": "`a=np.array([[1,2],[3,4]])`; `b=np.append(a, [5,6])`이다. b의 shape와 가능한 재배열은?",
+      "choices": [
+        "b는 (6,)이고 b.reshape(3,2)가 가능하다.",
+        "b는 (3,2)이며 append가 항상 새 행을 붙인다.",
+        "b는 (2,3)이고 원소 순서도 자동으로 정렬된다.",
+        "b는 (6,)이지만 b.reshape(4,2)가 가능하다."
+      ],
+      "answer": 0,
+      "explanation": "axis를 지정하지 않은 append는 평탄화한 결과를 반환한다. reshape는 원소 수를 보존해야 하므로 6개를 3×2로 바꿀 수 있다.",
+      "misconception": "append의 기본 동작을 리스트의 제자리 추가나 행 추가로 생각함.",
+      "practical_followup": {
+        "goal": "append 결과를 재배열하고 원본 배열을 확인한다.",
+        "starter_code": "import numpy as np\na = np.array([[1,2],[3,4]])\nb = np.append(a, [5,6])\n# TODO: matrix = b.reshape(-1,2)\n# TODO: a와 b, matrix의 shape 확인",
+        "expected": "a (2,2), b (6,), matrix [[1,2],[3,4],[5,6]], (3,2).",
+        "grading_notes": "a가 자동 변경되었다는 답, 원소를 복제해 (4,2)를 만드는 답 거부."
+      }
+    },
+    {
+      "id": "numpy-reduction-axis",
+      "topic": "numpy.reduction",
+      "prerequisites": [
+        "numpy.axes",
+        "numpy.shape"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          30
+        ]
+      },
+      "prompt": "행은 날짜, 열은 세 센서인 `a=[[2,4,6],[8,10,12]]`에서 날짜를 합쳐 센서별 평균을 구하려면?",
+      "choices": [
+        "a.mean(axis=1), 결과 [4,10]",
+        "a.mean(), 결과 7",
+        "a.sum(axis=0), 결과 [10,14,18]",
+        "a.mean(axis=0), 결과 [5,7,9]"
+      ],
+      "answer": 3,
+      "explanation": "날짜 축인 axis 0을 집계해 없애면 센서 축만 남는다. 어떤 축을 없앨지 데이터의 의미와 연결해 정한다.",
+      "misconception": "axis=0을 '첫 번째 행만 계산'으로 이해함.",
+      "practical_followup": {
+        "goal": "날짜별 합과 센서별 평균을 각각 구한다.",
+        "starter_code": "import numpy as np\na = np.array([[2,4,6],[8,10,12]])\n# TODO: daily_totals, sensor_means 계산",
+        "expected": "daily_totals [12,30], shape (2,); sensor_means [5,7,9], shape (3,).",
+        "grading_notes": "축과 의미 설명이 뒤집히거나 총합 42만 내면 거부."
+      }
+    },
+    {
+      "id": "numpy-variance-ddof",
+      "topic": "statistics.variance",
+      "prerequisites": [
+        "numpy.reduction"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          31,
+          32,
+          33
+        ]
+      },
+      "prompt": "`x=np.array([2.,4.,6.])`이다. np.var(x)의 분모와 np.var(x,ddof=1)의 분모는?",
+      "choices": [
+        "둘 다 3이다.",
+        "각각 3과 2이며, 같은 제곱편차 합을 다른 분모로 나눈다.",
+        "각각 2와 3이다.",
+        "ddof=1이면 표준편차를 반환한다."
+      ],
+      "answer": 1,
+      "explanation": "NumPy 기본 분산은 ddof=0이어서 n으로 나눈다. ddof=1은 n-1로 나누며 pandas Series.var의 기본값과 비교할 때 이 차이를 맞춘다.",
+      "misconception": "분산과 표준편차 또는 라이브러리의 기본 분모를 혼동함.",
+      "practical_followup": {
+        "goal": "같은 자료의 평균, 두 분산, 모집단 표준편차를 계산한다.",
+        "starter_code": "import numpy as np\nx = np.array([2.,4.,6.])\n# TODO: mean, var0, var1, std0 계산",
+        "expected": "mean 4, var0 8/3, var1 4, std0 sqrt(8/3).",
+        "grading_notes": "부동소수점 허용오차 사용. var1이 np.std라고 설명하면 거부. 어떤 모집단을 추정하는지 없이 ddof=1이 항상 더 옳다고 단정하지 않음."
+      }
+    },
+    {
+      "id": "numpy-vectorization-benchmark",
+      "topic": "numpy.vectorization",
+      "prerequisites": [
+        "python.control",
+        "numpy.elementwise"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          34,
+          35,
+          36,
+          37,
+          38,
+          39,
+          40
+        ]
+      },
+      "prompt": "같은 배열 곱을 수천 번 수행할 프로그램의 반복 실행 성능을 비교하려 한다. 적절한 절차는?",
+      "choices": [
+        "한 번의 실행에서 가장 큰 차이가 나온 숫자만 보고한다.",
+        "출력이 같은지 확인하지 않고 더 빨리 끝난 코드가 정답이라고 판단한다.",
+        "동일 입력의 결과 일치를 먼저 확인하고 예열·반복 측정을 하며 측정 조건을 밝힌다.",
+        "NumPy를 쓰면 언제나 정확히 100배 빨라진다고 기록한다."
+      ],
+      "answer": 2,
+      "explanation": "반복 실행 성능과 최초 실행 지연은 다른 질문이다. 벡터 연산과 반복문은 결과가 같아야 비교할 수 있고 실행 시간은 환경·크기·측정 조건에 영향을 받는다.",
+      "misconception": "자료 병렬 연산을 모든 경우 다중 CPU 사용 또는 고정 배속 보장으로 이해함.",
+      "practical_followup": {
+        "goal": "반복문과 원소별 곱 결과를 비교하고 반복 실행 측정 설계를 글로 쓴다.",
+        "starter_code": "import numpy as np\na = np.array([1.,3.,5.]); b = np.array([2.,4.,6.])\nloop_result = np.zeros(3)\nfor i in range(3):\n    loop_result[i] = a[i] * b[i]\n# TODO: vector_result와 결과 일치 확인\n# TODO: 예열/반복 여부와 측정 목표 기록",
+        "expected": "두 결과 [2,12,30] 동일; 최초 실행 또는 반복 실행 중 측정 목표 명시.",
+        "grading_notes": "특정 밀리초·속도비를 합격 조건으로 두지 않음. 벡터화가 항상 병렬 스레드라는 주장 거부."
+      }
+    },
+    {
+      "id": "numpy-parallelism-versus-vectorization",
+      "topic": "numpy.vectorization",
+      "prerequisites": [
+        "numpy.elementwise",
+        "numpy.vectorization"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          35
+        ]
+      },
+      "prompt": "① 사진 묶음을 나누어 같은 밝기 보정을 동시에 수행한다. ② 서로 독립적인 로그 요약과 차트 생성을 나누어 동시에 수행한다. ③ NumPy 배열에 `a * 2`를 쓴다. 올바른 설명은?",
+      "choices": [
+        "①은 자료 병렬, ②는 작업 병렬이며, ③만으로 사용한 CPU 코어 수는 알 수 없다.",
+        "①은 작업 병렬, ②는 자료 병렬이며, ③만으로 사용한 CPU 코어 수는 알 수 없다.",
+        "①은 자료 병렬, ②는 작업 병렬이며, ③은 반드시 여러 CPU 코어에서 실행된다.",
+        "①과 ②는 모두 자료 병렬이며, ③이 빨리 끝났다면 여러 CPU 코어를 썼다는 뜻이다."
+      ],
+      "answer": 0,
+      "explanation": "①은 자료를 나누어 같은 연산을 하므로 자료 병렬, ②는 독립적인 다른 작업을 나누므로 작업 병렬이다. 보충 설명: ③은 배열 연산으로 표현했다는 뜻이며 실제 코어 사용 수나 일정한 속도 향상을 보장하지 않는다. 실행 시간 차이만으로 다중 코어 사용을 증명할 수도 없다.",
+      "misconception": "자료 분할과 작업 분할을 뒤바꾸거나, NumPy 배열 표현 또는 빠른 실행을 곧 다중 코어 사용의 증거로 생각함.",
+      "practical_followup": {
+        "goal": "서로 다른 사례를 자료 병렬과 작업 병렬로 분류하고, 배열식의 계산 결과와 실제 실행 코어 수에 대한 결론을 구분한다.",
+        "starter_code": "import numpy as np\na = np.array([2,5,8])\n# TODO: 각 원소를 두 배로 만든 result 계산\n# TODO: 센서 기록을 나누어 같은 평균 계산을 동시에 수행하는 사례 분류\n# TODO: 독립적인 파일 용량 집계와 표 오류 검사를 동시에 수행하는 사례 분류\n# TODO: result 또는 실행 시간만으로 사용한 CPU 코어 수를 알 수 있는지 설명",
+        "expected": "result [4,10,16]; 센서 기록 분할은 자료 병렬, 서로 다른 집계와 검사는 작업 병렬. 배열식과 계산 결과 또는 실행 시간만으로 실제 코어 수를 알 수 없다고 설명한다.",
+        "grading_notes": "배열 결과와 두 사례의 분류를 구분해서 확인한다. NumPy가 항상 여러 코어를 쓰거나 항상 고정 배수로 빨라진다는 설명은 거부한다. 실제 병렬 실행을 만들거나 코어 사용을 측정하는 과제가 아니며, 연결된 기존 실습은 이 분류·설명 전체를 채점하지 않는다. 정답 코드 문자열 일치나 특정 실행 시간을 요구하지 않는다."
+      }
+    },
+    {
+      "id": "plot-chart-question",
+      "topic": "plot.selection",
+      "prerequisites": [
+        "data.science"
+      ],
+      "source": {
+        "document": "week_2_2_handout.pdf",
+        "pages": [
+          5
+        ]
+      },
+      "prompt": "30명의 통학 시간 자체가 어떤 분포인지 보고 싶다. 가장 직접적인 첫 그래프는?",
+      "choices": [
+        "학생 이름을 선으로 연결한 그래프",
+        "통학 시간을 구간별로 세는 히스토그램",
+        "학생별 시간을 전체의 비율로 만든 원그래프",
+        "학생 번호 두 개의 산점도"
+      ],
+      "answer": 1,
+      "explanation": "한 연속 변수의 분포는 히스토그램으로 확인한다. 관계는 산점도, 시간 추세는 선, 범주 비교는 막대가 각각 다른 질문에 대응한다.",
+      "misconception": "어떤 숫자든 선그래프 하나로 답할 수 있다고 생각함.",
+      "practical_followup": {
+        "goal": "차트 종류를 목적별로 선택하고 분포와 관계의 차이를 설명한다.",
+        "starter_code": "chart_plan = {'daily_trend': '', 'height_vs_weight': '', 'category_counts': '', 'one_variable_distribution': ''}",
+        "expected": "선, 산점도, 막대, 히스토그램 또는 적절한 상자그림을 이유와 함께 대응.",
+        "grading_notes": "범주 사이를 연속 변화인 것처럼 연결하거나 원그래프로 분포를 대신하면 거부."
+      }
+    },
+    {
+      "id": "plot-input-order",
+      "topic": "plot.lines",
+      "prerequisites": [
+        "python.sequences",
+        "python.imports"
+      ],
+      "source": {
+        "document": "week_2_2_handout.pdf",
+        "pages": [
+          6,
+          9,
+          10,
+          11
+        ]
+      },
+      "prompt": "`plt.plot([20, 10, 30])`의 점 좌표는?",
+      "choices": [
+        "(20,0),(10,1),(30,2)",
+        "(1,20),(2,10),(3,30)",
+        "값을 정렬한 (0,10),(1,20),(2,30)",
+        "(0,20),(1,10),(2,30)"
+      ],
+      "answer": 3,
+      "explanation": "y만 주면 x는 0부터 시작하는 위치다. plot은 제공된 순서대로 점을 연결하며 값을 자동 정렬하지 않는다.",
+      "misconception": "기본 x가 1부터 시작하거나 선그래프가 데이터를 자동 정렬한다고 생각함.",
+      "practical_followup": {
+        "goal": "명시한 x의 입력 순서가 연결 순서라는 점을 확인한다.",
+        "starter_code": "import matplotlib.pyplot as plt\nx = [2, 0, 1]\ny = [20, 5, 12]\nfig, ax = plt.subplots()\n# TODO: x,y를 그대로 선으로 그리고 연결 순서를 설명",
+        "expected": "선 데이터 x 순서 [2,0,1], y [20,5,12].",
+        "grading_notes": "정렬한 그림을 원래 입력과 같다고 답하면 거부. 시간 추세를 보려면 x와 y의 짝을 함께 정렬해야 한다는 설명 허용."
+      }
+    },
+    {
+      "id": "plot-style-components",
+      "topic": "plot.styles",
+      "prerequisites": [
+        "plot.lines"
+      ],
+      "source": {
+        "document": "week_2_2_handout.pdf",
+        "pages": [
+          7,
+          8,
+          15
+        ]
+      },
+      "prompt": "`ax.plot(x, y, 'ko--')`가 지정하는 것은?",
+      "choices": [
+        "검은색, 원형 마커, 파선",
+        "검은색, 마커 없음, 실선",
+        "파란색, 원형 마커, 점선",
+        "초록색, 사각형 마커, 파선"
+      ],
+      "answer": 0,
+      "explanation": "k는 검정, o는 원형 마커, --는 파선이다. 표현 방식이 바뀌어도 x와 y 값은 그대로다.",
+      "misconception": "색·마커·선 모양을 바꾸면 측정값도 바뀐다고 생각함.",
+      "practical_followup": {
+        "goal": "같은 데이터를 스타일 문자열과 명시적 인수로 같은 모양으로 그린다.",
+        "starter_code": "import matplotlib.pyplot as plt\nx, y = [0,1,2], [3,1,4]\nfig, ax = plt.subplots()\n# TODO: color='black', marker='o', linestyle='--'로 그리기",
+        "expected": "Line2D의 color 검정, marker o, linestyle --, 데이터 x/y 유지.",
+        "grading_notes": "스타일 이름의 설치 여부를 정답 조건으로 쓰지 않음. 존재하지 않는 seaborn-whitegrid를 무조건 사용시키지 않음."
+      }
+    },
+    {
+      "id": "plot-axis-scale-interpretation",
+      "topic": "plot.scales",
+      "prerequisites": [
+        "plot.lines"
+      ],
+      "source": {
+        "document": "week_2_2_handout.pdf",
+        "pages": [
+          11,
+          12
+        ]
+      },
+      "prompt": "같은 데이터를 그린 두 그래프가 서로 다른 y축 범위 때문에 변화가 달라 보인다. 타당한 판단은?",
+      "choices": [
+        "변화가 크게 보이는 그래프의 수치가 반드시 더 크다.",
+        "축 범위를 바꾸면 원자료의 분산도 바뀐다.",
+        "축 범위와 눈금 단위를 확인한 뒤 실제 값을 비교한다.",
+        "자동 축 범위에서는 오해가 절대로 생기지 않는다."
+      ],
+      "answer": 2,
+      "explanation": "축 범위는 화면에서 차이가 차지하는 비율을 바꾸지만 원자료는 바꾸지 않는다. 비교할 때 범위와 단위를 함께 읽는다.",
+      "misconception": "화면상 기울기와 수치적 변화량을 동일시함.",
+      "practical_followup": {
+        "goal": "동일한 데이터를 다른 y범위에 그리고 왜 인상이 달라지는지 설명한다.",
+        "starter_code": "import matplotlib.pyplot as plt\nx, y = [0,1,2], [48,50,52]\nfig, axes = plt.subplots(1,2)\n# TODO: 두 축에 같은 데이터, y범위는 (0,100)과 (47,53)",
+        "expected": "두 Axes의 선 데이터 동일, 범위만 다름. 실제 처음~끝 변화량 4.",
+        "grading_notes": "데이터를 바꾸어 인상을 맞추면 거부. 범위가 다르다는 이유만으로 한 그래프가 항상 거짓이라고 단정하지 않음."
+      }
+    },
+    {
+      "id": "plot-save-correct-figure",
+      "topic": "plot.export",
+      "prerequisites": [
+        "plot.lines"
+      ],
+      "source": {
+        "document": "supplement",
+        "pages": []
+      },
+      "prompt": "`fig1, ax1`에 그래프를 그린 뒤 다른 Figure를 만들었다. 처음 그림을 확실히 저장하려면?",
+      "choices": [
+        "ax1.savefig('first.png')",
+        "fig1.savefig('first.png')",
+        "plt.savefig는 존재하지 않으므로 반드시 오류가 난다.",
+        "plt.figure('first.png')"
+      ],
+      "answer": 1,
+      "explanation": "Figure.savefig는 지정한 Figure를 저장한다. plt.savefig도 실제로 존재하지만 현재 Figure를 저장하므로 여러 그림에서는 대상 객체가 명확한 fig1.savefig가 편리하다.",
+      "misconception": "슬라이드의 'pyplot에는 savefig가 없다'는 설명을 그대로 일반화함.",
+      "practical_followup": {
+        "goal": "첫 그림을 PNG로 저장하고 내용이 대상 Figure와 맞는지 확인한다.",
+        "starter_code": "import matplotlib.pyplot as plt\nfig1, ax1 = plt.subplots()\nax1.plot([0,1], [2,4])\nfig2, ax2 = plt.subplots()\nax2.plot([0,1], [9,9])\n# TODO: 제공된 임시 실습 폴더에 fig1을 first.png로 저장",
+        "expected": "존재하는 비어 있지 않은 PNG이며 처음 그림의 [2,4] 선이 포함됨.",
+        "grading_notes": "파일명 존재만 검사하지 않음. 빈 파일·다른 Figure 저장 거부. 작업 폴더 밖으로 저장하지 않음."
+      }
+    },
+    {
+      "id": "plot-figure-axes-layout",
+      "topic": "plot.layout",
+      "prerequisites": [
+        "numpy.indexing",
+        "plot.lines"
+      ],
+      "source": {
+        "document": "week_2_2_handout.pdf",
+        "pages": [
+          16,
+          17,
+          18,
+          19,
+          40,
+          41,
+          42
+        ]
+      },
+      "prompt": "`fig, axes = plt.subplots(2,2)` 후 오른쪽 아래 그리기 영역을 선택하는 표현은?",
+      "choices": [
+        "fig[1,1]",
+        "axes[2,2]",
+        "axes[0,1]",
+        "axes[1,1]"
+      ],
+      "answer": 3,
+      "explanation": "fig는 전체 그림이고 axes는 그리기 영역 배열이다. 0 기반 행·열 인덱스로 오른쪽 아래는 [1,1]이다. Axis는 좌표축이라는 다른 말이다.",
+      "misconception": "Figure, Axes, Axis를 모두 같은 객체라고 생각함.",
+      "practical_followup": {
+        "goal": "2×2 영역 중 한 칸에만 선을 그리고 그림 크기와 격자를 지정한다.",
+        "starter_code": "import matplotlib.pyplot as plt\nfig, axes = plt.subplots(2,2, figsize=(8,6))\n# TODO: 오른쪽 아래에 [0,1],[1,3] 선, y방향 격자, 제목 'Trend'",
+        "expected": "Axes 4개, axes[1,1]에만 선 1개; Figure 8×6인치; 해당 영역 제목과 y격자.",
+        "grading_notes": "축 하나를 전체 그림이라고 설명하거나 figsize를 원소 수·픽셀 수로 해석하면 거부. np.arrange 오타 사용 거부."
+      }
+    },
+    {
+      "id": "plot-scatter-meaning",
+      "topic": "plot.scatter",
+      "prerequisites": [
+        "plot.selection"
+      ],
+      "source": {
+        "document": "week_2_2_handout.pdf",
+        "pages": [
+          20,
+          21,
+          22,
+          23
+        ]
+      },
+      "prompt": "산점도가 U자 모양이다. 가장 신중한 해석은?",
+      "choices": [
+        "직선 경향이 약해도 두 변수 사이 비선형 관계가 있을 수 있다.",
+        "직선이 아니므로 반드시 아무 관계도 없다.",
+        "점이 있으므로 x가 y의 원인임이 증명됐다.",
+        "scatter가 U자 회귀식을 자동 학습했다."
+      ],
+      "answer": 0,
+      "explanation": "산점도는 관계의 모양을 살펴보는 도구다. scatter는 기본적으로 점을 그리며 회귀식이나 인과관계를 자동으로 증명하지 않는다.",
+      "misconception": "선형 관계 부재를 관계 부재 또는 인과관계의 확정과 혼동함.",
+      "practical_followup": {
+        "goal": "U자 자료를 그리고 점 크기와 색이 나타내는 정보를 명시한다.",
+        "starter_code": "import matplotlib.pyplot as plt\nx = [-2,-1,0,1,2]\ny = [4,1,0,1,4]\nfig, ax = plt.subplots()\n# TODO: scatter(x,y,s=60,alpha=0.6), 축 이름 지정",
+        "expected": "5개 점, U자 모양, 축 이름과 '비선형 관계 가능, 인과 확정 불가' 설명.",
+        "grading_notes": "자동 회귀선·원인 증명을 주장하면 거부. s는 면적 단위의 크기이며 반지름으로 설명하지 않음."
+      }
+    },
+    {
+      "id": "plot-bar-grouping",
+      "topic": "plot.bars",
+      "prerequisites": [
+        "numpy.elementwise",
+        "plot.selection"
+      ],
+      "source": {
+        "document": "week_2_2_handout.pdf",
+        "pages": [
+          24,
+          25
+        ]
+      },
+      "prompt": "같은 x에 `ax.bar(x, a)`와 `ax.bar(x, b)`를 그렸다. 두 집단을 옆으로 비교하려면?",
+      "choices": [
+        "두 번째 bar가 자동 누적되므로 그대로 둔다.",
+        "두 번째 색만 바꾸면 두 막대가 항상 전부 보인다.",
+        "막대 폭을 줄이고 두 집단의 x위치를 좌우로 옮긴다.",
+        "y값을 합쳐 두 집단 이름을 모두 지운다."
+      ],
+      "answer": 2,
+      "explanation": "같은 x에서 시작하는 두 막대는 겹친다. 나란히 비교하려면 폭과 x 오프셋을 함께 정한다. 누적 막대는 bottom을 별도로 지정한다.",
+      "misconception": "bar를 두 번 호출하면 자동으로 그룹 또는 누적 막대가 된다고 생각함.",
+      "practical_followup": {
+        "goal": "같은 세 범주에 두 집단의 막대를 겹침 없이 배치한다.",
+        "starter_code": "import numpy as np\nimport matplotlib.pyplot as plt\nx = np.arange(3)\na, b = [5,2,4], [3,6,1]\nfig, ax = plt.subplots()\n# TODO: x-0.2와 x+0.2에 폭 0.4의 막대, 범례, 범주 눈금",
+        "expected": "막대 6개, 각 쌍의 중심 x 간격 0.4, 범례 2개, 범주 눈금은 x.",
+        "grading_notes": "색만 변경, 같은 x 중첩, 수치 합산으로 원래 비교 질문 변경 시 거부."
+      }
+    },
+    {
+      "id": "plot-pie-whole",
+      "topic": "plot.pie",
+      "prerequisites": [
+        "plot.selection",
+        "data.information"
+      ],
+      "source": {
+        "document": "week_2_2_handout.pdf",
+        "pages": [
+          26
+        ]
+      },
+      "prompt": "두 범주의 횟수가 [3,1]이다. 원그래프에서 첫 범주의 비중과 explode의 역할은?",
+      "choices": [
+        "3%, 값을 더 크게 만든다.",
+        "75%, 조각을 중심에서 떨어뜨려 보이게 한다.",
+        "25%, 원의 색을 바꾼다.",
+        "75%, 첫 범주의 횟수를 증가시킨다."
+      ],
+      "answer": 1,
+      "explanation": "비중은 3/(3+1)이다. explode는 표현 위치만 바꾸며 값이나 비중은 바꾸지 않는다.",
+      "misconception": "조각의 시각적 강조를 비중의 변화로 생각함.",
+      "practical_followup": {
+        "goal": "레이블과 비율 표시를 갖춘 두 범주 원그래프를 만든다.",
+        "starter_code": "import matplotlib.pyplot as plt\nfig, ax = plt.subplots()\n# TODO: [3,1], labels=['A','B'], autopct='%.0f%%', explode=[0.05,0]",
+        "expected": "A 75%, B 25%, 두 조각. 사용한 원자료 합은 4 유지.",
+        "grading_notes": "합계 의미가 없는 임의 값에 부분-전체 설명을 붙이거나 explode를 값 가중치로 설명하면 거부."
+      }
+    },
+    {
+      "id": "plot-heatmap-colorbar",
+      "topic": "plot.heatmap",
+      "prerequisites": [
+        "numpy.shape",
+        "plot.selection"
+      ],
+      "source": {
+        "document": "week_2_2_handout.pdf",
+        "pages": [
+          27
+        ]
+      },
+      "prompt": "교실 위치별 온도를 2차원 배열로 imshow했다. colorbar가 필요한 이유는?",
+      "choices": [
+        "배열의 행과 열을 자동으로 바꾸기 위해서",
+        "결측값을 자동으로 온도로 복원하기 위해서",
+        "모든 색을 같은 값으로 만들기 위해서",
+        "색과 수치의 대응을 읽을 수 있게 하기 위해서"
+      ],
+      "answer": 3,
+      "explanation": "위치는 행·열, 값은 색으로 표현된다. colorbar는 색이 어느 수치 범위에 대응하는지 알려준다.",
+      "misconception": "색이 진하다는 인상만으로 단위나 범위를 알 수 있다고 생각함.",
+      "practical_followup": {
+        "goal": "명시한 온도 범위로 히트맵과 색 눈금을 만든다.",
+        "starter_code": "import numpy as np\nimport matplotlib.pyplot as plt\ntemperature = np.array([[18,20,22],[21,23,25]])\nfig, ax = plt.subplots()\n# TODO: im = ax.imshow(..., vmin=18, vmax=25)\n# TODO: fig.colorbar(im, ax=ax, label='Temperature (C)')",
+        "expected": "영상 데이터 shape (2,3), 색 범위 18~25, 색 눈금과 단위 표시.",
+        "grading_notes": "원소값 변경, 색 눈금을 다른 그림의 객체에 연결하거나 단위 누락 시 재시도."
+      }
+    },
+    {
+      "id": "plot-histogram-bins",
+      "topic": "plot.histogram",
+      "prerequisites": [
+        "plot.selection"
+      ],
+      "source": {
+        "document": "week_2_2_handout.pdf",
+        "pages": [
+          28,
+          29,
+          34
+        ]
+      },
+      "prompt": "같은 40개 측정값으로 bins=4와 bins=20인 히스토그램을 만들었다. 올바른 설명은?",
+      "choices": [
+        "관측값은 같고 구간 나누기가 달라져 보이는 분포 모양이 달라질 수 있다.",
+        "bins=20이면 표본이 20개로 줄어든다.",
+        "bins=4는 항상 옳고 bins=20은 항상 틀리다.",
+        "bins를 늘리면 측정 정확도가 자동으로 높아진다."
+      ],
+      "answer": 0,
+      "explanation": "bins는 구간을 정한다. 너무 거칠면 패턴이 가려지고 너무 잘게 나누면 작은 변동이 두드러질 수 있다.",
+      "misconception": "구간 수와 표본 수, 측정 정확도를 혼동함.",
+      "practical_followup": {
+        "goal": "명시적 구간 경계로 도수를 확인하고 전체 도수 합을 검산한다.",
+        "starter_code": "import numpy as np\nvalues = np.array([1,2,2,3,4,7])\n# TODO: np.histogram(values,bins=[0,3,6,9])의 counts와 edges 확인",
+        "expected": "counts [3,2,1], edges [0,3,6,9], 도수 합 6.",
+        "grading_notes": "경계 3을 첫 구간에 넣는 결과 거부. 마지막 구간만 오른쪽 끝을 포함하는 규칙을 먼저 설명."
+      }
+    },
+    {
+      "id": "plot-cumulative-count-proportion",
+      "topic": "plot.histogram",
+      "prerequisites": [
+        "plot.histogram",
+        "data.information"
+      ],
+      "source": {
+        "document": "supplement",
+        "pages": []
+      },
+      "prompt": "관측 6개를 모두 포함하는 범위에서 `ax.hist(values, cumulative=True)`를 호출했다. 가중치·density는 지정하지 않았다. 마지막 누적 막대 높이는?",
+      "choices": [
+        "반드시 1이다.",
+        "반드시 100이다.",
+        "6이다.",
+        "구간 수와 같다."
+      ],
+      "answer": 2,
+      "explanation": "기본 density=False에서는 누적 도수다. 누적 비율을 원하면 density=True 등 정규화 조건을 명시해야 한다. 범위 밖 자료나 가중치가 있으면 합의 해석도 달라진다.",
+      "misconception": "cumulative=True만으로 0~1 비율이 나온다고 생각함.",
+      "practical_followup": {
+        "goal": "같은 자료의 누적 도수와 누적 비율을 따로 확인한다.",
+        "starter_code": "import matplotlib.pyplot as plt\nvalues = [1,2,2,3,4,7]\nfig, axes = plt.subplots(1,2)\n# TODO: bins=[0,3,6,9], cumulative=True\n# TODO: 오른쪽에만 density=True",
+        "expected": "누적 도수 [3,5,6]; 누적 비율 [0.5,5/6,1].",
+        "grading_notes": "끝 높이가 모두 1 또는 모두 6이면 거부. 표시 y축은 각각 Count와 Proportion."
+      }
+    },
+    {
+      "id": "plot-normal-density",
+      "topic": "statistics.distribution",
+      "prerequisites": [
+        "statistics.variance",
+        "plot.histogram",
+        "numpy.creation"
+      ],
+      "source": {
+        "document": "week_2_2_handout.pdf",
+        "pages": [
+          31,
+          32,
+          33,
+          34,
+          35
+        ]
+      },
+      "prompt": "정규분포 생성 인수 loc를 0에서 5로 바꾸고 scale=2를 유지했다. 적절한 해석은?",
+      "choices": [
+        "표준편차가 5가 된다.",
+        "생성 분포의 중심은 오른쪽으로 5 이동하고 설정한 표준편차는 그대로다.",
+        "모든 표본값에 반드시 5개씩 같은 숫자가 나온다.",
+        "표본 평균이 정확히 5가 아니면 생성기가 고장이다."
+      ],
+      "answer": 1,
+      "explanation": "loc는 분포 평균, scale은 표준편차다. 유한 표본의 평균과 표준편차가 매번 모수와 정확히 같을 필요는 없다. 확률밀도 곡선과 비교할 히스토그램은 density=True로 단위를 맞춘다.",
+      "misconception": "분포의 모수와 실제 표본 요약값을 동일시하고 도수와 밀도를 혼동함.",
+      "practical_followup": {
+        "goal": "고정 시드로 정규 표본을 생성하고 밀도 히스토그램과 적합 곡선을 그린다.",
+        "starter_code": "import numpy as np\nimport matplotlib.pyplot as plt\nfrom scipy.stats import norm\nrng = np.random.default_rng(17)\ndata = rng.normal(loc=5, scale=2, size=1000)\nfig, ax = plt.subplots()\n# TODO: density=True 히스토그램\n# TODO: mu, sigma=norm.fit(data); x를 먼저 만들고 norm.pdf 곡선",
+        "expected": "표본 수 1000, 적합 sigma 양수, 밀도 면적 약 1. x가 정의되고 곡선 데이터 길이가 일치.",
+        "grading_notes": "표본 평균==5 같은 정확 일치 조건 금지. count 히스토그램에 밀도 곡선을 같은 단위라며 겹치면 거부. 정규성 확정 주장도 거부."
+      }
+    },
+    {
+      "id": "plot-boxplot-whisker",
+      "topic": "statistics.boxplot",
+      "prerequisites": [
+        "statistics.variance",
+        "plot.selection"
+      ],
+      "source": {
+        "document": "week_2_2_handout.pdf",
+        "pages": [
+          36,
+          37,
+          38,
+          39
+        ]
+      },
+      "prompt": "Q1=4, Q3=8인 자료가 있다. 위쪽 경계는 14이고 관측값 중 8보다 큰 값은 10,13,20이다. 기본 1.5×IQR 규칙의 위 수염 끝은?",
+      "choices": [
+        "14",
+        "20",
+        "8",
+        "13"
+      ],
+      "answer": 3,
+      "explanation": "수염 끝은 경계 그 자체가 아니라 경계 안의 가장 바깥 실제 관측값이다. IQR=4, 위 경계 14 안의 최댓값은 13이고 20은 별도 점으로 표시된다.",
+      "misconception": "수염은 항상 최댓값 또는 Q3+1.5×IQR이라고 생각함.",
+      "practical_followup": {
+        "goal": "제시된 사분위수에서 경계, 수염 끝, 이상치 후보를 구분한다.",
+        "starter_code": "q1, q3 = 4, 8\nupper_values = [10,13,20]\n# TODO: iqr, upper_fence, upper_whisker, upper_outliers 계산",
+        "expected": "iqr 4, upper_fence 14, upper_whisker 13, upper_outliers [20].",
+        "grading_notes": "경계를 수염으로 반환하면 거부. 이상치 표시만으로 20이 측정 오류라고 확정하면 거부. 이 과제는 q1/q3를 제공하며 표본에서 재추정하지 않음."
+      }
+    },
+    {
+      "id": "pandas-series-missing",
+      "topic": "pandas.series",
+      "prerequisites": [
+        "python.imports",
+        "numpy.shape"
+      ],
+      "source": {
+        "document": "week_3_1_handout.pdf",
+        "pages": [
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ]
+      },
+      "prompt": "`s=pd.Series([4,np.nan,8],index=['가','나','다'])`에서 `s.isna()`의 의미는?",
+      "choices": [
+        "원소별 결측 여부를 [False,True,False]로 알려준다.",
+        "비어 있는 행을 자동 삭제한다.",
+        "모든 원소가 정수가 되는 새 Series를 만든다.",
+        "결측값을 0으로 채운다."
+      ],
+      "answer": 0,
+      "explanation": "isna는 결측 위치를 표시할 뿐 원자료를 바꾸지 않는다. Series의 인덱스는 값의 이름이고 별도 데이터 열이 아니다.",
+      "misconception": "탐지, 삭제, 대체를 모두 같은 결측 처리로 생각함.",
+      "practical_followup": {
+        "goal": "라벨이 있는 Series를 만들고 결측 개수를 센다.",
+        "starter_code": "import numpy as np\nimport pandas as pd\ns = pd.Series([4,np.nan,8], index=['가','나','다'])\n# TODO: missing_mask, missing_count 계산",
+        "expected": "mask 라벨 유지, 값 [False,True,False]; count 1; s의 결측값 유지.",
+        "grading_notes": "s==np.nan으로 탐지하거나 결측을 0과 동일시하면 거부."
+      }
+    },
+    {
+      "id": "pandas-csv-index",
+      "topic": "pandas.csv",
+      "prerequisites": [
+        "pandas.series"
+      ],
+      "source": {
+        "document": "week_3_1_handout.pdf",
+        "pages": [
+          10,
+          11,
+          12,
+          13
+        ]
+      },
+      "prompt": "CSV 문자열의 첫 열이 도시 이름이고 뒤에 temp 열이 있다. 도시를 행 라벨로 읽으려면?",
+      "choices": [
+        "pd.read_csv(source, index_col=1)",
+        "pd.read_csv(source, index_col=0)",
+        "pd.read_csv(source, header=None)만 사용하면 항상 된다.",
+        "읽은 뒤 temp 값을 도시 이름으로 바꾼다."
+      ],
+      "answer": 1,
+      "explanation": "index_col=0은 파일의 첫 번째 열을 행 라벨로 쓴다. header, 구분자, 인코딩은 각각 다른 조건이다.",
+      "misconception": "인덱스 열과 첫 데이터 열, 헤더 행을 혼동함.",
+      "practical_followup": {
+        "goal": "외부 파일 없이 StringIO CSV를 읽어 행 라벨과 shape를 확인한다.",
+        "starter_code": "from io import StringIO\nimport pandas as pd\nsource = StringIO('city,temp\\nSeoul,21\\nBusan,24\\n')\n# TODO: df를 도시 라벨을 가진 표로 읽기",
+        "expected": "df.index == ['Seoul','Busan']; columns ['temp']; shape (2,1).",
+        "grading_notes": "행 라벨이 0,1이고 city가 데이터 열로 남으면 목표 미달. 문자열 전체를 파일 경로로 넘기면 거부."
+      }
+    },
+    {
+      "id": "pandas-column-labels",
+      "topic": "pandas.selection",
+      "prerequisites": [
+        "pandas.series",
+        "pandas.csv"
+      ],
+      "source": {
+        "document": "week_3_1_handout.pdf",
+        "pages": [
+          13,
+          14,
+          25,
+          26,
+          27,
+          32
+        ]
+      },
+      "prompt": "df의 행 라벨은 'east','west', 열 라벨은 문자열 '2024','2025'이다. `df['2025']`는?",
+      "choices": [
+        "2025번째 행",
+        "정수 2025 라벨의 행",
+        "문자열 '2025' 열의 Series",
+        "전체 표를 2025개로 복제한 결과"
+      ],
+      "answer": 2,
+      "explanation": "일반 대괄호에 열 이름 하나를 주면 그 열의 Series를 반환한다. 문자열 연도와 정수 위치는 다르다.",
+      "misconception": "대괄호가 언제나 행이나 위치를 선택한다고 생각함.",
+      "practical_followup": {
+        "goal": "한 열 Series와 한 열 DataFrame을 구분해 선택한다.",
+        "starter_code": "import pandas as pd\ndf = pd.DataFrame({'2024':[4,7],'2025':[6,9]},index=['east','west'])\n# TODO: one_series=df[...]와 one_frame=df[[...]] 만들기",
+        "expected": "Series shape (2,), DataFrame shape (2,1), 값 [6,9], 라벨 유지.",
+        "grading_notes": "문자열 '2025'를 정수 2025로 바꾸거나 tolist 이후에도 라벨이 남는다고 답하면 거부."
+      }
+    },
+    {
+      "id": "pandas-derived-recompute",
+      "topic": "pandas.derived",
+      "prerequisites": [
+        "pandas.selection",
+        "numpy.reduction"
+      ],
+      "source": {
+        "document": "week_3_1_handout.pdf",
+        "pages": [
+          15,
+          16,
+          17
+        ]
+      },
+      "prompt": "`df['total']=df[['A','B']].sum(axis=1)`을 만든 뒤 A의 값을 바꿨다. total은?",
+      "choices": [
+        "항상 새 A로 자동 갱신된다.",
+        "total을 읽을 때마다 수식이 다시 계산된다.",
+        "pandas가 A 수정 자체를 막는다.",
+        "기존 계산 결과이며 필요하면 원본 열을 명시해 다시 계산한다."
+      ],
+      "answer": 3,
+      "explanation": "계산 열은 대입 당시 결과다. 새 합계를 만들 때 이전 total까지 포함하면 중복 합산될 수 있으므로 입력 열을 명시한다.",
+      "misconception": "DataFrame 계산 열을 스프레드시트의 살아 있는 수식으로 생각함.",
+      "practical_followup": {
+        "goal": "원본 열 수정 전후 total의 상태와 명시적 재계산 결과를 비교한다.",
+        "starter_code": "import pandas as pd\ndf = pd.DataFrame({'A':[2,4], 'B':[3,6]})\ndf['total'] = df[['A','B']].sum(axis=1)\ndf.loc[0,'A'] = 20\n# TODO: 재계산 전 total 기록 후 A,B만으로 다시 계산",
+        "expected": "재계산 전 [5,10], 후 [23,10].",
+        "grading_notes": "df.sum(axis=1)로 기존 total을 다시 더해 [28,20]을 만드는 답 거부."
+      }
+    },
+    {
+      "id": "pandas-drop-return",
+      "topic": "pandas.mutation",
+      "prerequisites": [
+        "pandas.selection"
+      ],
+      "source": {
+        "document": "week_3_1_handout.pdf",
+        "pages": [
+          18,
+          19,
+          20
+        ]
+      },
+      "prompt": "`reduced = df.drop('old', axis=1)`을 실행했다. 기본 inplace=False일 때 올바른 설명은?",
+      "choices": [
+        "reduced에는 old 열이 없고 원래 df에는 남아 있다.",
+        "원래 df와 reduced 둘 다 old 열이 없다.",
+        "old 이름의 행만 없어진다.",
+        "reduced는 반드시 None이다."
+      ],
+      "answer": 0,
+      "explanation": "axis=1은 열에서 라벨을 찾는다. 기본값은 변경된 표를 반환하고 원래 변수는 그대로 둔다. inplace=True를 쓰면 반환값은 None이다.",
+      "misconception": "axis와 in-place 여부, 반환값을 한꺼번에 혼동함.",
+      "practical_followup": {
+        "goal": "새 표를 반환하는 삭제와 원본 변경을 구별한다.",
+        "starter_code": "import pandas as pd\ndf = pd.DataFrame({'old':[1,2], 'keep':[3,4]})\n# TODO: reduced를 만들어 old 열 제외\n# TODO: 두 표의 columns 출력",
+        "expected": "df.columns ['old','keep']; reduced.columns ['keep']; 각각 행 2개.",
+        "grading_notes": "df = df.drop(...,inplace=True)로 df가 None이 되는 코드는 거부."
+      }
+    },
+    {
+      "id": "pandas-transpose-time-plot",
+      "topic": "pandas.plot",
+      "prerequisites": [
+        "pandas.selection",
+        "plot.lines"
+      ],
+      "source": {
+        "document": "week_3_1_handout.pdf",
+        "pages": [
+          21,
+          22,
+          23,
+          24
+        ]
+      },
+      "prompt": "df의 행은 지점, 열은 연도다. 지점별 변화선을 그리고 x축을 연도로 만들려면?",
+      "choices": [
+        "df.plot.line()은 항상 연도를 알아서 x축에 둔다.",
+        "df.T로 행·열을 바꾼 뒤 선그래프를 그린다.",
+        "연도 열 이름을 모두 지운다.",
+        "df의 숫자를 정렬하면 연도가 x축이 된다."
+      ],
+      "answer": 1,
+      "explanation": "기본 DataFrame.plot은 인덱스를 x축에, 열마다 계열을 둔다. 전치하면 연도가 인덱스가 되고 지점이 각 선이 된다.",
+      "misconception": "그래프가 열 이름의 의미를 해석해 시간 축을 자동으로 선택한다고 생각함.",
+      "practical_followup": {
+        "goal": "두 지점의 두 해 값을 전치해 축과 범례 의미를 확인한다.",
+        "starter_code": "import pandas as pd\nimport matplotlib.pyplot as plt\ndf = pd.DataFrame({'2024':[3,6], '2025':[5,7]},index=['east','west'])\n# TODO: yearly=df.T, ax=yearly.plot.line()",
+        "expected": "yearly.index ['2024','2025']; columns ['east','west']; 두 선의 y값 [3,5], [6,7].",
+        "grading_notes": "전치 없이 지점을 시간순서라고 설명하거나 값만 재정렬하면 거부."
+      }
+    },
+    {
+      "id": "pandas-loc-iloc",
+      "topic": "pandas.indexers",
+      "prerequisites": [
+        "pandas.selection",
+        "python.sequences"
+      ],
+      "source": {
+        "document": "week_3_1_handout.pdf",
+        "pages": [
+          28,
+          29,
+          30,
+          31,
+          32
+        ]
+      },
+      "prompt": "df의 행 라벨은 [10,20,30]이다. 두 번째 행을 위치로 고르는 명확한 표현은?",
+      "choices": [
+        "df.loc[1]",
+        "df[1]",
+        "df.iloc[1]",
+        "df.loc[2]"
+      ],
+      "answer": 2,
+      "explanation": "iloc는 0 기반 위치, loc는 라벨을 사용한다. 정수 라벨이어도 위치와 같다는 뜻은 아니다. 명시적 indexer를 쓰면 버전별 Series 대괄호 처리 차이도 피한다.",
+      "misconception": "정수이면 항상 위치 인덱스라고 생각함.",
+      "practical_followup": {
+        "goal": "정수 행 라벨에서 같은 셀을 라벨과 위치로 각각 선택한다.",
+        "starter_code": "import pandas as pd\ndf = pd.DataFrame({'score':[60,75,90]},index=[10,20,30])\n# TODO: by_label, by_position에 가운데 score를 각각 선택",
+        "expected": "df.loc[20,'score'] == df.iloc[1,0] == 75.",
+        "grading_notes": "df.loc[1] 또는 df[1] 사용 거부. loc 슬라이스는 끝 라벨 포함, iloc 슬라이스는 끝 위치 제외라는 차이를 별도로 설명."
+      }
+    },
+    {
+      "id": "pandas-pivot-layout",
+      "topic": "pandas.reshape",
+      "prerequisites": [
+        "pandas.selection",
+        "pandas.indexers"
+      ],
+      "source": {
+        "document": "week_3_1_handout.pdf",
+        "pages": [
+          33,
+          34
+        ]
+      },
+      "prompt": "상품별로 색상 가격을 한눈에 보는 표를 만든다. 원본 열은 item,color,price이며 조합은 중복되지 않는다. pivot 인수 연결은?",
+      "choices": [
+        "index='price', columns='item', values='color'",
+        "index='color', columns='price', values='item'",
+        "index='item', columns='price', values='color'",
+        "index='item', columns='color', values='price'"
+      ],
+      "answer": 3,
+      "explanation": "행에 상품, 열에 색상, 셀에 가격을 놓도록 각각 index, columns, values를 연결한다. 관측되지 않은 조합은 결측으로 남는다.",
+      "misconception": "pivot 인수의 이름을 데이터의 값 종류와 연결하지 못함.",
+      "practical_followup": {
+        "goal": "긴 표를 넓은 표로 바꾸고 관측되지 않은 조합을 찾는다.",
+        "starter_code": "import pandas as pd\ndf = pd.DataFrame({'item':['pen','pen','bag'], 'color':['blue','red','blue'], 'price':[2,3,8]})\n# TODO: wide=pivot(...), bag/red의 결측 여부 확인",
+        "expected": "pen/blue=2, pen/red=3, bag/blue=8, bag/red 결측.",
+        "grading_notes": "미관측 가격을 설명 없이 0원이라고 단정하면 거부. 표시용 fillna(0)와 실제 관측 0의 의미 구분."
+      }
+    },
+    {
+      "id": "pandas-pivot-duplicate-aggregation",
+      "topic": "pandas.reshape",
+      "prerequisites": [
+        "pandas.reshape",
+        "numpy.reduction"
+      ],
+      "source": {
+        "document": "supplement",
+        "pages": []
+      },
+      "prompt": "같은 상품·색상 조합의 거래가 두 번 기록되어 있다. 조합별 평균 가격을 원한다면?",
+      "choices": [
+        "pivot_table(..., aggfunc='mean')으로 집계 의도를 명시한다.",
+        "pivot이 중복 거래를 항상 자동 평균낸다.",
+        "첫 거래만 남기면 언제나 평균과 같다.",
+        "pivot은 열 이름 목록을 받지 못하므로 중복과 관계없이 실패한다."
+      ],
+      "answer": 0,
+      "explanation": "pivot은 중복 조합을 집계하지 않는다. pivot_table은 mean, sum 등의 규칙을 명시할 수 있다. 현대 pandas의 pivot은 여러 열 이름도 받을 수 있어 '두 열이면 무조건 pivot_table'은 정확한 구분이 아니다.",
+      "misconception": "pivot과 pivot_table을 축 열 개수만으로 구분하거나 중복을 자동 집계한다고 생각함.",
+      "practical_followup": {
+        "goal": "중복 거래를 평균·합계 두 방식으로 집계하고 의미 차이를 설명한다.",
+        "starter_code": "import pandas as pd\ndf = pd.DataFrame({'item':['pen','pen','bag'], 'color':['blue','blue','red'], 'price':[2,6,9]})\n# TODO: average와 total을 각각 pivot_table로 작성",
+        "expected": "pen/blue 평균 4, 합계 8; bag/red 평균·합계 9.",
+        "grading_notes": "중복을 조용히 버리거나 집계 규칙을 쓰지 않은 결과만 제시하면 거부. 다중 인덱스 가능 여부와 중복 집계를 분리."
+      }
+    },
+    {
+      "id": "pandas-concat-labels",
+      "topic": "pandas.combine",
+      "prerequisites": [
+        "pandas.selection",
+        "numpy.axes"
+      ],
+      "source": {
+        "document": "week_3_1_handout.pdf",
+        "pages": [
+          36,
+          37,
+          38
+        ]
+      },
+      "prompt": "두 표를 `pd.concat([left,right], axis=0, join='inner')`로 합친다. inner가 고르는 것은?",
+      "choices": [
+        "양쪽 표에서 값이 같은 행만 남긴다.",
+        "양쪽에 공통인 열을 남기고 행은 아래로 이어 붙인다.",
+        "행과 열 이름을 전부 숫자로 바꾼다.",
+        "중복 행 라벨을 자동으로 제거한다."
+      ],
+      "answer": 1,
+      "explanation": "axis=0은 행을 쌓는 방향이다. join은 그 반대 축인 열 라벨의 합집합·교집합을 결정한다. concat은 키 값으로 거래를 매칭하는 merge와 다르다.",
+      "misconception": "concat의 inner를 merge의 키 교집합으로 이해함.",
+      "practical_followup": {
+        "goal": "공통 열만 갖는 행 결합과 기본 outer 결합을 비교한다.",
+        "starter_code": "import pandas as pd\nleft = pd.DataFrame({'A':[1], 'B':[2]},index=['r'])\nright = pd.DataFrame({'B':[3], 'C':[4]},index=['r'])\n# TODO: common과 all_columns를 concat으로 작성",
+        "expected": "common shape (2,1), B [2,3], 라벨 r 두 개 유지; outer shape (2,3), 없는 셀 NaN.",
+        "grading_notes": "행 수를 1로 줄이거나 B가 같은 값일 때만 남긴다는 설명 거부."
+      }
+    },
+    {
+      "id": "pandas-merge-key-values",
+      "topic": "pandas.combine",
+      "prerequisites": [
+        "pandas.combine",
+        "pandas.indexers"
+      ],
+      "source": {
+        "document": "week_3_1_handout.pdf",
+        "pages": [
+          39,
+          40,
+          41,
+          42,
+          43,
+          44
+        ]
+      },
+      "prompt": "학생표의 id는 [1,2], 출석표의 id는 [2,3]이다. id로 left merge하면 어떤 id가 남는가? 각 표의 id는 중복되지 않는다.",
+      "choices": [
+        "[2]",
+        "[1,2,3]",
+        "[1,2]",
+        "[2,3]"
+      ],
+      "answer": 2,
+      "explanation": "left는 왼쪽 키를 유지한다. id=1의 오른쪽 정보는 결측이고 id=2의 정보가 연결된다. 행 위치나 우연히 같은 기본 인덱스로 붙이는 것이 아니다.",
+      "misconception": "merge를 위치 결합으로 생각하거나 left가 두 표의 교집합이라고 생각함.",
+      "practical_followup": {
+        "goal": "서로 순서가 다른 표를 키로 결합해 결과와 결측을 확인한다.",
+        "starter_code": "import pandas as pd\nstudents = pd.DataFrame({'id':[1,2], 'name':['Ada','Bo']})\nattendance = pd.DataFrame({'id':[3,2], 'days':[7,9]})\n# TODO: on='id', how='left'로 joined 생성",
+        "expected": "id [1,2], name ['Ada','Bo'], days [NaN,9].",
+        "grading_notes": "행 순서대로 붙여 Ada에 7을 주거나 Bo에 잘못된 값을 주면 거부. 키 중복 시 행 수가 늘 수 있어 일반적인 행 수 보장은 하지 않음."
+      }
+    },
+    {
+      "id": "pandas-weather-missing-group",
+      "topic": "pandas.grouping",
+      "prerequisites": [
+        "pandas.series",
+        "pandas.indexers",
+        "numpy.reduction"
+      ],
+      "source": {
+        "document": "week_3_1_handout.pdf",
+        "pages": [
+          45,
+          46
+        ]
+      },
+      "prompt": "날짜별 풍속 열에 NaN이 있다. 월평균 계산 전에 적절한 태도는?",
+      "choices": [
+        "NaN은 반드시 무풍이므로 모두 0으로 바꾼다.",
+        "문자열 날짜의 첫 글자만으로 월을 정한다.",
+        "결측 행을 삭제했다는 기록을 남기면 항상 편향이 없어진다.",
+        "결측 개수와 의미를 확인하고 날짜를 변환해 월별로 묶으며 삭제·대체 정책을 명시한다."
+      ],
+      "answer": 3,
+      "explanation": "결측은 관측 0과 다르다. DatetimeIndex의 month로 묶어 평균을 낼 수 있고, 기본 평균은 결측을 제외하므로 유효 관측 수도 함께 살핀다.",
+      "misconception": "누락을 실제 0으로 보거나 결측을 제외한 평균의 분모를 전체 행 수로 생각함.",
+      "practical_followup": {
+        "goal": "작은 날씨 표의 월별 평균과 유효 관측 수를 함께 구한다.",
+        "starter_code": "import numpy as np\nimport pandas as pd\nweather = pd.DataFrame({'wind':[2.,np.nan,6.,4.]},index=pd.to_datetime(['2026-01-01','2026-01-02','2026-02-01','2026-02-02']))\n# TODO: 결측 개수, 월별 mean과 count 계산",
+        "expected": "결측 1, 월 1 평균 2·count 1, 월 2 평균 5·count 2.",
+        "grading_notes": "1월 평균을 1로 만드는 무단 0대체 거부. 여러 해 자료를 .month만으로 묶을 때 해를 합친다는 점을 설명. 한 열 fillna는 명시적 재대입 권장."
+      }
+    }
+  ]
+}

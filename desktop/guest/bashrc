@@ -1,0 +1,30 @@
+# This file belongs to the private guest. No host commands or history storage.
+# Set the prompt here: interactive Bash may replace an inherited PS1.
+# Colours are terminal-only; saved reports and pipelines stay plain text.
+force_color_prompt=yes
+PS1='\[\e[01;32m\]\u@lab\[\e[0m\]:\[\e[01;34m\]\w\[\e[0m\]\$ '
+if command -v dircolors >/dev/null 2>&1; then
+    eval "$(dircolors -b)"
+fi
+alias ls='ls --color=auto'
+alias grep='grep --color=auto'
+
+
+if [[ "$SG_PRESEEDED" = 1 ]]; then
+    sleep 300 &
+    sleep 300 &
+    kill -STOP %1
+fi
+PROMPT_COMMAND='jobs -l > "/tmp/shellground-jobs-$SG_SESSION.json"; /usr/bin/python3 /opt/shellground/shell_snapshot.py'
+
+# Bash enables interactive job control after reading its startup file. Start
+# fixture jobs at the first prompt, not inside startup where they'd share the
+# shell's process group. Subsequent prompts incur no extra process/helper call.
+if [[ -r /opt/shellground/process-bootstrap.sh ]]; then
+    _sg_process_initialize() {
+        PROMPT_COMMAND=${PROMPT_COMMAND#'_sg_process_initialize; '}
+        source /opt/shellground/process-bootstrap.sh
+        unset -f _sg_process_initialize
+    }
+    PROMPT_COMMAND="_sg_process_initialize; $PROMPT_COMMAND"
+fi

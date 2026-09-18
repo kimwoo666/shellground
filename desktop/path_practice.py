@@ -86,4 +86,9 @@ def natural_paths(m, *, move_to_focus=True):
             prompt = prompt.replace(root, short)
     if prompt != m.prompt:
         prompt = '아래 상대경로는 시작 위치 기준입니다. 이동했다면 현재 위치에 맞게 해석하세요.\n\n' + prompt
+    if m.kind == 'copy':
+        # Distinguish the source tree from the separate prepared work area.
+        # Keep canonical anchors visible even after the learner changes cwd;
+        # individual objectives and solutions still use nearby relative paths.
+        prompt = f'원본 폴더: {m.source}\n작업 폴더: {m.target}\n\n' + prompt
     return replace(m, prompt=prompt, solution='\n'.join(lines))

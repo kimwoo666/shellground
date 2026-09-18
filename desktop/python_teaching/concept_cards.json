@@ -1,0 +1,670 @@
+{
+  "schema": 1,
+  "cards": [
+    {
+      "id": "parallelism-data",
+      "topic": "numpy.vectorization",
+      "title": "자료 병렬은 자료를 나누어 같은 일을 한다",
+      "why": "계산을 나눌 때 자료와 작업 중 무엇을 나누는지 구별할 수 있습니다.",
+      "explanation": "자료 병렬은 자료를 여러 부분으로 나누고, 각 부분에 같은 종류의 연산을 동시에 수행하는 방식입니다. 서로 독립적으로 처리할 수 있는 부분을 나누는 것이 핵심입니다.",
+      "example": "여러 사진을 몇 묶음으로 나누고 각 묶음의 밝기를 같은 규칙으로 동시에 보정한다면 자료 병렬의 예입니다.",
+      "misconception": "자료가 많거나 반복문을 썼다는 사실만으로 병렬 실행은 아닙니다. 한 묶음씩 차례로 처리할 수도 있습니다.",
+      "quiz_ids": [
+        "numpy-parallelism-versus-vectorization"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          35
+        ]
+      }
+    },
+    {
+      "id": "parallelism-task",
+      "topic": "numpy.vectorization",
+      "title": "작업 병렬은 서로 다른 일을 나누어 한다",
+      "why": "같은 연산을 자료별로 나누는 경우와 역할이 다른 작업을 나누는 경우를 구별합니다.",
+      "explanation": "작업 병렬은 서로 독립적으로 진행할 수 있는 다른 작업들을 나누어 동시에 수행하는 방식입니다. 한 작업의 결과가 있어야 다음 작업을 시작할 수 있다면 그 의존 관계를 먼저 고려해야 합니다.",
+      "example": "이미 준비된 자료에서 서로 독립적인 로그 요약과 차트 생성을 나누어 동시에 진행한다면 작업 병렬의 예입니다.",
+      "misconception": "단계 이름이 다르다고 모두 동시에 실행할 수 있는 것은 아닙니다. 한 프로그램에서 자료 병렬과 작업 병렬을 함께 사용할 수도 있습니다.",
+      "quiz_ids": [
+        "numpy-parallelism-versus-vectorization"
+      ],
+      "source": {
+        "document": "week_2_1_handout.pdf",
+        "pages": [
+          35
+        ]
+      }
+    },
+    {
+      "id": "vectorization-not-core-count",
+      "topic": "numpy.vectorization",
+      "title": "배열식만 보고 CPU 코어 수를 알 수는 없다",
+      "why": "NumPy 코드로 바꾸면 반드시 여러 코어를 쓰거나 일정 배수로 빨라진다는 오해를 피합니다.",
+      "explanation": "벡터화는 원소별 Python 반복 대신 배열 연산으로 계산을 표현하는 방식입니다. CPU 코어는 CPU 안에서 계산을 맡는 처리 단위입니다. 배열식으로 썼다는 사실만으로 몇 코어에서 실행됐는지는 알 수 없으며, 연산의 구현과 실행 환경에 따라 달라집니다.",
+      "example": "a * 2는 배열의 각 원소를 두 배로 계산하는 표현입니다. 코드 한 줄만으로 여러 코어가 동시에 계산했다거나 반복문보다 항상 빠르다고 결론내릴 수는 없습니다.",
+      "misconception": "실행 시간이 짧아졌다는 것만으로도 다중 코어 사용을 증명할 수 없습니다. 결과가 맞는지, 측정 조건은 같은지를 먼저 확인합니다.",
+      "quiz_ids": [
+        "numpy-parallelism-versus-vectorization",
+        "numpy-vectorization-benchmark"
+      ],
+      "source": {
+        "document": "supplement",
+        "pages": []
+      }
+    },
+    {
+      "id": "notebook-kernel-state",
+      "topic": "notebook.kernel",
+      "title": "커널은 실행한 결과를 기억한다",
+      "why": "화면의 코드와 현재 변수 값이 다른 이유를 이해할 수 있습니다.",
+      "explanation": "노트북 문서는 코드와 설명을 담고, 커널은 코드를 실행하며 변수 값을 기억합니다. 셀을 편집만 하면 실행 상태는 바뀌지 않습니다. 앞선 입력을 다시 실행해도 그 값을 쓴 다른 셀은 저절로 재실행되지 않습니다.",
+      "example": "한 셀에서 한 변의 길이를 정하고 다음 셀에서 정사각형 넓이를 구했다면, 길이를 바꾼 뒤 넓이 셀도 다시 실행해야 새 넓이를 얻습니다.",
+      "misconception": "노트북 셀은 스프레드시트 수식처럼 자동으로 연결되어 갱신되는 것이 아닙니다.",
+      "quiz_ids": [
+        "notebook-execution-order"
+      ],
+      "source": {
+        "document": "Week 1_1.pdf",
+        "pages": [
+          11
+        ]
+      }
+    },
+    {
+      "id": "cloud-python-location",
+      "topic": "notebook.persistence",
+      "title": "Colab의 Python은 원격 컴퓨터에서 실행된다",
+      "why": "내 기기와 실행 컴퓨터의 파일·설치 상태를 혼동하지 않게 됩니다.",
+      "explanation": "Colab에서는 브라우저로 코드를 보내고 원격 런타임에서 실행 결과를 받습니다. 브라우저를 여는 기기와 Python이 실행되는 컴퓨터는 다릅니다.",
+      "example": "태블릿으로 노트북을 열어 계산해도 원격 런타임의 폴더가 태블릿의 사진 폴더가 되는 것은 아닙니다.",
+      "misconception": "브라우저에서 Python이 동작한다는 사실만으로 내 기기에 Python이나 Conda가 설치되었다고 판단할 수 없습니다.",
+      "quiz_ids": [
+        "cloud-session-storage"
+      ],
+      "source": {
+        "document": "Week 1_1.pdf",
+        "pages": [
+          12,
+          14
+        ]
+      }
+    },
+    {
+      "id": "cloud-temporary-files",
+      "topic": "notebook.persistence",
+      "title": "임시 런타임 파일은 따로 보관한다",
+      "why": "다음 학습 시간에 입력 자료를 잃지 않고 계산을 재현할 수 있습니다.",
+      "explanation": "저장된 노트북 문서와 실행 중인 런타임의 임시 폴더는 별개입니다. 세션이 바뀌면 임시 파일을 다시 제공해야 할 수 있으므로, 원본과 필요한 결과를 지속되는 저장소에 보관할 계획이 필요합니다.",
+      "example": "실험 기록을 업로드해 분석했다면 원본 파일을 개인 저장소에도 남겨 두고, 새 세션에서 다시 불러오는 순서를 기록합니다.",
+      "misconception": "노트북 저장 버튼이나 브라우저 북마크가 런타임의 모든 파일까지 보존해 주지는 않습니다.",
+      "quiz_ids": [
+        "cloud-session-storage"
+      ],
+      "source": {
+        "document": "Week 1_1.pdf",
+        "pages": [
+          12,
+          14
+        ]
+      }
+    },
+    {
+      "id": "local-workspace-files",
+      "topic": "notebook.persistence",
+      "title": "로컬 실행은 내 컴퓨터의 저장소를 사용한다",
+      "why": "오프라인 학습과 파일 보관 방식을 실행 장소에 맞게 선택할 수 있습니다.",
+      "explanation": "로컬 환경에서는 준비한 Python이 내 컴퓨터에서 실행되고 저장한 파일도 그 컴퓨터에 남습니다. 준비된 도구와 자료만 쓰는 작업은 오프라인에서도 할 수 있지만, 파일 보관과 백업은 별도로 관리해야 합니다.",
+      "example": "기차에서 분석하려면 출발 전에 필요한 패키지와 입력 파일을 컴퓨터에 준비합니다. 웹 자료를 새로 받는 작업은 인터넷이 필요합니다.",
+      "misconception": "로컬 파일이 세션 종료 후 남는다는 뜻이지, 삭제나 고장에서도 자동으로 안전하다는 뜻은 아닙니다.",
+      "quiz_ids": [
+        "cloud-session-storage"
+      ],
+      "source": {
+        "document": "Week 1_1.pdf",
+        "pages": [
+          13,
+          14
+        ]
+      }
+    },
+    {
+      "id": "package-install-import",
+      "topic": "environment.packages",
+      "title": "설치와 import는 다른 단계다",
+      "why": "패키지를 준비하는 작업과 코드에서 사용하는 작업을 구별할 수 있습니다.",
+      "explanation": "설치는 Python 환경에 외부 패키지를 준비하는 과정이고, import는 현재 Python 실행에서 사용할 이름을 불러오는 과정입니다. 패키지를 이미 준비했더라도 새 코드에서는 필요한 import를 해야 합니다.",
+      "example": "그리기 도구를 환경에 준비한 뒤 코드에서 matplotlib.pyplot을 불러옵니다. plt라는 별칭은 코드에서 정하는 짧은 이름입니다.",
+      "misconception": "별칭을 바꾸거나 import를 반복해도 설치되지 않은 패키지가 새로 설치되지는 않습니다.",
+      "quiz_ids": [
+        "install-versus-import"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          29,
+          30,
+          34
+        ]
+      }
+    },
+    {
+      "id": "python-selected-environment",
+      "topic": "environment.packages",
+      "title": "설치한 환경과 실행하는 환경을 맞춘다",
+      "why": "터미널에서는 되는데 노트북에서는 안 되는 상황을 점검할 수 있습니다.",
+      "explanation": "한 컴퓨터에도 여러 Python 환경이 있을 수 있습니다. 터미널이 사용하는 Python과 노트북 커널이 사용하는 Python이 다르면, 볼 수 있는 패키지와 버전도 다를 수 있습니다.",
+      "example": "터미널의 분석용 환경에는 그래프 패키지가 있고 노트북은 다른 환경을 선택했다면, 먼저 두 곳의 실행 환경이 같은지 확인합니다.",
+      "misconception": "한 곳에 설치한 패키지가 그 컴퓨터의 모든 Python 환경에 자동으로 공유되는 것은 아닙니다.",
+      "quiz_ids": [
+        "install-versus-import"
+      ],
+      "source": {
+        "document": "supplement",
+        "pages": []
+      }
+    },
+    {
+      "id": "conda-project-environment",
+      "topic": "environment.conda",
+      "title": "Conda 환경은 프로젝트의 도구 구성을 나눈다",
+      "why": "서로 다른 과제의 Python·패키지 요구를 분리할 수 있습니다.",
+      "explanation": "Conda 환경은 Python과 패키지 구성을 따로 관리하는 단위입니다. 환경 생성, 사용할 환경의 활성화, 필요한 패키지 준비는 서로 다른 단계입니다. 활성화는 그 환경을 선택하는 일입니다.",
+      "example": "작년 분석 보고서와 새 수업 프로젝트가 서로 다른 패키지 버전을 요구하면 환경을 나누어 각 구성을 관리할 수 있습니다.",
+      "misconception": "환경 이름을 적거나 활성화한다고 코드가 수정되거나 모든 버전 충돌이 사라지는 것은 아닙니다. 이 카드는 실제 환경을 생성하지 않습니다.",
+      "quiz_ids": [
+        "conda-project-isolation"
+      ],
+      "source": {
+        "document": "supplement",
+        "pages": []
+      }
+    },
+    {
+      "id": "android-native-versus-remote",
+      "topic": "environment.platform",
+      "title": "실행 위치와 공식 설치 지원을 구분한다",
+      "why": "지원하지 않는 설치를 완료했다고 오인하지 않고 학습 경로를 고를 수 있습니다.",
+      "explanation": "Conda의 공식 설치 안내 대상은 Windows·macOS·Linux입니다. 이를 Android 네이티브 설치 지원으로 간주하면 안 됩니다. Android 브라우저로 원격 Python을 쓰는 방법과 지원되는 PC에 설치하는 방법은 실행 위치가 다릅니다.",
+      "example": "휴대전화에서 원격 노트북의 계산 결과를 받았다면 원격 Python 실행을 확인한 것입니다. 휴대전화 자체의 Conda 설치 성공을 확인한 것은 아닙니다.",
+      "misconception": "Android가 Linux 커널을 쓴다는 사실만으로 데스크톱 Linux용 Conda 설치가 보장되지는 않습니다. 이 카드는 설치 성공을 판정하지 않습니다.",
+      "quiz_ids": [
+        "conda-android-platform"
+      ],
+      "source": {
+        "document": "supplement",
+        "pages": []
+      }
+    },
+    {
+      "id": "data-science-question",
+      "topic": "data.science",
+      "title": "데이터 과학은 질문과 근거에서 시작한다",
+      "why": "자료를 많이 모으는 것과 문제를 분석하는 것을 구분할 수 있습니다.",
+      "explanation": "데이터 과학은 자료에서 질문에 답할 근거와 지식을 얻는 활동입니다. 분석·모델링·계산 도구를 목적에 맞게 사용합니다. 자료가 작거나 수익을 만들지 않는 활동도 분석 대상이 될 수 있습니다.",
+      "example": "화분 여섯 개의 물주기 기록으로 잎이 시드는 조건을 비교할 수 있습니다. 비교할 조건과 다른 가능한 원인도 함께 생각합니다.",
+      "misconception": "자료의 크기나 사업 수익만으로 데이터 과학인지 결정하지 않습니다. 코드 실행만으로 결론이 옳아지는 것도 아닙니다.",
+      "quiz_ids": [
+        "data-science-small-sample"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          2,
+          3,
+          7,
+          10
+        ]
+      }
+    },
+    {
+      "id": "data-to-information",
+      "topic": "data.information",
+      "title": "정보는 목적에 맞게 해석한 데이터다",
+      "why": "원자료를 어떤 기준으로 요약해야 하는지 결정할 수 있습니다.",
+      "explanation": "데이터는 측정하거나 수집한 값과 기록입니다. 정보는 그 데이터를 특정 질문이나 목적에 맞게 처리해 의미를 얻은 것입니다. 같은 기록에서도 질문에 따라 다른 정보가 나옵니다.",
+      "example": "자전거 대여 시작·종료 시각은 기록입니다. 정비 인력을 배치하려고 요일별 이용 시간을 집계하면 그 목적에 쓰는 정보를 얻습니다.",
+      "misconception": "종이 기록을 파일로 바꾸기만 했다고 목적에 맞는 정보가 저절로 생기지는 않습니다. 단위와 누락도 살펴야 합니다.",
+      "quiz_ids": [
+        "data-versus-information"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          11
+        ]
+      }
+    },
+    {
+      "id": "bigdata-volume",
+      "topic": "data.three_vs",
+      "title": "Volume은 데이터의 양이다",
+      "why": "저장 용량과 전체 처리량 때문에 생기는 어려움을 구별할 수 있습니다.",
+      "explanation": "빅데이터의 3V 중 Volume은 자료의 양을 가리킵니다. 현재 들어오는 속도보다 이미 쌓였거나 처리해야 하는 전체 규모가 문제라면 양의 관점에서 봅니다.",
+      "example": "영상 기록이 여러 해 쌓여 한 저장장치에 담거나 한 번에 처리하기 어려워졌다면 Volume 문제가 드러납니다.",
+      "misconception": "파일이 빠르게 도착한다는 뜻과 파일이 많이 쌓였다는 뜻은 같지 않습니다. 한 시스템에 여러 V가 함께 나타날 수도 있습니다.",
+      "quiz_ids": [
+        "bigdata-three-vs"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          4
+        ]
+      }
+    },
+    {
+      "id": "bigdata-velocity",
+      "topic": "data.three_vs",
+      "title": "Velocity는 데이터가 들어오는 속도다",
+      "why": "전체 자료량이 작아도 제때 처리하기 어려운 이유를 설명할 수 있습니다.",
+      "explanation": "빅데이터의 3V 중 Velocity는 데이터의 생성·유입 속도와 그에 맞춘 처리의 시간 요구를 가리킵니다. 새 자료가 빨리 들어와 처리가 밀리는 상황에 주목합니다.",
+      "example": "공연 예매가 열리자 요청이 짧은 시간에 몰려 대기열이 길어진다면, 그 순간의 유입 속도가 중요한 문제입니다.",
+      "misconception": "저장 공간만 늘린다고 빠른 유입을 제때 처리하는 문제가 반드시 해결되는 것은 아닙니다.",
+      "quiz_ids": [
+        "bigdata-three-vs"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          4
+        ]
+      }
+    },
+    {
+      "id": "bigdata-variety",
+      "topic": "data.three_vs",
+      "title": "Variety는 데이터 형태의 다양성이다",
+      "why": "자료마다 읽고 정리하는 방법이 달라지는 이유를 이해할 수 있습니다.",
+      "explanation": "빅데이터의 3V 중 Variety는 자료의 구조와 형태가 다양하다는 뜻입니다. 숫자 표, 자유로운 글, 사진, 소리처럼 서로 다른 자료를 함께 다루면 표현과 처리 방식을 맞춰야 합니다.",
+      "example": "상품 평점 숫자, 후기 글, 고객이 올린 사진을 함께 분석하려면 각 형태에 맞는 준비 과정이 필요합니다.",
+      "misconception": "같은 형식의 숫자 행이 더 많아지는 것만으로 형태의 다양성이 커지는 것은 아닙니다.",
+      "quiz_ids": [
+        "bigdata-three-vs"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          4
+        ]
+      }
+    },
+    {
+      "id": "digital-discrete-values",
+      "topic": "data.digitization",
+      "title": "디지털 표현은 구별되는 값을 사용한다",
+      "why": "연속적으로 변하는 현상을 컴퓨터에 담을 때 선택이 필요한 이유를 이해합니다.",
+      "explanation": "아날로그는 연속적으로 변하는 값을, 디지털은 서로 구별되는 단계의 값을 다룹니다. 디지털 표현을 만들 때는 어느 순간을 읽고 어느 값 단계로 기록할지 정해야 합니다.",
+      "example": "실제 소리의 세기는 계속 변하지만 저장된 음성에는 정해진 시점마다 정해진 단계로 표현한 수치가 들어 있습니다.",
+      "misconception": "디지털이라는 말이 원래 현상의 모든 변화를 손실 없이 담았다는 뜻은 아닙니다.",
+      "quiz_ids": [
+        "digital-sample-quantize-encode"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          12,
+          13
+        ]
+      }
+    },
+    {
+      "id": "digitization-sampling",
+      "topic": "data.digitization",
+      "title": "표본화는 언제 측정할지 정한다",
+      "why": "시간 간격을 바꾸면 어떤 변화를 관찰할 수 있는지 판단할 수 있습니다.",
+      "explanation": "표본화는 연속 신호에서 정해진 시점의 값을 읽는 단계입니다. 측정 시점을 고르는 일이며, 읽은 값을 몇 단계로 반올림할지는 다음 문제입니다.",
+      "example": "진동을 0.02초 간격으로 읽도록 정하는 것은 표본화 간격을 선택한 것입니다.",
+      "misconception": "측정 간격을 정하는 일과 값의 소수 자릿수를 줄이는 일은 서로 다른 단계입니다.",
+      "quiz_ids": [
+        "digital-sample-quantize-encode"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          13
+        ]
+      }
+    },
+    {
+      "id": "digitization-quantization",
+      "topic": "data.digitization",
+      "title": "양자화는 표현할 값의 단계를 정한다",
+      "why": "측정값을 제한된 정밀도로 나타낼 때 생기는 차이를 이해할 수 있습니다.",
+      "explanation": "양자화는 읽어 온 값을 사용할 수 있는 단계에 맞추는 일입니다. 단계 사이의 값은 정해진 규칙으로 가까운 표현값 등에 대응시킵니다.",
+      "example": "저울의 측정값을 0.5그램 단위로 나타내도록 정했다면, 12.3그램을 12.5그램으로 표현하는 과정이 양자화의 예입니다.",
+      "misconception": "양자화는 측정 시점을 고르는 단계가 아닙니다. 값 단계를 세밀하게 바꿔도 측정 횟수가 저절로 늘지는 않습니다.",
+      "quiz_ids": [
+        "digital-sample-quantize-encode"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          13
+        ]
+      }
+    },
+    {
+      "id": "digitization-encoding",
+      "topic": "data.digitization",
+      "title": "부호화는 정한 값을 기호로 기록한다",
+      "why": "값의 선택과 그 값을 저장하는 표현을 구분할 수 있습니다.",
+      "explanation": "부호화는 양자화된 값이나 단계 번호를 정해진 기호로 나타내는 일입니다. 이진 부호화에서는 0과 1의 조합을 사용합니다.",
+      "example": "밝기를 8단계로 정한 뒤 단계 번호 5를 이진수 101로 기록할 수 있습니다. 단계 자체를 고르는 일과 101로 쓰는 일은 다릅니다.",
+      "misconception": "이진수로 적는다고 앞 단계에서 없어진 세밀한 측정 정보가 복구되지는 않습니다.",
+      "quiz_ids": [
+        "digital-sample-quantize-encode"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          13
+        ]
+      }
+    },
+    {
+      "id": "image-bitmap-pixels",
+      "topic": "data.images",
+      "title": "비트맵은 픽셀의 값으로 그림을 만든다",
+      "why": "이미지를 행과 열을 가진 데이터로 생각할 수 있습니다.",
+      "explanation": "비트맵은 격자 각 위치의 색이나 밝기 값을 저장합니다. 이 격자의 한 칸이 픽셀입니다. 가로 픽셀 수와 세로 픽셀 수를 곱하면 전체 픽셀 수가 됩니다.",
+      "example": "가로 9칸, 세로 5칸의 작은 비트맵에는 값을 담을 픽셀이 45개 있습니다.",
+      "misconception": "가로와 세로 길이를 더한 값은 픽셀 수가 아닙니다. 그림의 화면 표시 크기와 저장된 픽셀 수도 구분해야 합니다.",
+      "quiz_ids": [
+        "image-representation-storage"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          14,
+          15
+        ]
+      }
+    },
+    {
+      "id": "image-vector-shapes",
+      "topic": "data.images",
+      "title": "벡터 이미지는 도형을 기술한다",
+      "why": "이미지마다 저장 방식과 용량 계산법이 다른 이유를 이해합니다.",
+      "explanation": "벡터 이미지는 선·곡선·영역 같은 도형을 좌표와 수학적 표현으로 기술합니다. 각 픽셀의 값을 하나씩 저장하는 비트맵과 표현 단위가 다릅니다.",
+      "example": "원 중심의 좌표, 반지름, 채우기 색으로 아이콘의 원을 기술할 수 있습니다.",
+      "misconception": "벡터 그림의 파일 크기를 가로 픽셀 수×세로 픽셀 수만으로 계산할 수는 없습니다.",
+      "quiz_ids": [
+        "image-representation-storage"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          14
+        ]
+      }
+    },
+    {
+      "id": "image-eight-bit-grayscale",
+      "topic": "data.images",
+      "title": "8비트 회색조는 밝기를 256단계로 나타낸다",
+      "why": "표현 가능한 밝기 종류와 저장 크기를 혼동하지 않게 됩니다.",
+      "explanation": "회색조는 색상 대신 밝기를 나타냅니다. 8비트 회색조에서는 픽셀 하나에 0부터 255까지의 밝기 값 하나를 저장하므로, 가능한 밝기는 256종류입니다.",
+      "example": "한 픽셀의 값이 90이라면 256개의 값을 모두 담은 것이 아니라, 가능한 밝기 중 하나를 기록한 것입니다.",
+      "misconception": "밝기가 256종류라고 픽셀 하나가 256바이트를 차지하는 것은 아닙니다.",
+      "quiz_ids": [
+        "image-representation-storage"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          16,
+          17
+        ]
+      }
+    },
+    {
+      "id": "storage-bits-bytes",
+      "topic": "data.images",
+      "title": "1바이트는 8비트다",
+      "why": "파일 용량이나 원소 크기를 같은 단위로 비교할 수 있습니다.",
+      "explanation": "비트는 0 또는 1을 나타내는 단위이고, 1바이트는 8비트입니다. 비트 수를 바이트 수로 바꾸려면 8로 나눕니다.",
+      "example": "총 80비트의 데이터는 10바이트입니다. 숫자만 보지 말고 bit인지 byte인지 함께 읽습니다.",
+      "misconception": "비트와 바이트는 이름만 다른 같은 단위가 아닙니다. 10비트와 10바이트처럼 숫자가 같아도 저장량은 8배 다릅니다.",
+      "quiz_ids": [
+        "image-representation-storage"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          17
+        ]
+      }
+    },
+    {
+      "id": "image-raw-storage",
+      "topic": "data.images",
+      "title": "원시 픽셀 용량은 개수와 픽셀당 크기로 구한다",
+      "why": "밝기 단계 수가 아니라 저장되는 값의 개수로 용량을 계산할 수 있습니다.",
+      "explanation": "압축과 파일 헤더가 없다는 조건에서는 전체 픽셀 수에 픽셀당 바이트 수를 곱합니다. 8비트 회색조의 픽셀 하나는 1바이트입니다.",
+      "example": "가로 12픽셀, 세로 5픽셀인 8비트 회색조 원시 데이터는 12×5×1=60바이트입니다.",
+      "misconception": "이 계산값이 실제 PNG나 JPEG 파일 크기와 반드시 같은 것은 아닙니다. 압축과 부가 정보라는 조건을 확인합니다.",
+      "quiz_ids": [
+        "image-representation-storage"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          15,
+          16,
+          17
+        ]
+      }
+    },
+    {
+      "id": "storage-binary-prefix",
+      "topic": "data.images",
+      "title": "KiB는 1024바이트를 뜻한다",
+      "why": "용량 표기의 관례 때문에 서로 다른 숫자를 비교하는 실수를 줄입니다.",
+      "explanation": "정확한 이진 단위 KiB는 1024바이트이고, 십진 단위 kB는 1000바이트입니다. 강의는 KB를 1024바이트 관례로 쓰므로 문제에서 지정한 기준을 먼저 읽습니다.",
+      "example": "2048바이트는 2KiB입니다. 같은 양을 십진 kB로 표현하면 2.048kB입니다.",
+      "misconception": "접두어가 붙은 용량은 언제나 1000 또는 언제나 1024라고 단정하지 말고 표기와 조건을 확인합니다.",
+      "quiz_ids": [
+        "image-representation-storage"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          17,
+          18
+        ]
+      }
+    },
+    {
+      "id": "science-empirical",
+      "topic": "data.paradigms",
+      "title": "경험 과학은 관찰과 실험으로 알아본다",
+      "why": "자료를 직접 얻는 활동이 과학적 탐구에서 맡는 역할을 구분합니다.",
+      "explanation": "경험 과학은 실제 현상을 관찰하거나 조건을 바꾸어 실험하고 결과를 기록하는 접근입니다. 개인적 느낌보다 확인할 수 있는 관찰과 측정이 중요합니다.",
+      "example": "같은 종류의 씨앗에 주는 물의 양을 달리하고 매일 자란 길이를 기록하는 것은 관찰·실험 중심의 접근입니다.",
+      "misconception": "여기서 경험은 막연한 직감이라는 뜻이 아닙니다. 계산 도구를 쓴다고 관찰·실험이 불필요해지는 것도 아닙니다.",
+      "quiz_ids": [
+        "science-four-paradigms"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          21,
+          22
+        ]
+      }
+    },
+    {
+      "id": "science-theoretical",
+      "topic": "data.paradigms",
+      "title": "이론 과학은 관계를 수학적 법칙으로 설명한다",
+      "why": "현상을 관찰하는 일과 설명 모델을 세우는 일을 구별할 수 있습니다.",
+      "explanation": "이론 과학은 현상을 설명하는 관계와 법칙을 수학적 모델로 표현합니다. 관찰 결과와 맞는지 검토하며, 어떤 조건에서 모델이 성립하는지도 살핍니다.",
+      "example": "진자의 길이와 흔들리는 주기 사이의 관계를 수식으로 세우고, 그 식이 어떤 가정에 기대는지 따져 봅니다.",
+      "misconception": "수식으로 표현했다고 관찰 검증이 필요 없어지는 것은 아닙니다. 경험과 이론은 서로 보완합니다.",
+      "quiz_ids": [
+        "science-four-paradigms"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          21,
+          22
+        ]
+      }
+    },
+    {
+      "id": "science-computational",
+      "topic": "data.paradigms",
+      "title": "계산 과학은 모델의 동작을 시뮬레이션한다",
+      "why": "컴퓨터 사용 자체와 모델 시뮬레이션을 구분할 수 있습니다.",
+      "explanation": "계산 과학은 수학적 모델을 컴퓨터로 계산하여 복잡한 시스템이 어떻게 변할지 살펴보는 접근입니다. 단순히 기록을 저장하거나 표를 정렬하는 일과는 목적이 다릅니다.",
+      "example": "도로의 차량 움직임 규칙을 정한 뒤 신호 시간을 바꾸며 교통 흐름을 가상으로 계산해 보는 것이 한 예입니다.",
+      "misconception": "컴퓨터를 사용한 모든 작업을 계산 과학이라고 부르지는 않습니다. 무엇을 모델링하고 시뮬레이션했는지가 핵심입니다.",
+      "quiz_ids": [
+        "science-four-paradigms"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          21,
+          23
+        ]
+      }
+    },
+    {
+      "id": "science-data-intensive",
+      "topic": "data.paradigms",
+      "title": "데이터 중심 과학은 수집된 자료에서 패턴을 찾는다",
+      "why": "모델을 먼저 계산하는 접근과 자료에서 규칙을 발견하는 접근을 구분합니다.",
+      "explanation": "데이터 중심 과학은 폭넓게 수집된 자료를 분석해 패턴과 관계를 발견하는 접근입니다. 관찰·이론·시뮬레이션과 함께 사용할 수 있으며, 앞선 방법을 폐기한다는 뜻은 아닙니다.",
+      "example": "여러 지역의 식물 관찰 기록에서 꽃이 피는 시기와 기후 조건의 관계를 탐색할 수 있습니다.",
+      "misconception": "패턴을 찾았다고 원인까지 자동으로 증명되는 것은 아닙니다. 새 접근이 이전 과학 방법을 모두 대체하지도 않습니다.",
+      "quiz_ids": [
+        "science-four-paradigms"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          21,
+          23
+        ]
+      }
+    },
+    {
+      "id": "library-numpy",
+      "topic": "environment.library_roles",
+      "title": "NumPy는 수치 배열 계산을 돕는다",
+      "why": "같은 형태의 숫자를 묶어 계산할 때 사용할 도구를 고를 수 있습니다.",
+      "explanation": "NumPy는 수치 배열을 표현하고 배열의 원소 계산이나 벡터·행렬 연산을 수행하는 도구입니다. 이 수업에서는 배열의 형태와 축을 이해하는 것이 먼저입니다.",
+      "example": "여러 지점에서 측정한 습도 값을 배열로 모아 각 값에 보정량을 적용하는 계산에 사용할 수 있습니다.",
+      "misconception": "NumPy는 패키지를 설치하는 관리자가 아닙니다. 배열 계산 도구와 설치 도구의 역할은 다릅니다.",
+      "quiz_ids": [
+        "package-roles"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          32,
+          33
+        ]
+      }
+    },
+    {
+      "id": "library-pandas",
+      "topic": "environment.library_roles",
+      "title": "pandas는 이름 붙은 표 데이터를 다룬다",
+      "why": "행·열의 의미를 유지하며 기록을 정리할 도구를 고를 수 있습니다.",
+      "explanation": "pandas는 Series와 DataFrame으로 라벨이 있는 데이터를 다룹니다. 표를 읽고 필요한 행·열을 선택하거나 집단별로 요약하는 작업에 쓰입니다.",
+      "example": "도시 이름, 조사 날짜, 강수량이 있는 표에서 도시별 강수량을 요약하는 작업에 사용할 수 있습니다.",
+      "misconception": "pandas는 웹 브라우저가 아니며, 표의 행 라벨이 항상 0부터 시작하는 위치 번호와 같은 것도 아닙니다.",
+      "quiz_ids": [
+        "package-roles"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          32,
+          33
+        ]
+      }
+    },
+    {
+      "id": "library-matplotlib",
+      "topic": "environment.library_roles",
+      "title": "Matplotlib은 데이터의 모습을 그래프로 보여 준다",
+      "why": "수치 결과를 사람이 비교하고 해석할 수 있는 그림으로 표현합니다.",
+      "explanation": "Matplotlib은 선·산점도·막대 등 다양한 그래프를 그리는 도구입니다. 축과 제목, 범례 같은 구성 요소를 지정해 값의 의미를 전달할 수 있습니다.",
+      "example": "며칠 동안 측정한 전력 사용량을 시간 순서대로 선 그래프로 표현하는 데 사용할 수 있습니다.",
+      "misconception": "그래프를 그렸다는 이유만으로 자료의 품질이나 분석 결론이 검증되는 것은 아닙니다.",
+      "quiz_ids": [
+        "package-roles"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          32,
+          33
+        ]
+      }
+    },
+    {
+      "id": "library-seaborn",
+      "topic": "environment.library_roles",
+      "title": "Seaborn은 통계 시각화를 간편하게 만든다",
+      "why": "집단 간 분포나 변수 관계를 비교하는 그림을 선택할 수 있습니다.",
+      "explanation": "Seaborn은 Matplotlib 위에서 통계적 시각화를 쉽게 표현하도록 돕는 도구입니다. 표의 변수와 집단을 그래프의 역할에 대응시키는 데 편리합니다.",
+      "example": "근무조별 처리 시간의 분포를 나란히 비교하는 통계 그림을 만들 때 사용할 수 있습니다.",
+      "misconception": "Seaborn과 Matplotlib은 아무 관계 없는 별개 종류의 도구가 아닙니다. 더 간편한 표현도 데이터의 의미를 대신 판단해 주지는 않습니다.",
+      "quiz_ids": [
+        "package-roles"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          32,
+          33
+        ]
+      }
+    },
+    {
+      "id": "library-scikit-learn",
+      "topic": "environment.library_roles",
+      "title": "scikit-learn은 머신러닝 모델을 다루는 도구다",
+      "why": "데이터 정리·그리기와 모델 학습의 역할을 구분할 수 있습니다.",
+      "explanation": "scikit-learn은 여러 머신러닝 알고리즘을 일관된 방식으로 사용할 수 있게 제공합니다. 앞으로 모델을 학습하고 결과를 평가할 때 다루며, 지금은 역할을 구별하면 됩니다.",
+      "example": "꽃의 측정값으로 종류를 구분하는 모델을 준비하고 평가하는 작업에 사용할 수 있습니다.",
+      "misconception": "라이브러리를 가져오기만 하면 모델이 자동으로 학습되는 것은 아닙니다. 이 카드에서 알고리즘 수식을 외울 필요는 없습니다.",
+      "quiz_ids": [
+        "package-roles"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          32,
+          33
+        ]
+      }
+    },
+    {
+      "id": "library-tensorflow",
+      "topic": "environment.library_roles",
+      "title": "TensorFlow는 딥러닝 모델의 계산과 학습을 돕는다",
+      "why": "여섯 도구 중 신경망 모델을 다루는 도구의 위치를 알 수 있습니다.",
+      "explanation": "TensorFlow는 수치 계산과 딥러닝 모델을 만들고 학습시키는 데 사용하는 도구입니다. 표를 정리하는 도구나 패키지 관리자와 역할이 다릅니다. 신경망의 세부 원리는 이후 학습 범위입니다.",
+      "example": "다양한 손글씨 이미지를 이용해 숫자를 구분하는 신경망을 학습시키는 작업에 사용할 수 있습니다.",
+      "misconception": "TensorFlow를 모든 문제에서 더 좋은 도구라는 순위로 이해하지 않습니다. 무엇을 만들고 계산할지에 따라 도구를 고릅니다.",
+      "quiz_ids": [
+        "package-roles"
+      ],
+      "source": {
+        "document": "week_1_2_handout.pdf",
+        "pages": [
+          32,
+          33
+        ]
+      }
+    }
+  ]
+}

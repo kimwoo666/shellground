@@ -1,0 +1,15 @@
+Shellground includes CPython, NumPy, pandas, Matplotlib, SciPy, Seaborn,
+scikit-learn, Chaquopy, Pillow, and their dependencies under their respective
+licenses. Library license files are included in the bundled package metadata.
+
+This software is based in part on the work of the FreeType Team.
+Portions of this software are copyright © 2026 The FreeType Project
+(https://freetype.org). All rights reserved.
+
+FreeType 2.14.3 is rebuilt from unmodified upstream sources with Android NDK
+r27c and 16KB ELF load alignment. The FreeType Project License (FTL.TXT),
+source URL/checksum and build information are included in its wheel metadata.
+Optional PNG, Brotli, HarfBuzz, zlib and bzip2 integrations in this FreeType
+build are disabled. Shellground does not claim to have authored FreeType.
+
+Noto Sans CJK is distributed under the SIL Open Font License 1.1.

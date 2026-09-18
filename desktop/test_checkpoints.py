@@ -9,6 +9,7 @@ from PySide6.QtWidgets import QDialog, QMessageBox
 from checkpoints import CHECKPOINTS, checkpoint_at, make_checkpoint
 from missions import UNITS
 from native_app import Window, create_application
+from course_topics import unit_number, next_in_topic
 
 
 class CheckpointContentTests(unittest.TestCase):
@@ -29,8 +30,8 @@ class CheckpointContentTests(unittest.TestCase):
         for checkpoint in CHECKPOINTS:
             known = set().union(*(introduced.get(u.key, set()) for u in UNITS[:checkpoint.end]))
             for seed in range(12):
-                m = make_checkpoint(checkpoint.end, seed)
-                self.assertEqual(m, make_checkpoint(checkpoint.end, seed))
+                m = make_checkpoint(checkpoint.end, seed, mode='simulation')
+                self.assertEqual(m, make_checkpoint(checkpoint.end, seed, mode='simulation'))
                 self.assertEqual(m.review['units'], [u.key for u in checkpoint.units])
                 if checkpoint.end <= 25: self.assertGreaterEqual(len(m.review['goals']), 3)
                 else: self.assertIn('extension', m.review)
@@ -65,19 +66,20 @@ class CheckpointUITests(unittest.TestCase):
     def fake_jobs(self, value):
         return patch.object(self.window, 'run_job', side_effect=lambda fn, cb, **kwargs: cb(value))
 
-    def test_sidebar_interleaves_checkpoints_without_renumbering(self):
+    def test_sidebar_interleaves_checkpoints_with_stable_ids_and_topic_numbers(self):
         w = self.window
-        self.assertEqual(w.course.count(), 48)
+        self.assertEqual(w.course.count(), len(w.units) + len(w.checkpoints))
+        self.assertEqual([u.key for u in w.units[:40]], [u.key for u in UNITS])
         for c in CHECKPOINTS:
             row = w.checkpoint_rows[c.end]
             self.assertEqual(w.course.item(row).data(256), ('checkpoint', c.end))
-            self.assertTrue(w.course.item(row - 1).text().startswith(f'{c.end:02d}.'))
-            if c.end < len(UNITS): self.assertTrue(w.course.item(row + 1).text().startswith(f'{c.end + 1:02d}.'))
+            self.assertTrue(w.course.item(row - 1).text().startswith(f'{unit_number(w.units, c.end - 1):02d}.'))
+            if c.end < len(UNITS): self.assertTrue(w.course.item(row + 1).text().startswith(f'{unit_number(w.units, c.end):02d}.'))
         w.select_checkpoint(5)
-        self.assertEqual(w.phase, 'learn')
-        self.assertIn('완료하면', w.feedback.text())
+        self.assertEqual(w.phase, 'checkpoint_ready')
+        self.assertEqual(w.checkpoint_end, 5)
 
-    def test_boundary_routes_to_checkpoint_and_requires_passing_it(self):
+    def test_boundary_offers_checkpoint_but_next_lesson_is_always_available(self):
         w = self.window
         w.completed = [u.key for u in UNITS[:4]]
         w.index, w.phase, w.practice_number = 4, 'practice', 2
@@ -87,7 +89,7 @@ class CheckpointUITests(unittest.TestCase):
         with self.fake_jobs({'passed': True, 'checks': []}):
             w.grade()
         self.assertEqual(len(w.completed), 5)
-        self.assertFalse(w.lesson_unlocked(5))
+        self.assertTrue(w.lesson_unlocked(5))
         self.assertIn('종합 복습', w.next_button.text())
         w.advance()
         self.assertEqual(w.phase, 'checkpoint_ready')
@@ -112,7 +114,7 @@ class CheckpointUITests(unittest.TestCase):
 
     def test_resume_pending_checkpoint_and_preserve_legacy_completions(self):
         w = self.window
-        w.completed = [u.key for u in UNITS]
+        w.completed = [u.key for u in w.units]
         w.save_progress()
         restored = Window(self.ui, self.mono, self.path)
         self.assertEqual(restored.completed, w.completed)
@@ -153,7 +155,7 @@ class CheckpointUITests(unittest.TestCase):
             w.completed = [u.key for u in UNITS[:c.end]]
             w.completed_checkpoints = [x.key for x in CHECKPOINTS if x.end < c.end]
             w.refresh_course()
-            self.assertFalse(w.lesson_unlocked(c.end))
+            self.assertTrue(w.lesson_unlocked(c.end))
             w.select_checkpoint(c.end, initial=True)
             with patch.object(w, 'run_job'):
                 w.advance()
@@ -162,7 +164,8 @@ class CheckpointUITests(unittest.TestCase):
                 w.grade()
             with patch.object(w, 'launch'):
                 w.advance()
-            if c.end < len(UNITS):
-                self.assertEqual(w.index, c.end)
+            following = next_in_topic(w.units, c.end - 1)
+            if following is not None:
+                self.assertEqual(w.index, following)
                 self.assertEqual(w.phase, 'learn')
             else: self.assertEqual(w.phase, 'random')

@@ -19,7 +19,7 @@ from lab import lab
 
 
 def base_filesystem():
-    fs = FS(); fs.uid = 0
+    fs = FS(); fs.uid = 0; fs.gid = 0
     for path in ('/home/learner', '/root', '/tmp', '/usr/bin', '/bin', '/etc', '/var/log', '/srv/fixtures'):
         fs.mkdir(path, True, True)
     fs.get('/home/learner').uid = 1100
@@ -27,7 +27,7 @@ def base_filesystem():
     fs.write('/etc/passwd', b'root:x:0:0:root:/root:/bin/bash\nlearner:x:1100:1100::/home/learner:/bin/bash\n')
     fs.write('/etc/group', b'root:x:0:\nlearner:x:1100:\nsudo:x:27:learner\n')
     fs.write('/tmp/shellground.pid', b'100')
-    fs.uid = 1100
+    fs.uid = 1100; fs.gid = 1100
     return fs
 
 
@@ -46,9 +46,9 @@ def fixtures(fs):
     data['bundle.zip'] = stream.getvalue()
     # Explicitly simulated package; never fed to a host package manager.
     data['toolkit.deb'] = b'!<arch>\nShellground simulated Debian package\nPackage: shellground-toolkit\nVersion: 1.0\n' + lab.MESSAGE
-    uid = fs.uid; fs.uid = 0
+    uid, gid = fs.uid, fs.gid; fs.uid = 0; fs.gid = 0
     for name, value in data.items(): fs.write('/srv/fixtures/' + name, value)
-    fs.uid = uid
+    fs.uid, fs.gid = uid, gid
 
 
 def lab_adapter(shell):
@@ -111,7 +111,11 @@ class SimEngine:
         fixtures(self.shell.fs)
         self.shell.cwd = mission.start; self.shell.env['PWD'] = mission.start
         self.name = 'simulation'
-        self.reference = lab_adapter(self.shell)['prepare'](mission.payload())['reference']
+        if mission.kind.startswith('admin_'):
+            from sim_admin import prepare_admin
+            prepare_admin(self.shell, mission)
+        else:
+            self.reference = lab_adapter(self.shell)['prepare'](mission.payload())['reference']
         if mission.kind.startswith('sim_'):
             from sim_lessons import prepare_extension
             prepare_extension(self.shell, mission)
@@ -125,6 +129,15 @@ class SimEngine:
     def _rpc(self, action, mission):
         if not self.shell: raise ValueError('실습이 시작되지 않았습니다.')
         if action != 'grade': raise ValueError('unsupported simulator action')
+        if mission.kind.startswith('admin_'):
+            from sim_admin import accounts
+            from admin_lessons import grade_admin
+            # Grading may inspect inaccessible files but never changes the
+            # effective credentials of the learner's command execution.
+            uid = self.shell.fs.uid
+            self.shell.fs.uid = 0
+            try: return grade_admin(mission.review, accounts(self.shell.fs))
+            finally: self.shell.fs.uid = uid
         if mission.kind.startswith('sim_'):
             from sim_lessons import grade_extension
             return grade_extension(self.shell, mission)

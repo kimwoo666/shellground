@@ -53,7 +53,7 @@ class ScrollbackTests(unittest.TestCase):
         t = self.terminal
         QTest.keyClick(t, Qt.Key.Key_PageUp, Qt.KeyboardModifier.ShiftModifier)
         before = self.text()
-        t.selection_start, t.selection_end = (0, 0), (1, 20)
+        t.selection_start, t.selection_end = (t.viewport_top(), 0), (t.viewport_top() + 1, 20)
         t.feed(b'more output\r\n')
         QTest.keyClick(t, Qt.Key.Key_C, Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
         self.assertEqual(self.app.clipboard().text(), '\n'.join(before[:2]))

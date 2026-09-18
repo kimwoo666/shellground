@@ -39,7 +39,7 @@ class SimulatorTests(unittest.TestCase):
                         self.assertTrue(self.engine.rpc('grade', m)['passed'], self.engine.rpc('grade', m))
         for checkpoint in CHECKPOINTS:
             with self.subTest(checkpoint=checkpoint.end):
-                m = make_checkpoint(checkpoint.end, 4242)
+                m = make_checkpoint(checkpoint.end, 4242, mode='simulation')
                 self.engine = SimEngine(); self.engine.start(m); self.shell = self.engine.shell
                 self.assertFalse(self.engine.rpc('grade', m)['passed'])
                 self.solve(m)

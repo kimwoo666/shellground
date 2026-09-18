@@ -1,17 +1,78 @@
-__pycache__/
-*.py[cod]
-.venv/
-.runtime/
-.build-tools/
-.native-libs/
-build/
-dist/
-*.spec
-*.log
-.env
-.env.*
-progress*.json
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/.vinext/
+/out/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# local environment
+.env*
+
+# deployment and generated files
+.vercel
+next-env.d.ts
+/dist/
+/.wrangler/
+/outputs/
+/work/
+
+# native desktop build tools and intermediates
+/desktop/.build-tools/
+/desktop/build/
+/desktop/__pycache__/
+/desktop/.runtime/
+/desktop/.python-runtime/
+/desktop/.android-tools/
+/android/.gradle/
+/android/.gradle-user/
+/android/app/build/
+/android/build/
+/android/local.properties
+/android/.native-runtime/
+/android/runtime-probe/build/
+/android/runtime/__pycache__/
+/desktop/tmp/
+/desktop/python_teaching/__pycache__/
+/desktop/.native-libs/
+/desktop/.vm-runtime/
+/desktop/.vm-build/
+/desktop/.conda-build/
+/desktop/.jupyter-build/
+/desktop/notebook_teaching/__pycache__/
+/desktop/.vm-runtime-conda/
+/desktop/.windows-build/
+/desktop/conda_teaching/__pycache__/
+/desktop/dist-python/
+# Versioned review bundles contain multi-GB VM images; publish source, not runtimes.
+/desktop/dist-*/
+/desktop/.vm-sessions/
+/desktop/.venv/
+/desktop/dist/
+/desktop/lab/__pycache__/
+/publish/
+/releases/
+/android/.port-checks/
+/tmp/pdfs/
 memory-v1.json
 memory-v1.json.*.tmp
-.DS_Store
-Thumbs.db

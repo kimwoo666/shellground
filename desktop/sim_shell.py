@@ -106,6 +106,8 @@ def options(args, allowed='', values='', long=None):
 class Shell:
     def __init__(self, fs=None):
         self.fs = fs or FS()
+        if self.fs.uid == 0:
+            self.fs.gid, self.fs.groups = 0, {0}
         self.cwd = '/home/learner'
         self.env = {'HOME': self.cwd, 'USER': 'learner', 'PATH': '/usr/local/bin:/usr/bin:/bin', 'PWD': self.cwd}
         self.exported = set(self.env)
@@ -263,6 +265,8 @@ class Shell:
     def command(self, argv, stdin=b'', redirected=False):
         name, args = argv[0], argv[1:]
         if name.startswith('/bin/') or name.startswith('/usr/bin/'): name = p.basename(name)
+        from sim_admin import COMMANDS, command as admin_command
+        if name in COMMANDS and args != ['--help']: return admin_command(self, name, args)
         if name == 'docker': return self.docker.command(args, stdin)
         if args == ['--help'] and name in self.commands():
             supported = {'ls': '-a -A -l -h -1 -R -r -S -t -d', 'touch': '-a -m -c', 'cat': '-n -b -A',
@@ -535,10 +539,8 @@ class Shell:
             self.errexit |= 'e' in args[0]; self.nounset |= 'u' in args[0]
         elif name in ('jobs', 'ps', 'kill', 'bg', 'fg', 'sleep'): return self.process_command(name, args)
         elif name == 'sudo':
-            if not args: raise ValueError('usage: sudo command')
-            uid = self.fs.uid; self.fs.uid = 0
-            try: return self.command(args, stdin, redirected)
-            finally: self.fs.uid = uid
+            from sim_admin import sudo
+            return sudo(self, args, stdin, redirected)
         elif name in ('apt', 'apt-get'): return self.apt(args)
         elif name == 'whoami': out = 'root\n' if self.fs.uid == 0 else 'learner\n'
         elif name == 'id': out = 'uid=0(root) gid=0(root) groups=0(root)\n' if self.fs.uid == 0 else 'uid=1100(learner) gid=1100(learner) groups=1100(learner),27(sudo)\n'
@@ -568,7 +570,7 @@ class Shell:
 
     @staticmethod
     def commands():
-        return 'pwd cd ls mkdir touch cat cp mv rm rmdir chmod ln echo printf head tail wc grep find curl wget tar unzip dpkg-deb nano more less export unset env printenv bash sh source jobs ps kill bg fg sleep sudo apt apt-get tree whoami id hostname uname type history help docker clear true false test exit'.split()
+        return 'pwd cd ls mkdir touch cat cp mv rm rmdir chmod chown chgrp ln echo printf head tail wc grep find curl wget tar unzip dpkg-deb nano more less export unset env printenv bash sh source jobs ps kill bg fg sleep sudo apt apt-get tree whoami id groups getent useradd groupadd usermod hostname uname type history help docker clear true false test exit'.split()
 
     def ls(self, args, redirected=False):
         flags, _, paths = options(args, 'alAhS1Rrtd', long={'--all': 'a', '--almost-all': 'A', '--human-readable': 'h', '--recursive': 'R', '--reverse': 'r'})
@@ -593,9 +595,11 @@ class Shell:
                     node = item(n); size = 4096 if node.kind == 'dir' else len(node.target) if node.kind == 'link' else len(node.data)
                     size_text = (f'{size / 1024:.1f}K' if 1024 <= size < 10240 else f'{size / 1024:.0f}K' if size >= 10240 else str(size)) if 'h' in flags else str(size)
                     mode = stat.filemode({'dir': stat.S_IFDIR, 'file': stat.S_IFREG, 'link': stat.S_IFLNK}[node.kind] | node.mode)
-                    owner = 'root' if node.uid == 0 else 'learner'
+                    from sim_admin import accounts
+                    db = accounts(self.fs)
+                    owner, group = db.username(node.uid), db.groupname(node.gid)
                     date = time.strftime('%b %d  %Y' if abs(time.time() - node.mtime) > 15552000 else '%b %d %H:%M', time.gmtime(node.mtime))
-                    chunks.append(f'{mode} 1 {owner} {owner} {size_text:>6} {date} {n}' + (' -> ' + node.target if node.kind == 'link' else '') + '\n')
+                    chunks.append(f'{mode} 1 {owner} {group} {size_text:>6} {date} {n}' + (' -> ' + node.target if node.kind == 'link' else '') + '\n')
             elif names: chunks.append(('\n' if redirected or '1' in flags else '  ').join(names) + '\n')
             if 'R' in flags and isdir:
                 for n in names:

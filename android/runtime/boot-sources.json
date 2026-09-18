@@ -1,0 +1,11 @@
+{
+  "alpine-virt": {
+    "version": "3.23.5",
+    "architecture": "aarch64",
+    "archive": "alpine-virt-3.23.5-aarch64.iso",
+    "url": "https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/aarch64/alpine-virt-3.23.5-aarch64.iso",
+    "sha256_url": "https://dl-cdn.alpinelinux.org/alpine/v3.23/releases/aarch64/alpine-virt-3.23.5-aarch64.iso.sha256",
+    "sha256": "4fe6f6d17cbdf3b52b618cb793e77b4bfe47de33572cd6577dd1823f96e337ba",
+    "purpose": "Developer-only real Linux kernel and initramfs boot gate; not the course distribution"
+  }
+}

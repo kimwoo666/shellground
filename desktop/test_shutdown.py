@@ -13,6 +13,7 @@ from pathlib import Path
 import sys
 import tempfile
 import time
+import threading
 from PySide6.QtCore import QTimer
 from native_app import create_application, Window
 
@@ -31,6 +32,11 @@ with tempfile.TemporaryDirectory(prefix='shellground-shutdown-test-') as tempora
         return real_close() if mode == 'docker' else None
     window.engine.close = cleanup
     window.show()
+    if mode == 'busy':
+        cancelled = threading.Event()
+        window.engine.cancel_pending = cancelled.set
+        state['late_callback'] = False
+        window.run_job(lambda log: cancelled.wait(5), lambda value: state.update(late_callback=True))
     if mode == 'progress':
         window.completed = ['navigate']
         window.save_progress()
@@ -73,6 +79,13 @@ with tempfile.TemporaryDirectory(prefix='shellground-shutdown-test-') as tempora
 
 
 class ShutdownTests(unittest.TestCase):
+    def test_close_during_pending_job_cancels_and_does_not_open_terminal(self):
+        state = self.run_scenario('busy')
+        self.assertFalse(state['timed_out'], state)
+        self.assertFalse(state['late_callback'], state)
+        self.assertFalse(state['visible'], state)
+        self.assertEqual(state['cleanup_calls'], 1, state)
+
     def run_scenario(self, mode):
         root = Path(__file__).resolve().parent
         env = dict(os.environ, QT_QPA_PLATFORM='offscreen')

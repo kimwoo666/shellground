@@ -194,7 +194,7 @@ class RealLabTests(unittest.TestCase):
         for checkpoint in CHECKPOINTS:
             for seed in [4242, 4243, 4244]:
                 with self.subTest(end=checkpoint.end, seed=seed):
-                    self.mission = m = make_checkpoint(checkpoint.end, seed)
+                    self.mission = m = make_checkpoint(checkpoint.end, seed, mode='simulation')
                     self.engine.start(m)
                     self.assertFalse(self.engine.rpc('grade', m)['passed'])
                     run = self.interactive()

@@ -50,6 +50,18 @@ def tree_paths(m):
 
 
 def prepare(m):
+    if m['kind'].startswith('system_'):
+        return owned_request('system_lab.py', 'prepare', m)
+    if m['kind'].startswith('io_'):
+        return owned_request('io_lab.py', 'prepare', m)
+    if m['kind'].startswith('process_'):
+        return owned_request('process_lab.py', 'prepare', m)
+    if m['kind'].startswith('shell_'):
+        return owned_request('shell_lab.py', 'prepare', m)
+    if m['kind'].startswith('auth_'):
+        return owned_request('auth_lab.py', 'prepare', m)
+    if m['kind'].startswith('apt_'):
+        return apt_request('prepare', m)
     source, target = Path(m['source']), Path(m['target'])
     hidden, nested = tree_paths(m)
     for path in [Path(m['start']), source / 'docs', source / hidden, source / nested, source / 'folder.deb', target, Path(m['report']).parent]:
@@ -97,7 +109,7 @@ def prepare(m):
     for index, goal in enumerate(m.get('review', {}).get('goals', [])):
         if goal['type'] == 'copy':
             reference['review'][str(index)] = base64.b64encode(Path(goal['source']).read_bytes()).decode()
-        elif goal['type'] == 'listing':
+        elif goal['type'] in ('listing', 'output_listing'):
             reference['review'][str(index)] = subprocess.check_output(['ls', goal['options'], goal['source']], text=True, timeout=5)
     return {'ready': True, 'reference': reference}
 
@@ -250,7 +262,35 @@ def grade_base(m):
     return {'passed': bool(checks) and all(c['passed'] for c in checks), 'checks': checks}
 
 
+def apt_request(action, mission):
+    return owned_request('apt_lab.py', action, mission)
+
+
+def owned_request(helper, action, mission):
+    # The ordinary filesystem grader runs as learner. Package fixtures need
+    # guest-only administration; never execute this helper on the host.
+    from agent import require_guest as guard
+    guard()
+    if helper not in ('apt_lab.py', 'auth_lab.py', 'shell_lab.py', 'process_lab.py', 'io_lab.py', 'system_lab.py') or action not in ('prepare', 'grade'):
+        raise ValueError('Unknown owned-guest grading helper')
+    return json.loads(subprocess.check_output(
+        ['sudo', '-n', '/usr/bin/python3', '/opt/shellground/' + helper, action],
+        input=json.dumps(mission), text=True, timeout=75))
+
+
 def grade(m):
+    if m['kind'].startswith('system_'):
+        return owned_request('system_lab.py', 'grade', m)
+    if m['kind'].startswith('io_'):
+        return owned_request('io_lab.py', 'grade', m)
+    if m['kind'].startswith('process_'):
+        return owned_request('process_lab.py', 'grade', m)
+    if m['kind'].startswith('shell_'):
+        return owned_request('shell_lab.py', 'grade', m)
+    if m['kind'].startswith('auth_'):
+        return owned_request('auth_lab.py', 'grade', m)
+    if m['kind'].startswith('apt_'):
+        return apt_request('grade', m)
     review = m.get('review', {})
     if not review: return grade_base(m)
     checks = grade_base(m)['checks'] if review.get('keep_base') else []
@@ -258,15 +298,17 @@ def grade(m):
     labels = {'dir': '폴더 생성', 'absent': '이전 경로 제거', 'copy': '원본 내용 보존',
               'file': '파일 내용', 'stripped_file': '집계 값', 'cwd': '현재 위치',
               'output': '화면 출력', 'output_contains': '화면 내용', 'listing': '목록 형식과 내용',
-              'file_contains': '파일에 필수 내용 포함', 'executable': '실행 권한'}
+              'file_contains': '파일에 필수 내용 포함', 'executable': '실행 권한', 'output_listing': '화면의 상세 목록',
+              'line_set': '경로 목록의 내용'}
     for index, goal in enumerate(review['goals']):
         kind = goal['type']
         path = Path(goal.get('path', '/tmp/unused'))
-        content = read_regular(path) if kind in ('copy', 'file', 'stripped_file', 'listing', 'file_contains') else None
+        content = read_regular(path) if kind in ('copy', 'file', 'stripped_file', 'listing', 'file_contains', 'line_set') else None
         if kind == 'dir': passed = path.is_dir()
         elif kind == 'absent': passed = not os.path.lexists(path)
         elif kind == 'file': passed = content == goal['text'].encode()
         elif kind == 'stripped_file': passed = content is not None and content.strip() == goal['text'].encode()
+        elif kind == 'line_set': passed = content is not None and set(content.decode(errors='replace').splitlines()) == set(goal['text'].splitlines())
         elif kind == 'copy': passed = content == base64.b64decode(m['_reference']['review'][str(index)])
         elif kind == 'file_contains': passed = content is not None and goal['text'].encode() in content
         elif kind == 'cwd':
@@ -276,6 +318,13 @@ def grade(m):
             except (OSError, ValueError): passed = False
         elif kind == 'output': passed = output.splitlines().count(goal['text']) >= goal.get('count', 1)
         elif kind == 'output_contains': passed = goal['text'] in output
+        elif kind == 'output_listing':
+            # Ignore prompts/command echo, but require actual ls fields for
+            # every expected entry, not just a filename or the word 'learner'.
+            expected = long_records(m['_reference']['review'][str(index)], goal['source'], False)
+            lines = [line for line in output.splitlines() if re.match(r'^[bcdlps-][rwxstST-]{9}[.+@]?\s', line)]
+            actual = long_records('\n'.join(lines), goal['source'], False)
+            passed = bool(expected and actual and set(expected.get('', ())).issubset(set(actual.get('', ()))))
         elif kind == 'executable': passed = path.is_file() and bool(path.stat().st_mode & stat.S_IXUSR) == goal['value']
         elif kind == 'listing':
             expected = m['_reference']['review'][str(index)]

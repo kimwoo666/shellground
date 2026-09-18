@@ -24,7 +24,7 @@ def review_mission(m):
         solution = 'pwd\ncd ..\npwd'
         goals = [cwd(str(PurePosixPath(m.start).parent))]
     elif kind == 'lsintro':
-        prompt = f'{s}/docs로 직접 이동한 뒤 그 안의 목록을 화면에 표시하세요. 공백이 들어간 파일 이름도 확인하고 그 폴더에 머문 상태로 채점하세요.'
+        prompt = f'{s}/docs로 직접 이동한 뒤 그 안의 목록을 화면에 표시하세요. 공백이 들어간 파일 이름도 확인하고 그 폴더에 머무세요.'
         solution = f'cd {s}/docs\nls'
         goals = [cwd(s + '/docs'), {'type': 'output_contains', 'text': 'read me.txt'}]
     elif kind == 'mkdir':
@@ -76,7 +76,11 @@ def review_mission(m):
         title = '손상된 복사본 복구와 백업'
         keep_base = True
         setup = [file(t + '/manual.txt', 'CORRUPTED\n')]
-        prompt = f'draft.txt를 {t}/draft-backup.txt로 먼저 보존하세요. 손상된 manual.txt는 원본으로 복구하고 다음 정리를 완료하세요.\n' + m.prompt
+        prompt = (f'{t}/draft.txt를 {t}/draft-backup.txt로 먼저 보존하세요.\n'
+                  f'복구 기준 파일은 {s}/guide.txt입니다. 이 파일의 내용으로 손상된 {t}/manual.txt를 덮어쓰세요. '
+                  '파일 이름이 서로 다른 것은 정상입니다. guide.txt는 변경하지 마세요.\n'
+                  f'{t}/draft.txt를 같은 폴더의 {t}/final.txt로 이름을 바꾸세요.\n'
+                  f'{t}/obsolete.txt만 삭제하세요.')
         solution = f'cp {t}/draft.txt {t}/draft-backup.txt\n' + m.solution
         goals = [copy(t + '/draft-backup.txt', t + '/draft.txt')]
     elif kind == 'list':
@@ -88,17 +92,22 @@ def review_mission(m):
         goals = [file(r + '.bak', 'Old incomplete inventory\n')]
     elif kind == 'long':
         keep_base = True
-        prompt = f'{s}로 직접 이동해서 상세 보고서를 작성하고 작업한 위치도 {r}.where에 별도로 기록하세요.\n' + m.prompt
+        prompt = (f'{s}로 이동하세요. 이동한 뒤의 현재 디렉터리 절대경로를 한 줄로 '
+                  f'{r}.where 파일에 저장하세요. 이 파일에는 파일 목록이 아니라 현재 디렉터리 경로만 담으세요.\n'
+                  + m.prompt + '\n작업을 마친 뒤에도 이동한 폴더에 머무세요.')
         solution = f'cd {s}\nls -al > {r}\npwd > {r}.where'
         goals = [cwd(s), file(r + '.where', s + '\n')]
     elif kind == 'mixed':
         keep_base = True
-        prompt = f'{t}/backup 폴더에 guide.txt 원본 복사본을 보관한 뒤 위치와 보고서 목표를 해결하세요.\n' + m.prompt
+        prompt = (f'원본 파일은 {s}/guide.txt입니다.\n'
+                  f'{t} 안에 backup 폴더를 새로 만드세요. 원본을 변경하지 않고 '
+                  f'{t}/backup/guide.txt로 복사하세요.\n' + m.prompt)
         solution = f'mkdir {t}/backup\ncp {s}/guide.txt {t}/backup/guide.txt\n' + m.solution
-        goals = [copy(t + '/backup/guide.txt', s + '/guide.txt')]
+        goals = [copy(t + '/backup/guide.txt', s + '/guide.txt'),
+                 file(s + '/guide.txt', f'Release {m.seed} user guide\n')]
     elif kind == 'pwdpaths':
         title = '두 경로가 같아지는 경우 비교'
-        prompt = f'이번에는 바로가기를 거치지 말고 실제 경로 {s}/docs로 들어가세요. pwd -L과 pwd -P를 각각 실행하면 같은 경로가 두 번 나와야 합니다. 그 위치에서 채점하세요.'
+        prompt = f'이번에는 바로가기를 거치지 말고 실제 경로 {s}/docs로 들어가세요. pwd -L과 pwd -P를 각각 실행하면 같은 경로가 두 번 나와야 합니다. 그 위치에 머무세요.'
         solution = f'cd {s}/docs\npwd -L\npwd -P'
         goals = [cwd(s + '/docs'), output(s + '/docs', 2)]
     elif kind == 'lsoptions':

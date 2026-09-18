@@ -1,33 +1,88 @@
-# Shellground 4
+<div align="center">
 
-Linux·Docker 명령을 연습하는 **오프라인 네이티브 데스크톱 시뮬레이터**입니다. 웹 앱이 아니며 Docker·WSL·VM 설치가 필요하지 않습니다. 명령어 정답 문자열을 맞추는 방식이 아니라 가상 파일·권한·셸·프로세스·이미지·컨테이너 상태로 채점합니다.
+# Shellground
 
-## 현재 버전
+### Learn by doing. Check the result. Keep improving.
 
-- 40단원, 5단원마다 종합 복습 8개, 완료 범위 올랜덤.
-- 설명을 보며 자유 연습 → 예시 → 서로 다른 활용 2개 → 완료 기록 자동 저장.
-- 활용·종합·랜덤 테스트 중에는 왼쪽 명령어·단원명을 숨깁니다. 배우기·예시에서는 복원합니다.
-- 미완료 채점 후 같은 상태에서 계속 수정하고 F5로 재채점할 수 있습니다.
-- Linux x86-64에서 빌드·검사했습니다. Windows 공용 코드/빌드 스크립트는 제공하지만 **Windows exe 산출물과 실기기 검증은 아직 없습니다**.
+A native practice app for **Linux · Docker · ROS 2 · Python · Conda · Jupyter**.
 
-## 시작하기
+**English** · [한국어](README.ko.md)
 
-Linux 빌드 산출물은 `desktop/dist/Shellground`, Windows에서 빌드한 산출물은 `desktop/dist/Shellground.exe`입니다. 실행할 때 Docker나 가상화 설정은 필요 없습니다.
+[Downloads](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-preview) · [Getting started](docs/GETTING_STARTED.md) · [Platform & verification notes](docs/PLATFORMS.md)
 
-소스에서 실행하려면 Python 3.12 환경에서 다음을 실행하세요.
+</div>
 
-```sh
-cd desktop
-python -m pip install -r requirements.txt
-python shellground.py
+![Shellground's native Linux learning screen](docs/screenshots/linux-learning.png)
+
+Shellground turns a command or a library into a sequence of short, hands-on lessons. Read a concept, try it, solve a different task, then revisit what you learned in mixed practice. It checks the resulting files, processes, variables and plots—not just whether you typed a sample answer.
+
+This is an installed application, **not a website or a WebView**. Lesson content is currently in Korean; this introduction and the getting-started guide are available in English and Korean.
+
+## A practical learning loop
+
+1. **Learn one concept at a time.** Small explanation steps with room to try the command or code.
+2. **Work through an example.** Understand the starting directory, inputs and expected result.
+3. **Solve application tasks.** Repair a broken state, preserve an original, or combine earlier skills.
+4. **Get specific feedback.** Failed checks do not force a reset; keep working in the same session.
+5. **Review and mix.** Review blocks and learned-range random practice help you retain older material.
+
+Completed lessons and your position within a lesson are saved automatically. Typed code, terminal sessions and temporary practice files are not a permanent workspace.
+
+## One app, several learning tracks
+
+| Track | Included learning material |
+| --- | --- |
+| Linux | 90 units + 18 reviews: navigation, files, quoting, relative paths, editors, streams, permissions, accounts, packages and processes |
+| Docker | 25 units + 5 reviews: images, containers, registries, files, volumes, networks, builds, lifecycle and resource observation |
+| ROS 2 | 23 units + 4 reviews: workspaces, nodes, topics, services, parameters, launch, bags and terminal controls |
+| Python & data | 95 units/reviews, 285 tasks: Python, NumPy, Matplotlib, pandas, SciPy, Seaborn and scikit-learn |
+| Conda & pip | 20 units/reviews, 60 tasks, plus an optional installation exercise |
+| Jupyter | 6 units/reviews, 18 tasks: real kernel selection, cell order, state, environment and notebook saving |
+
+Counts describe the included curriculum, not a claim that every upstream command option or every device feature is covered. See [scope and limitations](docs/PLATFORMS.md).
+
+## Real results, readable feedback
+
+![Python code and an actual Matplotlib plot](docs/screenshots/python-plot.png)
+
+**Run code and inspect the result.** Python uses bundled CPython and scientific libraries. Plot tasks inspect the actual figure and its data, not a screenshot match.
+
+![Per-goal feedback after running the example](docs/screenshots/python-grading.png)
+
+**Fix only what is missing.** The question and grading panels share their space. You can return to the task without restarting the practice environment.
+
+<p align="center"><img src="docs/screenshots/android-notebook.png" width="320" alt="Native Android Jupyter lesson screen"></p>
+
+**Practice on Android without a PC.** Native mobile tabs give the explanation, terminal, notebook and feedback their own usable space. Linux-based practice runs inside the app's bundled ARM64 Linux environment.
+
+These are captures of the application, not concept mockups. Desktop captures are from Linux; they are not evidence of native Windows execution.
+
+## Download and run
+
+Get the versioned files from [Releases](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-preview). Keep the complete desktop package together: the executable alone does not contain the Linux practice disk.
+
+| Platform | Package | Verification boundary |
+| --- | --- | --- |
+| Linux x86-64 | Portable bundle | Built and exercised on the development Linux laptop |
+| Windows x64 | Portable ZIP with `Shellground.exe` | Windows executable built using Wine; **not run on a native Windows PC** |
+| Android | Standalone APK | Changed functionality checked on an Android emulator; **physical ARM phones not verified** |
+| macOS | — | Not included in this release |
+
+No separate Python, Docker, Conda, WSL, Termux or practice server is required for the bundled courses. Booting the included Linux environment takes time and uses more memory than the Python-only workspace. The packages are unsigned/development-signed; they are not store-certified releases.
+
+Start with [the installation guide](docs/GETTING_STARTED.md). Desktop shortcuts include **Shift+Enter** for Python execution, **F1** for hints, **F5** for grading and **F6** for the next step. Android also provides touch controls.
+
+## Safety, progress and project layout
+
+- Linux-based commands run in an app-owned disposable guest, not your personal Docker or WSL installation.
+- Python's worker is a separate process, **not a hostile-code security sandbox**. Use trusted practice code.
+- Closing the app stops its practice processes. Progress is separate from disposable practice files.
+- The original lightweight simulator is retained on desktop, but real-environment courses are the primary path.
+
+```text
+desktop/              Native Qt app, shared curricula and graders
+android/              Native Android app and guest integration
+docs/                 Guides, platform notes and actual screenshots
 ```
 
-Linux 빌드: `bash desktop/build.sh`. Windows 빌드: PowerShell에서 `desktop/build-windows.ps1`.
-
-## 안내
-
-[사용설명서](docs/USER_GUIDE.ko.md) · [실행 및 지원 범위](desktop/README.md) · [학습 순서](desktop/LEARNING_PATH.md) · [검증 기록](desktop/VERIFICATION.md) · [개발 구조](docs/DEVELOPMENT.ko.md)
-
-전체 GNU/bash/Docker를 구현한 운영체제가 아닙니다. 아직 미구현인 명령·옵션은 오류로 표시합니다. 패키지/이미지·자원 수치는 학습용 가상 상태이며 실제 설치·네트워크·성능 측정이 아닙니다. 강의자료의 모든 명령·옵션을 다루는 확장은 아직 미완료입니다.
-
-이전 Docker 백엔드와 문자열 퀴즈는 보관용이며 4.x GUI에서 사용하지 않습니다. 이전 버전의 Docker 자원을 자동으로 삭제하지 않습니다. 완료 진도와 기억노트는 유지합니다.
+Build products, VM images, SDKs, caches, signing keys, personal progress and lecture PDFs are not committed to Git. Download packages belong in Releases. Development notes: [desktop](desktop/README.md), [Android](android/README.md). Third-party software and corresponding-source information: [notices](THIRD_PARTY_NOTICES.md).

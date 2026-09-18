@@ -1,0 +1,75 @@
+--- a/meson.build
++++ b/meson.build
+@@ -437,7 +437,7 @@
+ 
+ qemu_common_flags = qemu_isa_flags + qemu_common_flags
+ 
+-if get_option('prefer_static')
++if get_option('prefer_static') and not cc.has_header('android/sharedmem.h')
+   qemu_ldflags += get_option('b_pie') ? '-static-pie' : '-static'
+ endif
+ 
+@@ -1363,7 +1363,7 @@
+ rt = not_found
+ if host_os != 'windows'
+   have_shm_open = cc.has_function('shm_open')
+-  if not have_shm_open
++  if not have_shm_open and not cc.has_header('android/sharedmem.h')
+     rt = cc.find_library('rt', required: true)
+   endif
+ endif
+@@ -2070,7 +2070,10 @@
+   fdt_opt = 'system'
+ endif
+ if fdt_opt in ['enabled', 'system'] or (fdt_opt == 'auto' and have_system)
+-  fdt = cc.find_library('fdt', required: fdt_opt == 'system')
++  fdt = dependency('libfdt', required: false, method: 'pkg-config')
++  if not fdt.found()
++    fdt = cc.find_library('fdt', required: fdt_opt == 'system')
++  endif
+   if fdt.found() and cc.links('''
+      #include <libfdt.h>
+      #include <libfdt_env.h>
+@@ -3279,7 +3282,7 @@
+   'loongarch' : ['CONFIG_LOONGARCH_DIS'],
+ }
+ 
+-have_ivshmem = config_host_data.get('CONFIG_EVENTFD')
++have_ivshmem = config_host_data.get('CONFIG_EVENTFD') and not cc.has_header('android/sharedmem.h')
+ host_kconfig = \
+   (get_option('fuzzing') ? ['CONFIG_FUZZ=y'] : []) + \
+   (have_tpm ? ['CONFIG_TPM=y'] : []) + \
+--- a/util/oslib-posix.c
++++ b/util/oslib-posix.c
+@@ -982,8 +982,25 @@
+     }
+ }
+ 
++#ifdef __ANDROID__
++#include <android/sharedmem.h>
++#endif
++
+ int qemu_shm_alloc(size_t size, Error **errp)
+ {
++#ifdef __ANDROID__
++    int fd = ASharedMemory_create("shellground-qemu", size);
++    if (fd < 0) {
++        error_setg_errno(errp, errno, "failed to create Android shared memory");
++        return -1;
++    }
++    if (fcntl(fd, F_SETFD, FD_CLOEXEC) < 0) {
++        error_setg_errno(errp, errno, "failed to set shared memory close-on-exec");
++        close(fd);
++        return -1;
++    }
++    return fd;
++#else
+     g_autoptr(GString) shm_name = g_string_new(NULL);
+     int fd, oflag, cur_sequence;
+     static int sequence;
+@@ -1032,4 +1049,5 @@
+     }
+ 
+     return fd;
++#endif
+ }

@@ -1,3 +1,5 @@
-PySide6==6.11.2
+PySide6==6.11.2; sys_platform != 'win32'
+# Qt 6.8 avoids the newer Windows system ICU dependency during Wine builds.
+PySide6==6.8.3; sys_platform == 'win32'
 pyte==0.8.2
 pyinstaller==6.22.2

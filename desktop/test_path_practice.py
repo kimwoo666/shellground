@@ -32,6 +32,120 @@ def semantic_commands(solution, start):
 
 
 class PathPracticeTests(unittest.TestCase):
+    def test_long_5942_current_directory_goal_is_explicit_and_required(self):
+        from sim_engine import SimEngine
+        m = make_mission('long', 5942, 2)
+        self.assertEqual(m.source, '/home/learner/archive/staging/release5942')
+        self.assertIn('현재 디렉터리 절대경로를 한 줄로', m.prompt)
+        self.assertIn(m.report + '.where 파일에 저장', m.prompt)
+        self.assertNotIn('작업한 위치도', m.prompt)
+        engine = SimEngine()
+        engine.start(m)
+        try:
+            for command in m.solution.splitlines()[:-1]:
+                result = engine.shell.execute(command)
+                self.assertEqual(result.code, 0, result.err)
+            self.assertFalse(engine.rpc('grade', m)['passed'])
+            self.assertEqual(engine.shell.execute(m.solution.splitlines()[-1]).code, 0)
+            self.assertEqual(engine.shell.fs.read(m.report + '.where'), (m.source + '\n').encode())
+            self.assertTrue(engine.rpc('grade', m)['passed'])
+        finally:
+            engine.close()
+
+    def test_mixed_8372_example_contains_only_required_steps(self):
+        from sim_engine import SimEngine
+        m = make_mission('mixed', 8372)
+        self.assertEqual([line.split()[0] for line in m.solution.splitlines()], ['cd', 'ls'])
+        engine = SimEngine()
+        engine.start(m)
+        try:
+            for command in m.solution.splitlines():
+                result = engine.shell.execute(command)
+                self.assertEqual(result.code, 0, result.err)
+            self.assertTrue(engine.rpc('grade', m)['passed'])
+            self.assertEqual(engine.shell.cwd, m.source)
+        finally:
+            engine.close()
+
+    def test_mixed_8133_backup_creation_and_source_are_explicit(self):
+        from sim_engine import SimEngine
+        m = make_mission('mixed', 8133, 2)
+        self.assertEqual(m.start, '/home/learner/office/sessions/team7')
+        self.assertEqual(m.source, '/home/learner/archive/staging/release8133')
+        self.assertEqual(m.target, '/home/learner/work/output/result8133')
+        self.assertIn('원본 파일은 ' + m.source + '/guide.txt', m.prompt)
+        self.assertIn(m.target + ' 안에 backup 폴더를 새로 만드세요', m.prompt)
+        self.assertIn(m.target + '/backup/guide.txt로 복사', m.prompt)
+        self.assertNotIn('위치와 보고서 목표', m.prompt)
+        self.assertNotIn('pwd', m.solution)
+        engine = SimEngine()
+        engine.start(m)
+        try:
+            original = engine.shell.fs.read(m.source + '/guide.txt')
+            self.assertEqual(original, b'Release 8133 user guide\n')
+            self.assertFalse(engine.shell.fs.exists(m.target + '/guide.txt'))
+            self.assertFalse(engine.shell.fs.exists(m.target + '/backup'))
+            for command in m.solution.splitlines():
+                result = engine.shell.execute(command)
+                self.assertEqual(result.code, 0, result.err)
+            self.assertEqual(engine.shell.fs.read(m.source + '/guide.txt'), original)
+            self.assertEqual(engine.shell.fs.read(m.target + '/backup/guide.txt'), original)
+            self.assertTrue(engine.rpc('grade', m)['passed'])
+            engine.shell.execute(f"printf changed > {m.source}/guide.txt")
+            result = engine.rpc('grade', m)
+            self.assertFalse(result['passed'])
+            self.assertTrue(any(not check['passed'] and m.source + '/guide.txt' in check['label'] for check in result['checks']))
+        finally:
+            engine.close()
+
+    def test_copy_3504_repair_names_the_actual_source_and_overwrite_target(self):
+        from sim_engine import SimEngine
+        m = make_mission('copy', 3504, 2)
+        self.assertEqual(m.start, '/home/learner/delivery/result3504')
+        self.assertEqual(m.source, '/home/learner/data/release3504')
+        self.assertIn('복구 기준 파일은 ' + m.source + '/guide.txt', m.prompt)
+        self.assertIn('손상된 ./manual.txt를 덮어쓰세요', m.prompt)
+        self.assertNotIn('원본으로 복구', m.prompt)
+        self.assertEqual(m.prompt.count('덮어쓰세요'), 1)
+        engine = SimEngine()
+        engine.start(m)
+        try:
+            self.assertEqual(engine.shell.fs.read(m.source + '/guide.txt'), b'Release 3504 user guide\n')
+            self.assertFalse(engine.shell.fs.exists(m.source + '/manual.txt'))
+            self.assertEqual(engine.shell.fs.read(m.target + '/manual.txt'), b'CORRUPTED\n')
+            self.assertFalse(engine.rpc('grade', m)['passed'])
+            for command in m.solution.splitlines():
+                result = engine.shell.execute(command)
+                self.assertEqual(result.code, 0, result.err)
+            self.assertTrue(engine.rpc('grade', m)['passed'])
+        finally:
+            engine.close()
+
+    def test_reported_copy_9280_has_draft_in_work_folder_not_source(self):
+        from sim_engine import SimEngine
+        m = make_mission('copy', 9280, 1)
+        self.assertEqual(m.start, '/home/learner/work/output')
+        self.assertEqual(m.source, '/home/learner/archive/staging/release9280')
+        self.assertEqual(m.target, '/home/learner/work/output/result9280')
+        self.assertIn('원본 폴더: ' + m.source, m.prompt)
+        self.assertIn('작업 폴더: ' + m.target, m.prompt)
+        self.assertIn('result9280/final.txt', m.prompt)
+        engine = SimEngine()
+        engine.start(m)
+        try:
+            self.assertFalse(engine.shell.fs.exists(m.source + '/draft.txt'))
+            self.assertEqual(engine.shell.fs.read(m.target + '/draft.txt'), b'Draft 9280\n')
+            # Same position as the user's transcript: use canonical paths
+            # from there, not start-relative paths after changing cwd.
+            self.assertEqual(engine.shell.execute('cd ' + m.source).code, 0)
+            for command in (f'cp guide.txt {m.target}/manual.txt',
+                            f'mv {m.target}/draft.txt {m.target}/final.txt',
+                            f'rm {m.target}/obsolete.txt'):
+                self.assertEqual(engine.shell.execute(command).code, 0)
+            self.assertTrue(engine.rpc('grade', m)['passed'])
+        finally:
+            engine.close()
+
     def test_nearby_only_and_dotfiles(self):
         self.assertEqual(nearby_path('/work/.env', '/work'), '.env')
         self.assertEqual(nearby_path('/work/a.txt', '/work/docs'), '../a.txt')

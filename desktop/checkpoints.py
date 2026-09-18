@@ -37,12 +37,25 @@ CHECKPOINTS = (
 )
 
 
-def checkpoint_at(end):
+def checkpoint_at(end, mode='real'):
+    if mode == 'real':
+        from mode_curriculum import curriculum
+        return next(c for c in curriculum(mode)[1] if c.end == end)
+    if end > 40:
+        from mode_curriculum import curriculum
+        return next(c for c in curriculum(mode)[1] if c.end == end)
     return next(c for c in CHECKPOINTS if c.end == end)
 
 
-def make_checkpoint(end, seed=None):
-    checkpoint = checkpoint_at(end)
+def make_checkpoint(end, seed=None, mode='real'):
+    if mode == 'real':
+        from real_course_checks import make_review
+        return make_review(checkpoint_at(end, mode), seed)
+    return make_legacy_checkpoint(end, seed, mode)
+
+
+def make_legacy_checkpoint(end, seed=None, mode='simulation'):
+    checkpoint = checkpoint_at(end, mode)
     m = make_mission(checkpoint.kind, seed)
     if end > 25:
         return replace(m, review=dict(m.review, checkpoint=checkpoint.key, units=[u.key for u in checkpoint.units]))
@@ -59,7 +72,7 @@ def make_checkpoint(end, seed=None):
     if end == 5:
         prompt = (f'{s}/docs로 이동해 숨김 항목까지 목록을 확인하고, {s}/guide.txt와 '
                   f'{s}/docs/read me.txt를 읽으세요. 두 원본은 보존하세요.\n'
-                  f'{t} 안에 checkin 폴더와 그 안의 빈 ready.txt를 만든 뒤 checkin에서 위치를 확인하고 채점하세요.')
+                  f'{t} 안에 checkin 폴더와 그 안의 빈 ready.txt를 만든 뒤 checkin에서 위치를 확인하세요. 작업을 마친 위치는 checkin이어야 합니다.')
         solution = (f'pwd\ncd {s}/docs\nls -a\ncat ../guide.txt {q("read me.txt")}\n'
                     f'cd {t}\nmkdir checkin\ntouch checkin/ready.txt\ncd checkin\npwd')
         goals = [output(f'Release {m.seed} user guide'), output('A file name with spaces'),
@@ -83,7 +96,7 @@ def make_checkpoint(end, seed=None):
                   'daily notes 안에는 빈 done.txt도 만드세요. 원본은 보존하세요.\n'
                   f'{t}/draft.txt는 final.txt로 바꾸고 obsolete.txt는 삭제하세요.\n'
                   f'{s}의 바로 아래 항목을 숨김 항목과 .·..까지 포함해 {r}.names에 한 줄씩, '
-                  f'{r}에는 권한·소유자·크기·시간을 포함한 상세 형식으로 저장하세요. {s}에서 채점하세요.')
+                  f'{r}에는 권한·소유자·크기·시간을 포함한 상세 형식으로 저장하세요. 작업을 마친 위치는 {s}여야 합니다.')
         solution = (f'cd {t}\nmkdir -p {q("daily notes/backup")}\ntouch {q("daily notes/done.txt")}\n'
                     f'cp {s}/guide.txt {q("daily notes/backup/manual.txt")}\nmv draft.txt final.txt\n'
                     f'rm obsolete.txt\ncd {s}\nls -a > {r}.names\nls -al > {r}\npwd')
