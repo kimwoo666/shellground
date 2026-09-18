@@ -209,7 +209,8 @@ def supervise(directory, token, command, env):
         job = windows_kill_job()  # intentionally held until process teardown
         with (directory / 'qemu.log').open('ab') as log:
             process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=log, stderr=log,
-                                       env=env, **vm_process_options(), **child_death_options())
+                                       env=env, cwd=directory if os.name == 'nt' else None,
+                                       **vm_process_options(), **child_death_options())
             lower_priority(process)
             pending = directory / 'guard.json.pending'
             pending.write_text(json.dumps({'schema': 1, 'token': token,

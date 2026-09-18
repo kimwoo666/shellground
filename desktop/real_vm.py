@@ -314,7 +314,7 @@ class RealEngine:
             guard_env = dict(os.environ, PYINSTALLER_RESET_ENVIRONMENT='1')
             self.process = subprocess.Popen(supervisor + ['--', *command], stdin=subprocess.PIPE,
                 stdout=self.log_file, stderr=subprocess.STDOUT, env=guard_env,
-                cwd=self.session_dir if os.name == 'nt' else None, **vm_process_options())
+                cwd=root if os.name == 'nt' else None, **vm_process_options())
             self.supervised = True
             lower_priority(self.process)
             boot_seconds = 120

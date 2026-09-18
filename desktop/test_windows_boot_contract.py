@@ -56,7 +56,7 @@ class WindowsBootContractTests(unittest.TestCase):
                 argv = popen.call_args.args[0]
                 self.assertEqual(argv[argv.index('-L') + 1], '.')
                 self.assertEqual(argv[argv.index('-bios') + 1], 'qemu-bios.bin')
-                self.assertEqual(popen.call_args.kwargs['cwd'], session)
+                self.assertEqual(popen.call_args.kwargs['cwd'], root)
                 self.assertIn('file=practice.qcow2,format=qcow2,if=virtio', argv)
                 self.assertIn('file:console.log', argv)
                 self.assertEqual((session / 'qemu-bios.bin').read_bytes(), b'test-bios')
