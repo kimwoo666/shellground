@@ -33,3 +33,20 @@
 CPU Job에는 0.6 논리 코어에 해당하는 hard cap과 kill-on-close를 설정하고 실제 값을 조회했다. 짧은 CPU 시간 측정은 프로세서 주기 기반 제한과 동일한 값이 아니므로 10초의 보조 관찰로 무제한 실행 여부를 확인한다. [Windows Job CPU rate 설명](https://learn.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-jobobject_cpu_rate_control_information).
 
 GitHub Windows 워크플로는 네이티브 빌드·회귀·번들·UI 검사를 수행한다. 실제 VM 검사는 WHPX가 있는 별도 Windows에서 수행했다. 배포 ZIP과 설치기의 최종 SHA-256은 해당 릴리스의 `SHA256SUMS.txt` 및 `windows-build.json`에 제공한다.
+
+
+## 최종 공개 파일 재설치 검사
+
+[`v4.7.4-windows.2`](https://github.com/kimwoo666/shellground/releases/tag/v4.7.4-windows.2), 소스 커밋 `28ff74029c219402ec6829e9dbf1eef30d12f692`. [Windows 배포 작업](https://github.com/kimwoo666/shellground/actions/runs/35341689077)이 성공했다.
+
+- 공개 설치 파일을 다시 받아 SHA-256을 확인하고 NSIS로 설치했다. 설치기가 실제 HTTPS로 새 프로그램 ZIP을 다운로드·검증했다. 이미 검증된 동일 게스트 디스크는 중복 저장하지 않고 재사용했다.
+- 공개 설치본의 Python 95개 단원·285문제 및 오답/동등 풀이 124건이 통과했다.
+- 공개 설치본에서 실제 ROS·게스트 화면, Linux 파일·apt·계정·권한, Docker 갱신·아카이브 복원·배포를 다시 실행해 통과했다. 관찰한 WHPX 부팅은 39.64초, 정상 종료는 2.20초였다.
+- 네이티브 Qt 화면 전환·키보드 동작·작업자 정리가 통과했다. 일반 실행의 모드 선택 화면도 확인했다.
+- 한글 임시 폴더에서 시작 중 및 부팅 후 프로세스를 비정상 종료했다. 두 경우 모두 QEMU·감독 프로세스가 종료되고 overlay·펌웨어·세션 폴더가 제거됐다. 종료 후 정리는 각각 0.11초와 0.20초였으며 base 디스크의 크기·수정 시간은 유지됐다.
+- 중간 Windows 시험 배포 `v4.7.4-windows.1`과 로컬 중간 설치·빌드 파일은 제거했다.
+
+| 최종 파일 | SHA-256 |
+| --- | --- |
+| Shellground-Windows-Setup.exe | `586f058bd81a0630147b8fdcdcfa7a6e109643e3c3ef206fbebae6c5e10b7fd3` |
+| Shellground-4.7.4-Windows-App.zip | `59aec65c1ba96d6a90fe41409880520463f709500aeb9b79a9388eee28c97cb5` |
