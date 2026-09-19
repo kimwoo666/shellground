@@ -51,7 +51,7 @@ jobs:
         if: matrix.platform == 'linux'
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y libegl1 libopengl0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxkbcommon-x11-0 xvfb
+          sudo apt-get install -y libegl1 libopengl0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxkbcommon-x11-0 xvfb openbox
           ./desktop/.venv/bin/python -c "import tkinter; print('Installer Tk', tkinter.TkVersion)"
       - name: Check startup, shutdown and UI regressions
         working-directory: desktop

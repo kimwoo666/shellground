@@ -40,7 +40,7 @@ jobs:
           uv venv desktop/.venv --python 3.12.14
           uv pip install --python desktop/.venv/bin/python -r desktop/requirements-linux-lock.txt
           sudo apt-get update -qq
-          sudo apt-get install -y libegl1 libopengl0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxkbcommon-x11-0 xvfb
+          sudo apt-get install -y libegl1 libopengl0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxkbcommon-x11-0 xvfb openbox
       - name: Build and check actual X11 application and installer windows
         run: ./desktop/.venv/bin/python desktop/build_linux_release.py
       - name: Replace only the repaired Linux assets

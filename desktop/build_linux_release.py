@@ -34,7 +34,8 @@ def main():
     subprocess.run([sys.executable, str(ROOT / 'build.py'), '--skip-vm-pack',
                     '--offline-assets-from', str(windows), '--dist-dir', str(output / 'build'),
                     '--verification', 'incremental'], cwd=ROOT, check=True)
-    subprocess.run(['xvfb-run', '-a', str(output / 'build/Shellground'), '--self-test-study-ui',
+    subprocess.run(['xvfb-run', '-a', sys.executable, str(ROOT / 'x11_build_check.py'),
+                    str(output / 'build/Shellground'), '--self-test-study-ui',
                     '--capture-dir', str(output / 'verification-x11')],
                    env=dict(os.environ, QT_QPA_PLATFORM='xcb'), check=True, timeout=120)
     package = output / 'package/Shellground-Linux'
@@ -69,15 +70,18 @@ def main():
     # omit Tcl 9 even though tkinter imports successfully during the build.
     tk_binaries = []
     for pattern in ('libtcl*.so*', 'libtk*.so*'):
-        for library in sorted((Path(sys.base_prefix) / 'lib').glob(pattern)):
+        for library in sorted((Path(sys.base_prefix) / 'lib').rglob(pattern)):
             tk_binaries += ['--add-binary', str(library) + ':.']
+    print('Explicit Tcl/Tk libraries:', tk_binaries, flush=True)
     subprocess.run([sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onefile',
                     '--name', CONFIG['linux_setup'], '--distpath', str(output),
                     '--workpath', str(output / 'setup-build'), '--specpath', str(stage),
                     '--add-data', str(stage / 'manifest.json') + ':.',
                     '--add-data', str(stage / 'shellground.svg') + ':.',
                     '--add-data', str(stage / 'licenses') + ':licenses',
-                    *tk_binaries, str(stage / 'linux_setup.py')], check=True)
+                    *tk_binaries, str(stage / 'linux_setup.py')], check=True,
+                   env=dict(os.environ, LD_LIBRARY_PATH=str(Path(sys.base_prefix) / 'lib') +
+                            os.pathsep + os.environ.get('LD_LIBRARY_PATH', '')))
     setup = output / CONFIG['linux_setup']
     subprocess.run(['xvfb-run', '-a', str(setup), '--smoke-ui'], check=True, timeout=30)
     receipt = dict(tag=CONFIG['tag'], version=CONFIG['version'], platform='linux-x86_64',
