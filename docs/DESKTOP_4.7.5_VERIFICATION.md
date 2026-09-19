@@ -26,3 +26,24 @@ Windows WHPX에서 기존 설치 런타임과 동일한 기본 디스크를 사�
 Windows와 Linux 설치파일은 같은 `v4.7.5` 릴리스에 배포한다. Linux의 기존 4.7.4 설치가 있으면 SHA-256이 같은 기본 디스크를 하드 링크로 재사용한다. 기존 학습 기록은 앱 설치 폴더와 별도의 사용자 데이터 폴더에 그대로 남는다.
 
 Linux GUI·프로세스 검사는 CI 환경의 증거이며, 사용자의 Linux PC에서 직접 실습 VM을 다시 실행한 증거는 아니다.
+
+## 게시된 Windows 설치와 공통 검사
+
+소스 커밋 `a6746f33c3b3e62b02e0cdae7b795ffa6b5b975d`의 [네이티브 배포 작업](https://github.com/kimwoo666/shellground/actions/runs/35438234910)이 성공했다. Windows와 Linux 각각 회귀 검사 67개, Linux supervisor 검사 11개와 설치 검사 10개를 통과했다. 두 패키지에서 scientific worker, 리소스, 단일 창·단축키·숨겨진 worker 정리 검사도 통과했다.
+
+Windows 게시 설치파일의 SHA-256과 설치 영수증을 검증해 실제 설치를 완료했다(exit 0). 기존 바탕화면 아이콘이 4.7.5를 가리키며, 기존 진도 파일은 별도 사용자 데이터 폴더에 남아 있다. 7.8GB 기본 디스크를 공유한 뒤 실행 중이지 않은 이전 두 버전의 프로그램 파일 약 1.78GB를 삭제했다. 전체 실습 재검사는 사용자 요청대로 생략했다.
+
+Windows 설치파일 SHA-256: `17ad22c906be1a048407e25391fb89d413cf48d7631567e97ff475ec94fbf7d3`.
+
+Linux 설치창의 추가 실제 기동 검사에서 독립 Python의 Tcl/Tk 공유 라이브러리 누락을 발견해 명시적 번들링을 추가했다. 일반 X11 창에 필요한 xcb 라이브러리도 빌드 환경에 포함하고, 이후 Linux 빌드는 학습 앱과 설치창을 Xvfb의 X11 환경에서 실제로 열고 닫은 뒤에만 게시하도록 보강했다.
+
+## Linux 설치 패키지 보완과 재검증
+
+커밋 `c218f5f8c605aafe900120b8248181914b4b5c58`의 [Linux 패키지 보완 작업](https://github.com/kimwoo666/shellground/actions/runs/35439005729)이 성공했다. 창 관리자 Openbox를 함께 실행한 X11 환경에서 학습 앱의 단축키·창 수명 검사를 통과했고, 독립 실행 설치창도 정상적으로 열리고 닫혔다. 통과한 Linux 앱·설치파일과 영수증·체크섬으로 `v4.7.5`의 초기 Linux 파일을 교체했다. Windows 파일 두 개의 SHA-256은 변경되지 않았다.
+
+이어 [게시된 설치파일 검사 재실행](https://github.com/kimwoo666/shellground/actions/runs/35438528903/attempts/2)도 성공했다. 별도 Linux 실행 환경에서 실제 릴리스의 설치파일을 다시 다운로드하고 크기·SHA-256을 확인한 뒤 설치창을 실행했다. Linux 앱 아카이브와 Windows 파일까지 통합 `SHA256SUMS.txt`가 각각의 빌드 영수증과 일치한다.
+
+| 게시된 Linux 파일 | SHA-256 |
+| --- | --- |
+| `Shellground-Linux-Setup.run` | `135457b7301368d390dca6cc21a550f8aae3caa55c35fa38642255f05c33c16c` |
+| `Shellground-4.7.5-Linux-App.tar` | `4d0d2127bfbc36be68919ec15931a264a9da780a79e0c9b745d53fecdc0e1da5` |
