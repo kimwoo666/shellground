@@ -1,6 +1,7 @@
 """Build the Linux app and setup with verified existing offline guest assets."""
 import importlib.metadata
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -33,6 +34,9 @@ def main():
     subprocess.run([sys.executable, str(ROOT / 'build.py'), '--skip-vm-pack',
                     '--offline-assets-from', str(windows), '--dist-dir', str(output / 'build'),
                     '--verification', 'incremental'], cwd=ROOT, check=True)
+    subprocess.run(['xvfb-run', '-a', str(output / 'build/Shellground'), '--self-test-study-ui',
+                    '--capture-dir', str(output / 'verification-x11')],
+                   env=dict(os.environ, QT_QPA_PLATFORM='xcb'), check=True, timeout=120)
     package = output / 'package/Shellground-Linux'
     package.mkdir(parents=True)
     shutil.copy2(output / 'build/Shellground', package / 'Shellground')
@@ -60,14 +64,24 @@ def main():
         shutil.copy2(ROOT / 'installer' / name, stage / name)
     shutil.copytree(ROOT / 'installer/licenses', stage / 'licenses')
     (stage / 'manifest.json').write_text(json.dumps(manifest, indent=2))
+    # Standalone Python's Tcl/Tk libraries use an interpreter-relative RPATH.
+    # Explicitly collect them; PyInstaller's dependency scan may otherwise
+    # omit Tcl 9 even though tkinter imports successfully during the build.
+    tk_binaries = []
+    for pattern in ('libtcl*.so*', 'libtk*.so*'):
+        for library in sorted((Path(sys.base_prefix) / 'lib').glob(pattern)):
+            tk_binaries += ['--add-binary', str(library) + ':.']
     subprocess.run([sys.executable, '-m', 'PyInstaller', '--noconfirm', '--clean', '--onefile',
                     '--name', CONFIG['linux_setup'], '--distpath', str(output),
                     '--workpath', str(output / 'setup-build'), '--specpath', str(stage),
                     '--add-data', str(stage / 'manifest.json') + ':.',
                     '--add-data', str(stage / 'shellground.svg') + ':.',
-                    '--add-data', str(stage / 'licenses') + ':licenses', str(stage / 'linux_setup.py')], check=True)
+                    '--add-data', str(stage / 'licenses') + ':licenses',
+                    *tk_binaries, str(stage / 'linux_setup.py')], check=True)
     setup = output / CONFIG['linux_setup']
+    subprocess.run(['xvfb-run', '-a', str(setup), '--smoke-ui'], check=True, timeout=30)
     receipt = dict(tag=CONFIG['tag'], version=CONFIG['version'], platform='linux-x86_64',
+                   source_commit=os.environ.get('GITHUB_SHA'),
                    files={p.name: dict(bytes=p.stat().st_size, sha256=digest(p)) for p in (archive_path, setup)})
     (output / 'linux-build.json').write_text(json.dumps(receipt, indent=2) + '\n')
     print(json.dumps(receipt, indent=2))

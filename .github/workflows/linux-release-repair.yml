@@ -1,0 +1,59 @@
+name: Repair Linux 4.7.5 packaging
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/linux-release-repair.yml]
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    env:
+      PYTHONUTF8: '1'
+      QT_QPA_PLATFORM: offscreen
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify the exact release being repaired
+        run: |
+          gh release view v4.7.5 --json targetCommitish,isDraft > existing-release.json
+          python3 - <<'PY'
+          import json
+          release=json.load(open('existing-release.json'))
+          assert not release['isDraft'] and release['targetCommitish']=='a6746f33c3b3e62b02e0cdae7b795ffa6b5b975d'
+          assert json.load(open('desktop/windows_release.json'))['tag']=='v4.7.5'
+          PY
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4
+        with:
+          version: '0.12.16'
+          enable-cache: false
+      - name: Prepare native Linux build dependencies
+        run: |
+          uv python install 3.12.14
+          uv venv desktop/.venv --python 3.12.14
+          uv pip install --python desktop/.venv/bin/python -r desktop/requirements-linux-lock.txt
+          sudo apt-get update -qq
+          sudo apt-get install -y libegl1 libopengl0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxkbcommon-x11-0 xvfb
+      - name: Build and check actual X11 application and installer windows
+        run: ./desktop/.venv/bin/python desktop/build_linux_release.py
+      - name: Replace only the repaired Linux assets
+        run: |
+          set -euo pipefail
+          gh release download v4.7.5 --pattern SHA256SUMS.txt --dir desktop/dist-linux-release
+          python3 - <<'PY'
+          import json,pathlib
+          output=pathlib.Path('desktop/dist-linux-release')
+          receipt=json.load(open(output/'linux-build.json'))
+          checks=output/'SHA256SUMS.txt'
+          lines=[line for line in checks.read_text().splitlines() if line.split()[-1] not in receipt['files']]
+          lines += [value['sha256']+'  '+name for name,value in receipt['files'].items()]
+          checks.write_text('\n'.join(lines)+'\n')
+          PY
+          gh release upload v4.7.5 desktop/dist-linux-release/Shellground-4.7.5-Linux-App.tar desktop/dist-linux-release/Shellground-Linux-Setup.run desktop/dist-linux-release/linux-build.json desktop/dist-linux-release/SHA256SUMS.txt --clobber
