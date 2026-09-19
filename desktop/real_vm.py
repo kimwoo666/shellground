@@ -380,7 +380,7 @@ class RealEngine:
         Only replace the known grader in the verified, disposable guest. This
         keeps question/grading changes independent of the large OS base image.
         """
-        for source, name in (('lab/lab.py','lab.py'), ('guest/ros_lab.py','ros_lab.py'),
+        sources = (('lab/lab.py','lab.py'), ('guest/ros_lab.py','ros_lab.py'),
                              ('guest/ros_controls_lab.py','ros_controls_lab.py'),
                              ('guest/ros_observer.py','ros_observer.py'), ('guest/apt_lab.py','apt_lab.py'),
                              ('guest/auth_lab.py','auth_lab.py'), ('guest/shell_lab.py','shell_lab.py'),
@@ -388,18 +388,35 @@ class RealEngine:
                              ('guest/system_lab.py','system_lab.py'),
                              ('guest/docker_lab.py','docker_lab.py'), ('guest/docker_sessions_lab.py','docker_sessions_lab.py'),
                              ('guest/docker_runtime_lab.py','docker_runtime_lab.py'),
-                             ('guest/shell_snapshot.py','shell_snapshot.py')):
-            script = ("import sys; from pathlib import Path; sys.path.insert(0, '/opt/shellground'); "
-                      "from agent import require_guest; require_guest(); "
-                      "name=sys.argv[1]; assert name in ('lab.py','ros_lab.py','ros_controls_lab.py','ros_observer.py','apt_lab.py','auth_lab.py','shell_lab.py','process_lab.py','io_lab.py','system_lab.py','docker_lab.py','docker_sessions_lab.py','docker_runtime_lab.py','shell_snapshot.py'); "
-                      "data=sys.stdin.buffer.read(); compile(data, name, 'exec'); "
-                      "p=Path('/opt/shellground')/name; t=p.with_suffix('.new'); "
-                      "t.write_bytes(data); t.chmod(0o644); t.replace(p)")
-            result = self.channel.request('exec', timeout=10, run_timeout=5, root=True, cwd='/tmp',
-                argv=['/usr/bin/python3', '-c', script, name],
-                input=base64.b64encode(resource_path(source).read_bytes()).decode())
-            if result['code']:
-                raise LabError('실제 Linux 채점기 준비 실패: ' + base64.b64decode(result['err']).decode(errors='replace'))
+                             ('guest/shell_snapshot.py','shell_snapshot.py'))
+        # One process/round trip for the complete bundle. Validate every source
+        # before replacing any file in this private, disposable guest.
+        script = """import base64, json, sys
+from pathlib import Path
+sys.path.insert(0, '/opt/shellground')
+from agent import require_guest
+require_guest()
+files = json.load(sys.stdin)
+expected = {'lab.py','ros_lab.py','ros_controls_lab.py','ros_observer.py','apt_lab.py','auth_lab.py','shell_lab.py','process_lab.py','io_lab.py','system_lab.py','docker_lab.py','docker_sessions_lab.py','docker_runtime_lab.py','shell_snapshot.py'}
+if set(files) != expected:
+    raise ValueError('Unexpected grader bundle')
+files = {name: base64.b64decode(data, validate=True) for name, data in files.items()}
+for name, data in files.items():
+    compile(data, name, 'exec')
+for name, data in files.items():
+    p = Path('/opt/shellground') / name
+    t = p.with_suffix('.new')
+    t.write_bytes(data)
+    t.chmod(0o644)
+    t.replace(p)
+"""
+        payload = {name: base64.b64encode(resource_path(source).read_bytes()).decode()
+                   for source, name in sources}
+        result = self.channel.request('exec', timeout=30, run_timeout=25, root=True, cwd='/tmp',
+            argv=['/usr/bin/python3', '-c', script],
+            input=base64.b64encode(json.dumps(payload).encode()).decode())
+        if result['code']:
+            raise LabError('실제 Linux 채점기 준비 실패: ' + base64.b64decode(result['err']).decode(errors='replace'))
 
     def start(self, mission):
         self.boot()

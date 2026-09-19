@@ -6,7 +6,7 @@
 
 [다운로드](https://github.com/kimwoo666/shellground/releases)에서 **내 운영체제의 파일 하나만** 받습니다. GitHub의 `Source code` 파일은 실행파일이 아닙니다.
 
-- **Windows 10/11 x64:** [Windows 호환성 수정판](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-windows.2/Shellground-Windows-Setup.exe)을 받아 더블클릭하고 설치합니다. 이후에는 시작 메뉴나 바탕화면의 **Shellground**를 실행합니다.
+- **Windows 10/11 x64:** [Windows 호환성 수정판](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-windows.3/Shellground-Windows-Setup.exe)을 받아 더블클릭하고 설치합니다. 이후에는 시작 메뉴나 바탕화면의 **Shellground**를 실행합니다.
 - **Linux x86-64:** `Shellground-Linux-Setup.run`을 열어 설치합니다. 필요하면 파일 속성에서 **프로그램으로 실행 허용**을 켜세요. 파일 관리자가 실행하지 않으면 `chmod +x Shellground-Linux-Setup.run` 후 `./Shellground-Linux-Setup.run`을 사용합니다. 이후 앱 메뉴에서 **Shellground**를 검색합니다. Linux 실습에는 접근 가능한 `/dev/kvm`이 필요합니다.
 - **Android:** APK를 휴대폰에 내려받거나 옮긴 다음 열어 설치합니다. 필요하면 파일을 연 앱의 ‘알 수 없는 앱 설치’를 허용합니다. 설치 후 PC 연결은 필요 없습니다. Python은 Android7 이상, Linux 기반 과정은 Android9 이상과 지원되는64비트 ABI가 필요하며 실휴대폰 호환성은 미검증입니다.
 

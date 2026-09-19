@@ -18,7 +18,7 @@ public sealed class ReleasePart {
 public sealed class ShellgroundSetup {
     const string Owner = "shellground-setup-v1";
     const string BaseUrl = "https://github.com/kimwoo666/shellground/releases/download/v4.7.4-preview/";
-    const string Version = "4.7.4-windows.2";
+    const string Version = "4.7.4-windows.3";
     const string AppBaseUrl = "https://github.com/kimwoo666/shellground/releases/download/v" + Version + "/";
     readonly CancellationTokenSource cancellation = new CancellationTokenSource();
     public volatile string Stage = "설치 준비 중";

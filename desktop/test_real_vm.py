@@ -1,11 +1,13 @@
 """Private VM transport and cleanup regression tests (no VM required)."""
 import base64
 import json
+import io
 from pathlib import Path
 import socket
 import subprocess
 import tempfile
 import threading
+import types
 import unittest
 from unittest.mock import Mock, patch
 
@@ -18,13 +20,36 @@ class RealRuntimeTests(unittest.TestCase):
         engine=RealEngine();engine.channel=Mock()
         engine.channel.request.return_value={'code':0,'err':''}
         engine.configure_grader()
-        calls=engine.channel.request.call_args_list
-        self.assertEqual([c.kwargs['argv'][-1] for c in calls],
+        engine.channel.request.assert_called_once()
+        options=engine.channel.request.call_args.kwargs
+        files=json.loads(base64.b64decode(options['input']))
+        self.assertEqual(list(files),
                          ['lab.py','ros_lab.py','ros_controls_lab.py','ros_observer.py','apt_lab.py','auth_lab.py','shell_lab.py','process_lab.py','io_lab.py','system_lab.py','docker_lab.py','docker_sessions_lab.py','docker_runtime_lab.py','shell_snapshot.py'])
-        for call in calls:
-            self.assertTrue(call.kwargs['root'])
-            self.assertIn('require_guest()',call.kwargs['argv'][-2])
-            compile(base64.b64decode(call.kwargs['input']),'<grader>','exec')
+        self.assertTrue(options['root'])
+        self.assertIn('require_guest()',options['argv'][-1])
+        for name, data in files.items():
+            compile(base64.b64decode(data), name, 'exec')
+
+    def test_invalid_bundle_is_rejected_before_any_guest_file_is_written(self):
+        engine=RealEngine(); engine.channel=Mock()
+        engine.channel.request.return_value={'code':0,'err':''}
+        engine.configure_grader()
+        options=engine.channel.request.call_args.kwargs
+        original=json.loads(base64.b64decode(options['input']))
+        unexpected=dict(original, **{'../escape.py': base64.b64encode(b'pass').decode()})
+        broken=dict(original, **{'shell_snapshot.py': base64.b64encode(b'def :').decode()})
+        for files, error in ((unexpected, ValueError), (broken, SyntaxError)):
+            guest=types.ModuleType('agent'); guest.require_guest=Mock()
+            with patch.dict('sys.modules', {'agent': guest}), patch('sys.stdin', io.StringIO(json.dumps(files))), \
+                 patch('pathlib.Path.write_bytes') as write, patch('sys.path', []):
+                with self.assertRaises(error): exec(options['argv'][-1], {})
+                guest.require_guest.assert_called_once()
+                write.assert_not_called()
+
+    def test_grader_installation_error_is_reported(self):
+        engine=RealEngine(); engine.channel=Mock()
+        engine.channel.request.return_value={'code':1,'err':base64.b64encode(b'write failed').decode()}
+        with self.assertRaisesRegex(LabError, 'write failed'): engine.configure_grader()
 
     def test_shell_configuration_is_guest_scoped_and_packaged(self):
         engine = RealEngine()

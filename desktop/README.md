@@ -9,7 +9,7 @@ The application switches Linux/Docker/ROS 2, Python, Conda and Jupyter courses w
 Download one setup file from the [releases](https://github.com/kimwoo666/shellground/releases). It downloads and verifies the matching application and practice data automatically. Afterwards use the Shellground applications/Start-menu shortcut. [Installation guide](../docs/GETTING_STARTED.md) · [Installer source](installer/README.md)
 
 - Linux x86-64: run `Shellground`. Accessible KVM acceleration is required for the Linux VM.
-- Windows x64: install `v4.7.4-windows.2` and run the Shellground shortcut. This update is built on Windows; see the [native verification record](../docs/WINDOWS_4.7.4.1_VERIFICATION.md).
+- Windows x64: install `v4.7.4-windows.3` and run the Shellground shortcut. This update is built on Windows; see the [native verification record](../docs/WINDOWS_STARTUP_VERIFICATION.md).
 - Android uses its own native app: [Android development](../android/README.md).
 
 Completed learning and substep positions persist. Temporary VM files, shell sessions and Python variables do not persist across practice shutdown. Legacy lightweight simulation remains a separate desktop mode; it is not presented as real Linux.

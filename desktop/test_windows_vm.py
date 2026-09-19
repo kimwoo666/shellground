@@ -25,6 +25,26 @@ class WindowsVMContractTests(unittest.TestCase):
         kernel.SetInformationJobObject.return_value = 1
         return kernel
 
+    def test_hardware_budget_reserves_host_capacity_and_never_exceeds_four_cores(self):
+        for cpus in range(2, 1025):
+            rate = vm.cpu_rate(cpus, accelerated=True)
+            self.assertLessEqual(rate * cpus / 10000, min(4, cpus // 2))
+            self.assertLessEqual(rate, 5000)
+        self.assertEqual(vm.cpu_rate(1, accelerated=True), 6000)
+        self.assertEqual(vm.cpu_rate(12, accelerated=True), 3333)
+
+    def test_hardware_job_keeps_lifetime_and_hard_cpu_limits(self):
+        kernel = self.kernel(); recorded = []
+        def info(handle, kind, pointer, size):
+            if kind == 15:
+                value = ctypes.cast(pointer, ctypes.POINTER(vm.CpuLimits)).contents
+                recorded.append((value.flags, value.rate))
+            return 1
+        kernel.SetInformationJobObject.side_effect = info
+        self.assertEqual(vm.create_guard_job(kernel, 12, accelerated=True), 42)
+        self.assertEqual(recorded, [(5, 3333)])
+        kernel.AssignProcessToJobObject.assert_called_once_with(42, 101)
+
     def test_both_limits_are_set_before_process_assignment(self):
         kernel = self.kernel(); recorded = []
         def info(handle, kind, pointer, size):
@@ -84,10 +104,19 @@ class WindowsVMContractTests(unittest.TestCase):
         from vm_supervisor import windows_kill_job
         with patch('vm_supervisor.os.name', 'nt'), patch('windows_vm.create_guard_job', return_value=42) as guard:
             self.assertEqual(windows_kill_job(), 42)
-            guard.assert_called_once_with()
+            guard.assert_called_once_with(accelerated=False)
         with patch('vm_supervisor.os.name', 'posix'), patch('windows_vm.create_guard_job') as guard:
             self.assertIsNone(windows_kill_job())
             guard.assert_not_called()
+
+    def test_guard_budget_follows_the_selected_qemu_accelerator(self):
+        from vm_supervisor import windows_kill_job
+        for args, expected in ((['-accel', 'whpx'], True),
+                               (['-accel', 'tcg,thread=multi'], False),
+                               (['-name', 'whpx'], False)):
+            with patch('vm_supervisor.os.name', 'nt'), patch('windows_vm.create_guard_job') as guard:
+                windows_kill_job(['qemu.exe', *args])
+                guard.assert_called_once_with(accelerated=expected)
 
     def test_option_escaping_and_unicode_are_not_shell_quoted(self):
         self.assertEqual(vm.option_path(PureWindowsPath('C:/Users/김, 우/실습/practice.qcow2')),

@@ -26,7 +26,7 @@ from learning_progress import read_records, cursor_for, remember, confirmed_coun
 from app_settings import SettingsDialog, load_settings, save_settings, theme_palette
 from study_page import StudyPage
 
-APP_VERSION = '4.7.4-windows.2'
+APP_VERSION = '4.7.4-windows.3'
 
 
 class Worker(QThread):

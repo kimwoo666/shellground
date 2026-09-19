@@ -12,7 +12,7 @@ Windows x64 개발용 런타임을 `.windows-build/runtime/windows-x86_64`에 �
 - Linux에서 검증된 16,169,566,208바이트 guest의 SHA256을 다시 확인한 뒤 **하드링크**로 연결했다. Windows 검증을 위해 학습 문제를 재실행하지 않았다. 현재 guest SHA256은 `92ad90b561abe6ac7851244cb2abadd0836e3b328216b8b72ac5ecc3fb81b7fc`이다. 원본 runtime.json은 별도의 `guest-runtime-linux.json`에 바이트 그대로 보존하며 Linux 증거를 Windows 성공으로 바꾸지 않는다.
 - 하드링크는 현재 개발 PC의 공간 절약 방법이다. 이 runtime을 다른 PC로 배포할 때는 base 파일 실제 용량을 포함해야 한다. 모든 공유 base는 **불변**이며 교체할 때 새 파일을 만들어 원자적으로 바꿔야 한다. 직접 수정하면 기존 Linux 검토판도 손상된다.
 - Windows 하이퍼바이저가 이미 켜져 있으면 WHPX를 선택한다. 없으면 설정/재부팅/WSL 설치 없이 TCG를 선택하되 시작 화면에 느린 소프트웨어 실행임을 표시한다. WHPX 시작 실패를 임의로 TCG로 재시도하지 않는다. TCG는 최대 600초의 취소 가능한 시작 대기를 갖는다. 이것은 빠른 기동 검증 완료라는 뜻이 아니다.
-- Windows supervisor와 QEMU에 **한 개의 kill-on-close Job Object**를 적용하고 CPU hard cap을 함께 설정한다. 기본 예산은 전체 컴퓨터 60%가 아니라 **논리 코어 0.6개분 합계**다(8코어에서는 전체 CPU 7.5%). 코어 고정은 하지 않는다. 제한 설정이 실패하면 QEMU 실행 전에 중단한다. CPU 시간 제한이지 온도/배터리 사용량 보장은 아니며, WHPX 실제 사용량도 Windows에서 측정해야 한다.
+- Windows supervisor와 QEMU에 **한 개의 kill-on-close Job Object**를 적용하고 CPU hard cap을 함께 설정한다. WHPX 하드웨어 가속에는 **호스트 논리 코어의 절반, 최대 4코어분**을 허용한다(단일 코어 호스트는 0.6코어). 소프트웨어 실행 TCG의 예산은 **논리 코어 0.6개분 합계**로 유지한다. 코어 고정은 하지 않는다. 제한 설정이 실패하면 QEMU 실행 전에 중단한다. CPU 시간 제한이지 온도/배터리 사용량 보장은 아니며, WHPX 실제 사용량도 Windows에서 측정해야 한다.
 - 앱이 Windows qemu.log를 계속 열어 두어 임시 폴더 삭제를 막던 구조를 분리했다. 감독 프로세스 오류는 별도의 자동 정리 임시 파일로 받고, QEMU 오류는 종료 전 최대 3,000바이트만 전달한다. 쉼표/공백/한글 경로, firmware 경로 검증과 UTF-8 runtime metadata 처리도 추가했다.
 - `.gitattributes`는 Windows checkout이 guest 스크립트 줄바꿈과 소스 해시를 바꾸지 않게 LF를 지정한다. 기존 Linux 실행파일/바로가기/진도는 건드리지 않았다.
 

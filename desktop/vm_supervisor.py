@@ -183,7 +183,7 @@ def child_death_options():
     return {'preexec_fn': protect_child}
 
 
-def windows_kill_job():
+def windows_kill_job(command=()):
     """Put this guard and future children in a kill-on-close Windows job.
 
     Keep the non-inheritable handle until OS process teardown. Failure is
@@ -192,7 +192,9 @@ def windows_kill_job():
     if os.name != 'nt':
         return None
     from windows_vm import create_guard_job
-    return create_guard_job()
+    accelerated = any(flag == '-accel' and value == 'whpx'
+                      for flag, value in zip(command, command[1:]))
+    return create_guard_job(accelerated=accelerated)
 
 
 def supervise(directory, token, command, env):
@@ -206,7 +208,7 @@ def supervise(directory, token, command, env):
     signal.signal(signal.SIGINT, lambda *_: stopped.set())
     try:
         os.fstat(0)  # fail closed if no lifetime pipe was supplied
-        job = windows_kill_job()  # intentionally held until process teardown
+        job = windows_kill_job(command)  # intentionally held until process teardown
         with (directory / 'qemu.log').open('ab') as log:
             process = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=log, stderr=log,
                                        env=env, cwd=directory if os.name == 'nt' else None,

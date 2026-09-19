@@ -1,6 +1,6 @@
 {
-  "tag": "v4.7.4-windows.2",
-  "version": "4.7.4-windows.2",
+  "tag": "v4.7.4-windows.3",
+  "version": "4.7.4-windows.3",
   "python": "3.12.14",
   "archive": "Shellground-4.7.4-Windows-App.zip",
   "setup": "Shellground-Windows-Setup.exe",

@@ -47,22 +47,24 @@ def hypervisor_present():
         return False
 
 
-def cpu_rate(host_cpus):
-    """<= 0.6 logical CPU in total, NOT 60% of the entire computer.
+def cpu_rate(host_cpus, accelerated=False):
+    """Budget hardware acceleration separately from software translation.
 
     Windows uses 1..10000 units of total CPU capacity. Nested job limits can
-    reduce this further. Never pin work to a single core.
+    reduce this further. WHPX gets half the host, up to four logical cores;
+    TCG retains its 0.6-core budget. Never pin work to a single core.
     """
     if type(host_cpus) is not int or not 1 <= host_cpus <= 1024:
         raise ValueError('Invalid logical CPU count')
-    return max(1, 6000 // host_cpus)
+    budget = min(40000, (host_cpus // 2) * 10000) if accelerated and host_cpus > 1 else 6000
+    return max(1, budget // host_cpus)
 
 
 def _error():
     return ctypes.WinError(ctypes.get_last_error())
 
 
-def create_guard_job(kernel=None, host_cpus=None):
+def create_guard_job(kernel=None, host_cpus=None, accelerated=False):
     """Called inside the fresh supervisor before spawning any QEMU thread.
 
     Failure to apply either limit aborts startup. The non-inheritable handle
@@ -82,7 +84,7 @@ def create_guard_job(kernel=None, host_cpus=None):
         kernel.GetActiveProcessorCount.argtypes = [ctypes.c_uint16]
         kernel.GetActiveProcessorCount.restype = DWORD
         host_cpus = kernel.GetActiveProcessorCount(0xffff)  # ALL_PROCESSOR_GROUPS
-    rate = cpu_rate(host_cpus)  # fail closed on an invalid OS response
+    rate = cpu_rate(host_cpus, accelerated)  # fail closed on an invalid OS response
     handle = kernel.CreateJobObjectW(None, None)
     if not handle:
         raise _error()
@@ -117,7 +119,8 @@ def boot_timeout(acceleration):
 
 def startup_description(acceleration, cpus):
     method = '하드웨어 가속 WHPX' if acceleration[1] == 'whpx' else '소프트웨어 실행 TCG (시작이 느릴 수 있음)'
-    return f'{method} · 가상 CPU {cpus}개 · 메모리 2 GiB · VM CPU 예산: 논리 코어 0.6개분'
+    budget = '호스트 절반, 최대 4코어' if acceleration[1] == 'whpx' else '논리 코어 0.6개분'
+    return f'{method} · 가상 CPU {cpus}개 · 메모리 2 GiB · VM CPU 예산: {budget}'
 
 
 def option_path(path):
