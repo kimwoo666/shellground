@@ -3,6 +3,7 @@ import argparse
 import json
 from pathlib import Path
 import sys
+import threading
 from PySide6.QtCore import Qt, QStandardPaths, Signal, QThread, QTimer
 from PySide6.QtGui import QFont, QFontDatabase, QAction
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -26,7 +27,7 @@ from learning_progress import read_records, cursor_for, remember, confirmed_coun
 from app_settings import SettingsDialog, load_settings, save_settings, theme_palette
 from study_page import StudyPage
 
-APP_VERSION = '4.7.4-windows.3'
+APP_VERSION = '4.7.5'
 
 
 class Worker(QThread):
@@ -292,6 +293,8 @@ class Window(StudyPage):
         self.refresh_mode_labels()
         self.refresh_course()
         self.select_initial()
+        if self.mode == 'real' and hasattr(self.engine, 'prewarm'):
+            QTimer.singleShot(0, self.engine.prewarm)
 
     def apply_settings(self, settings):
         self.settings = settings
@@ -495,7 +498,7 @@ class Window(StudyPage):
         self.feedback.setText('완료한 종합 복습도 목록에서 다시 선택해 새 문제로 연습할 수 있습니다.')
         self.next_button.setText('종합 테스트 시작 (F6)')
         self.restore_course_selection()
-        if self.engine.name: self.run_job(lambda log: self.engine.close(), lambda value: None)
+        if self.engine.name: self.run_job(lambda log: self.release_practice(), lambda value: None)
         self.update_controls()
 
     def run_job(self, function, callback, on_error=None):
@@ -528,6 +531,12 @@ class Window(StudyPage):
         self.worker.finished.connect(finished)
         self.worker.start()
 
+    def release_practice(self):
+        if self.mode == 'real' and hasattr(self.engine, 'release_practice'):
+            self.engine.release_practice()
+        else:
+            self.engine.close()
+
     def prepare_environment(self):
         self.about_environment()
 
@@ -558,7 +567,7 @@ class Window(StudyPage):
         real = self.mode == 'real'
         self.setWindowTitle(f'Shellground {APP_VERSION} — {MODES[self.mode].title}')
         self.mode_label.setText('현재 모드: ' + MODES[self.mode].title + (' · 앱 전용 Linux에서 실제 프로그램 실행' if real else ' · 실제 Linux 도구를 실행하는 모드가 아닙니다.'))
-        self.environment.setText('전용 Linux · 실제 Bash/nano · 실습 시작 시 자동 기동 · 개인 파일/호스트 Docker 공유 없음' if real else
+        self.environment.setText('전용 Linux·Docker 미리 준비 · 단원 이동 시 유지 · ROS는 실습 선택 시 시작' if real else
                                  '오프라인 시뮬레이터 · 지원 범위 안의 모의 동작 · 실제 Bash/nano/Docker가 아님')
         self.check_env.setText('실제 Linux 상태' if real else '시뮬레이터 상태')
         self.setup.setText('실행 환경 안내')
@@ -598,6 +607,8 @@ class Window(StudyPage):
             self.refresh_mode_labels()
             self.refresh_course()
             self.select_initial()
+            if mode == 'real' and hasattr(self.engine, 'prewarm'):
+                self.engine.prewarm()
         self.run_job(lambda log: old_engine.close(), switched)
 
     def show_guest_display(self):
@@ -749,7 +760,7 @@ class Window(StudyPage):
         self.next_button.setText('예시 실습 시작 (F6)')
         if self.learning_sequence: self.render_learning_step()
         self.restore_course_selection()
-        if self.engine.name: self.run_job(lambda log: self.engine.close(), lambda value: None)
+        if self.engine.name: self.run_job(lambda log: self.release_practice(), lambda value: None)
         self.update_controls()
 
     def try_lesson(self):
@@ -1069,6 +1080,8 @@ class Window(StudyPage):
             event.ignore(); return
         event.ignore()
         self._closing = True
+        if hasattr(self.engine, 'cancel_pending'):
+            self.engine.cancel_pending()
         for reader in self.readers: reader.stop_requested.set()
         self.generation += 1
         for terminal in self.terminals:
@@ -1147,13 +1160,25 @@ def main():
     app, ui, mono = create_application()
     settings_path = Path(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)) / 'settings-v1.json'
     app.setPalette(theme_palette(load_settings(settings_path).theme))
-    mode = args.mode
-    if mode is None:
-        dialog = ModeDialog()
-        if dialog.exec() != QDialog.DialogCode.Accepted:
-            return 0
-        mode = dialog.selected_mode
-    from study_window import StudyWindow
-    window = StudyWindow(ui, mono, mode=mode, layout=args.layout)
-    window.show()
-    return app.exec()
+    warm = create_engine('real') if args.mode in (None, 'real') and mode_available('real') else None
+    if warm:
+        warm.prewarm()
+    try:
+        mode = args.mode
+        if mode is None:
+            dialog = ModeDialog()
+            if dialog.exec() != QDialog.DialogCode.Accepted:
+                return 0
+            mode = dialog.selected_mode
+        if warm and mode != 'real':
+            warm.cancel_pending()
+            threading.Thread(target=warm.close, name='shellground-unused-warmup', daemon=True).start()
+        from study_window import StudyWindow
+        window = StudyWindow(ui, mono, mode=mode, layout=args.layout,
+                             linux_engine=warm if mode == 'real' else None)
+        window.show()
+        return app.exec()
+    finally:
+        if warm:
+            warm.cancel_pending()
+            warm.close()

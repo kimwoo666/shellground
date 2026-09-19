@@ -110,5 +110,35 @@ class InstallerTests(unittest.TestCase):
         with self.assertRaises(tarfile.FilterError): setup.install()
         self.assertFalse((self.root / 'escaped').exists())
 
+    def test_update_downloads_new_app_and_reuses_verified_old_disk(self):
+        data = io.BytesIO()
+        with tarfile.open(fileobj=data, mode='w') as archive:
+            entry = tarfile.TarInfo('Shellground-Linux/Shellground')
+            entry.size = 3; entry.mode = 0o755
+            archive.addfile(entry, io.BytesIO(b'app'))
+        self.spec.update(version='4.7.5', application_base_url='https://github.com/kimwoo666/shellground/releases/download/v4.7.5/')
+        self.spec['linux'] = item('new-app.tar', data.getvalue())
+        setup = self.setup()
+        setup.root.mkdir()
+        (setup.root / '.shellground-installer').write_text('shellground-setup-v1')
+        previous = setup.root / 'app-4.7.4'
+        disk = previous / 'runtime/linux-x86_64/base.qcow2'
+        disk.parent.mkdir(parents=True); disk.write_bytes(b''.join(self.parts))
+        (previous / 'installed.json').write_text(json.dumps({'disk_sha256': self.spec['disk']['sha256']}))
+        urls = []
+        def opener(request, timeout):
+            urls.append(request.full_url)
+            return io.BytesIO(data.getvalue())
+        setup.opener = opener
+        result = setup.install()
+        self.assertEqual(result.name, 'app-4.7.5')
+        self.assertEqual(urls, [self.spec['application_base_url'] + 'new-app.tar'])
+        self.assertEqual(disk.stat().st_ino, (result / 'runtime/linux-x86_64/base.qcow2').stat().st_ino)
+        self.assertEqual(setup.install(), result)
+
+    def test_update_rejects_untrusted_application_endpoint(self):
+        self.spec.update(version='4.7.5', application_base_url='https://example.invalid/')
+        with self.assertRaisesRegex(ValueError, 'Untrusted application'): self.setup()
+
 
 if __name__ == '__main__': unittest.main()

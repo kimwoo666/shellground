@@ -62,6 +62,8 @@ next-env.d.ts
 /desktop/notebook_teaching/__pycache__/
 /desktop/.vm-runtime-conda/
 /desktop/.windows-build/
+/desktop/.linux-build/
+/desktop/installer/__pycache__/
 /desktop/conda_teaching/__pycache__/
 /desktop/dist-python/
 # Versioned review bundles contain multi-GB VM images; publish source, not runtimes.

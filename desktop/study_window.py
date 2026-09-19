@@ -1,6 +1,7 @@
 """One native application window with lazily created learning modes.
 
 Switching rooms does not restart engines, discard editor text, or start a VM.
+The Linux room can adopt a VM already warming in the mode picker.
 Only the selected room receives its shortcuts. Closing the containing window
 waits for every room's existing asynchronous cleanup, including hidden rooms.
 """
@@ -14,13 +15,14 @@ class StudyWindow(QMainWindow):
     MODES = ('linux', 'python', 'conda')
 
     def __init__(self, ui_family, mono_family, progress_path=None, mode='real',
-                 layout=DEFAULT_LAYOUT, page_factory=None):
+                 layout=DEFAULT_LAYOUT, page_factory=None, linux_engine=None):
         super().__init__()
         self.ui_family, self.mono_family = ui_family, mono_family
         self.base_progress_path = Path(progress_path or
             Path(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)) / 'progress-v3.json')
         self.linux_mode = mode if mode in ('real', 'simulation') else 'real'
         self.layout_key = layout
+        self.linux_engine = linux_engine
         self.pages = {}
         self.active_mode = None
         self._closing = self._shutdown_ready = False
@@ -47,7 +49,7 @@ class StudyWindow(QMainWindow):
         if mode == 'linux':
             from native_app import Window
             return Window(self.ui_family, self.mono_family, self.base_progress_path,
-                          mode=self.linux_mode, layout=self.layout_key)
+                          mode=self.linux_mode, layout=self.layout_key, engine=self.linux_engine)
         if mode == 'python':
             from python_app import PythonWindow
             return PythonWindow(self.ui_family, self.mono_family,

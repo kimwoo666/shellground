@@ -1,8 +1,8 @@
 {
-  "tag": "v4.7.4-windows.3",
-  "version": "4.7.4-windows.3",
+  "tag": "v4.7.5",
+  "version": "4.7.5",
   "python": "3.12.14",
-  "archive": "Shellground-4.7.4-Windows-App.zip",
+  "archive": "Shellground-4.7.5-Windows-App.zip",
   "setup": "Shellground-Windows-Setup.exe",
   "asset_source": {
     "url": "https://github.com/kimwoo666/shellground/releases/download/v4.7.4-preview/Shellground-4.7.4-Windows-App.zip",
@@ -11,5 +11,11 @@
   "nsis": {
     "url": "https://downloads.sourceforge.net/project/nsis/NSIS%203/3.11/nsis-3.11.zip",
     "sha256": "c7d27f780ddb6cffb4730138cd1591e841f4b7edb155856901cdf5f214394fa1"
+  },
+  "linux_archive": "Shellground-4.7.5-Linux-App.tar",
+  "linux_setup": "Shellground-Linux-Setup.run",
+  "linux_asset_source": {
+    "url": "https://github.com/kimwoo666/shellground/releases/download/v4.7.4-preview/Shellground-4.7.4-Linux-App.tar",
+    "sha256": "6f5351ad40cf28a298a94b53fff2f78447b369757e9a5479f76097f754036993"
   }
 }

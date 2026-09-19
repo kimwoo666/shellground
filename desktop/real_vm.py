@@ -4,6 +4,7 @@ The command protocol is transported over an app-owned QEMU virtio serial port.
 The shipped base disk is read-only; each app run uses its own disposable overlay.
 """
 import base64
+import functools
 import io
 import json
 import os
@@ -194,6 +195,15 @@ class GuestChannel:
             terminal.close()
 
 
+def serialized(function):
+    """Keep background startup, practice changes and teardown mutually exclusive."""
+    @functools.wraps(function)
+    def call(self, *args, **kwargs):
+        with self._lifecycle:
+            return function(self, *args, **kwargs)
+    return call
+
+
 class RealEngine:
     def __init__(self, root=None):
         self.root = root
@@ -210,13 +220,39 @@ class RealEngine:
         self.log_file = None
         self.guest_status = {}
         self.supervised = False
+        self._lifecycle = threading.RLock()
+        self._practice_active = False
+        self.warmup_thread = None
+        self.warmup_error = None
+
+    def prewarm(self):
+        """Prepare the owned VM without opening a terminal or touching progress."""
+        if self.warmup_thread is not None or self.shutdown_requested:
+            return
+        def prepare():
+            try:
+                with self._lifecycle:
+                    if self.cancelled.is_set() or self.shutdown_requested:
+                        return
+                    self.boot()
+                    result = self.channel.request('exec', timeout=65, run_timeout=60, root=True, cwd='/tmp',
+                        argv=['systemctl', 'start', 'docker.service', 'docker-registry.service',
+                              'shellground-files.service', 'shellground-display.service'])
+                    if result['code']:
+                        raise LabError(base64.b64decode(result['err']).decode(errors='replace'))
+            except Exception as exc:
+                self.warmup_error = str(exc)
+        self.warmup_thread = threading.Thread(target=prepare, name='shellground-prewarm', daemon=True)
+        self.warmup_thread.start()
 
     def status(self):
         runtime_info(self.root)
+        if self.warmup_thread and self.warmup_thread.is_alive():
+            return '실제 Linux와 Docker를 미리 준비하는 중… 설명과 단원 선택을 계속할 수 있습니다.'
         if self.channel:
             status = self.channel.request('status', timeout=5)
             return '실제 Linux · Bash/nano · Docker/ROS 준비 상태: ' + json.dumps(status, ensure_ascii=False)
-        return '내장 실제 Linux 런타임 확인됨 · 실습 시작 시 자동 기동'
+        return '내장 실제 Linux 런타임 확인됨 · 학습 화면을 열면 자동 준비'
 
     def build(self, on_line=lambda line: None):
         return self.status()
@@ -241,6 +277,7 @@ class RealEngine:
             raise LabError('실습 터미널 색상 설정 실패: ' +
                            base64.b64decode(result['err']).decode(errors='replace'))
 
+    @serialized
     def boot(self, on_line=lambda line: None):
         if self.shutdown_requested:
             raise LabError('앱 종료 요청으로 실제 Linux 시작이 취소되었습니다.')
@@ -418,6 +455,7 @@ for name, data in files.items():
         if result['code']:
             raise LabError('실제 Linux 채점기 준비 실패: ' + base64.b64decode(result['err']).decode(errors='replace'))
 
+    @serialized
     def start(self, mission):
         self.boot()
         if mission.kind.startswith('docker_') and 'docker_real' not in self.guest_status.get('adapters', []):
@@ -428,6 +466,11 @@ for name, data in files.items():
             raise LabError('이 실제 런타임 팩에는 패키지·Docker 교육 저장소가 없습니다. '
                            '실행 파일과 함께 제공되는 최신 runtime 폴더가 필요합니다. 기존 실습은 초기화하지 않았습니다.')
         self.observed_output.clear()
+        self.cleanup_exercise()
+        self._practice_active = True
+        self.channel.request('prepare', timeout=90, mission=adapt_real_mission(mission).payload())
+
+    def cleanup_exercise(self):
         result = self.channel.request('exec', timeout=15, run_timeout=10, root=True, cwd='/tmp',
             argv=['/usr/bin/python3', '/opt/shellground/system_lab.py', 'cleanup'])
         if result['code']:
@@ -440,7 +483,19 @@ for name, data in files.items():
             argv=['/usr/bin/python3', '/opt/shellground/auth_lab.py', 'cleanup'])
         if result['code']:
             raise LabError('이전 연습 계정 정리 실패: ' + base64.b64decode(result['err']).decode(errors='replace'))
-        self.channel.request('prepare', timeout=90, mission=adapt_real_mission(mission).payload())
+
+    @serialized
+    def release_practice(self):
+        """Discard exercise state while keeping the booted VM and Docker ready."""
+        if not self._practice_active or not self.channel:
+            return
+        self.cleanup_exercise()
+        # The existing agent closes labs, terminals and learner processes before
+        # dispatching this minimal private fixture. No lesson is completed.
+        self.channel.request('prepare', timeout=90, mission={'kind': '_idle'})
+        self._practice_active = False
+        self.bridge = None
+        self.observed_output.clear()
 
     def open_terminal(self, mission):
         self.bridge = self.channel.open_terminal(mission.start)
@@ -480,6 +535,12 @@ for name, data in files.items():
 
     def close(self):
         self.cancelled.set()
+        with self._lifecycle:
+            self._close()
+        if self.warmup_thread and self.warmup_thread is not threading.current_thread():
+            self.warmup_thread.join(timeout=3)
+
+    def _close(self):
         if self.channel:
             self.channel.close()
             self.channel = None
@@ -511,6 +572,7 @@ for name, data in files.items():
         self.name = None
         self.bridge = None
         self.supervised = False
+        self._practice_active = False
 
     def cancel_pending(self):
         """Nonblocking cancellation for a window close during startup/grading."""

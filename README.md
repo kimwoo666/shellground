@@ -63,8 +63,8 @@ These are captures of the application, not concept mockups. Desktop captures are
 
 | Platform | Package | Verification boundary |
 | --- | --- | --- |
-| Linux x86-64 | [Linux Setup.run](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-Linux-Setup.run) | Native setup window and HTTPS checked; existing learning binary unchanged |
-| Windows x64 | [Windows Setup.exe](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-windows.3/Shellground-Windows-Setup.exe) | Native Windows build; [Windows verification](docs/WINDOWS_STARTUP_VERIFICATION.md) |
+| Linux x86-64 | [Linux Setup.run](https://github.com/kimwoo666/shellground/releases/download/v4.7.5/Shellground-Linux-Setup.run) | Native Linux build with background startup; [verification](docs/DESKTOP_4.7.5_VERIFICATION.md) |
+| Windows x64 | [Windows Setup.exe](https://github.com/kimwoo666/shellground/releases/download/v4.7.5/Shellground-Windows-Setup.exe) | Native Windows build; [Windows verification](docs/DESKTOP_4.7.5_VERIFICATION.md) |
 | Android | [Android.apk](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-4.7.4-Android.apk) | Unchanged standalone APK; **physical ARM phones unverified** |
 | macOS | — | Not included in this release |
 

@@ -46,11 +46,15 @@ class Setup:
         self.cancel = cancel or threading.Event()
         self.opener = opener or urllib.request.urlopen
         self.version = manifest['version']
-        if self.version != '4.7.4':
+        if self.version not in ('4.7.4', '4.7.5'):
             raise ValueError('Unsupported setup version')
         self.base_url = manifest['base_url']
         if self.base_url != 'https://github.com/kimwoo666/shellground/releases/download/v4.7.4-preview/':
             raise ValueError('Untrusted release endpoint')
+        self.application_base_url = manifest.get('application_base_url', self.base_url)
+        expected = self.base_url if self.version == '4.7.4' else 'https://github.com/kimwoo666/shellground/releases/download/v4.7.5/'
+        if self.application_base_url != expected:
+            raise ValueError('Untrusted application endpoint')
 
     def check_cancel(self):
         if self.cancel.is_set():
@@ -79,11 +83,11 @@ class Setup:
                 raise ValueError('다른 Shellground 설치창이 이미 실행 중입니다.')
             yield
 
-    def receive(self, record, target, offset=0, overall=0, total=None):
+    def receive(self, record, target, offset=0, overall=0, total=None, application=False):
         """Stream into the final disk: never keep a second 8 GB set of chunks."""
         self.check_cancel()
         safe_file(target)
-        request = urllib.request.Request(self.base_url + record['name'],
+        request = urllib.request.Request((self.application_base_url if application else self.base_url) + record['name'],
             headers={'User-Agent': 'Shellground-Setup/4.7.4'})
         digest = hashlib.sha256()
         used = 0
@@ -154,12 +158,14 @@ class Setup:
             if final.is_symlink():
                 raise ValueError('Unsafe application directory')
             if receipt.exists() and json.loads(receipt.read_text()).get('disk_sha256') == self.manifest['disk']['sha256']:
+                if self.version != '4.7.4' and json.loads(receipt.read_text()).get('application_sha256') != self.manifest['linux']['sha256']:
+                    raise ValueError('설치 프로그램 버전이 일치하지 않습니다.')
                 if not (final / 'Shellground').is_file():
                     raise ValueError('설치 실행파일이 없습니다.')
                 return final
             if final.exists():
                 raise ValueError('같은 버전의 기존 폴더가 있습니다. 빈 설치 폴더를 선택하세요.')
-            incoming = self.root / '.incoming-4.7.4'
+            incoming = self.root / ('.incoming-' + self.version)
             if incoming.is_symlink():
                 raise ValueError('Unsafe installation staging')
             incoming.mkdir(exist_ok=True)
@@ -169,7 +175,7 @@ class Setup:
             if not ready.exists():
                 payload = self.root / 'application.tar.partial'
                 if not (payload.is_file() and checksum(payload) == record['sha256']):
-                    self.receive(record, payload)
+                    self.receive(record, payload, application=True)
                 self.check_cancel()
                 self.progress('프로그램 설치 중', 0, 0)
                 with tarfile.open(payload) as archive:
@@ -182,11 +188,24 @@ class Setup:
                 payload.unlink()
             elif json.loads(ready.read_text()).get('sha256') != record['sha256']:
                 raise ValueError('설치 자료 버전이 다릅니다.')
-            self.download_disk(app / 'runtime/linux-x86_64/base.qcow2')
+            disk = app / 'runtime/linux-x86_64/base.qcow2'
+            if self.version == '4.7.5' and not disk.exists():
+                previous = self.root / 'app-4.7.4'
+                old_disk = previous / 'runtime/linux-x86_64/base.qcow2'
+                old_receipt = previous / 'installed.json'
+                if (old_receipt.is_file() and not previous.is_symlink() and not old_disk.is_symlink()
+                        and old_disk.resolve().is_relative_to(previous.resolve())):
+                    identity = json.loads(old_receipt.read_text())
+                    if identity.get('disk_sha256') == self.manifest['disk']['sha256'] and old_disk.is_file():
+                        self.progress('기존 실습 자료 확인 중', 0, 0)
+                        if checksum(old_disk) == self.manifest['disk']['sha256']:
+                            disk.parent.mkdir(parents=True, exist_ok=True)
+                            os.link(old_disk, disk)
+            self.download_disk(disk)
             self.check_cancel()
             (app / 'Shellground').chmod(0o755)
             atomic_json(app / 'installed.json', {'owner': OWNER, 'version': self.version,
-                'disk_sha256': self.manifest['disk']['sha256']})
+                'disk_sha256': self.manifest['disk']['sha256'], 'application_sha256': record['sha256']})
             app.rename(final)
             ready.unlink(missing_ok=True)
             incoming.rmdir()

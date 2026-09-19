@@ -12,6 +12,7 @@ root = Path(__file__).resolve().parent
 parser=argparse.ArgumentParser()
 parser.add_argument('--dist-dir',type=Path,default=root/'dist')
 parser.add_argument('--skip-vm-pack',action='store_true')
+parser.add_argument('--offline-assets-from', type=Path, help='Verified offline wheels from an existing desktop bundle')
 parser.add_argument('--with-conda-runtime',action='store_true',help='Bundle the separately verified Conda-capable real runtime')
 parser.add_argument('--with-notebook-runtime',action='store_true',help='Bundle verified real Jupyter assets; requires --with-conda-runtime')
 parser.add_argument('--runtime-source',type=Path,help='Explicit verified Conda runtime version; requires --with-conda-runtime')
@@ -53,6 +54,9 @@ if args.with_conda_runtime:
         validate_learning(runtime_spec.get('conda_learning_validation',{}),course(),source_fingerprint(),learning_fingerprint())
         validate_setup(runtime_spec.get('conda_setup_validation',{}))
 extra = []
+if args.offline_assets_from:
+    from offline_build_assets import options as offline_options
+    extra.extend(offline_options(args.offline_assets_from, destination))
 if args.with_notebook_runtime:
     from notebook_teaching.build_assets import options
     from real_acceptance import validate_directory

@@ -6,7 +6,7 @@
 
 Download **one file for your OS** from [Releases](https://github.com/kimwoo666/shellground/releases). GitHub's automatically generated “Source code” files are not the application.
 
-- **Windows 10/11 x64:** download the [Windows compatibility update](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-windows.3/Shellground-Windows-Setup.exe), double-click `Shellground-Windows-Setup.exe`, install, then use the **Shellground** Start-menu or desktop shortcut.
+- **Windows 10/11 x64:** download the [Windows compatibility update](https://github.com/kimwoo666/shellground/releases/download/v4.7.5/Shellground-Windows-Setup.exe), double-click `Shellground-Windows-Setup.exe`, install, then use the **Shellground** Start-menu or desktop shortcut.
 - **Linux x86-64:** open `Shellground-Linux-Setup.run` and install. Enable **Properties → Permissions → Allow executing as a program** if needed. If your file manager will not launch it, use `chmod +x Shellground-Linux-Setup.run` then `./Shellground-Linux-Setup.run`. Afterwards search for **Shellground** in the applications menu. Linux practice requires access to `/dev/kvm`.
 - **Android:** transfer/download the APK to the phone, open it and allow installation from that file-opening app if Android asks. No PC is needed to use the installed app. Python requires Android7+; the bundled Linux-based tracks require Android9+, a supported64-bit ABI and enough memory. Physical-phone compatibility remains unverified.
 

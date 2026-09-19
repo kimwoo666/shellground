@@ -50,6 +50,10 @@ def tree_paths(m):
 
 
 def prepare(m):
+    if m['kind'] == '_idle':
+        from agent import require_guest
+        require_guest()
+        return {'reference': {}}
     if m['kind'].startswith('system_'):
         return owned_request('system_lab.py', 'prepare', m)
     if m['kind'].startswith('io_'):

@@ -1,4 +1,4 @@
-name: Windows release
+name: Desktop release
 
 on:
   workflow_dispatch:
@@ -12,12 +12,24 @@ permissions:
   contents: write
 
 concurrency:
-  group: windows-release
+  group: desktop-release
   cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            python: ./.venv/Scripts/python.exe
+            root_python: ./desktop/.venv/Scripts/python.exe
+          - os: ubuntu-22.04
+            platform: linux
+            python: ./.venv/bin/python
+            root_python: ./desktop/.venv/bin/python
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     env:
       PYTHONUTF8: '1'
@@ -34,30 +46,61 @@ jobs:
         run: |
           uv python install 3.12.14
           uv venv desktop/.venv --python 3.12.14
-      - name: Install pinned Windows build dependencies
-        run: uv pip install --python desktop/.venv/Scripts/python.exe -r desktop/requirements-windows-lock.txt
-      - name: Check Windows and ROS regressions
+      - name: Install native build dependencies
+        run: uv pip install --python "${{ matrix.root_python }}" -r desktop/requirements-${{ matrix.platform }}-lock.txt
+      - name: Install Linux GUI system libraries
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y libegl1 libopengl0 libxcb-cursor0 libxkbcommon-x11-0 xvfb
+          ./desktop/.venv/bin/python -c "import tkinter; print('Installer Tk', tkinter.TkVersion)"
+      - name: Check startup, shutdown and UI regressions
         working-directory: desktop
-        run: ./.venv/Scripts/python.exe -m unittest test_windows_vm test_windows_stdio test_windows_boot_contract test_platform_runtime test_ros_grading test_real_vm test_vm_resources -v
+        run: ${{ matrix.python }} -m unittest test_windows_vm test_windows_stdio test_windows_boot_contract test_platform_runtime test_ros_grading test_real_vm test_vm_resources test_prewarm test_prewarm_ui test_study_window -v
+      - name: Check native Linux lifetime and installer
+        if: matrix.platform == 'linux'
+        run: |
+          cd desktop
+          ./.venv/bin/python -m unittest test_vm_supervisor -v
+          cd installer
+          ../.venv/bin/python -m unittest test_installer -v
       - name: Build and check the native executable and installer
-        run: ./desktop/.venv/Scripts/python.exe desktop/build_windows_release.py
-      - name: Publish Windows downloads
-        shell: pwsh
+        run: ${{ matrix.root_python }} desktop/build_${{ matrix.platform }}_release.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          compression-level: 0
+          if-no-files-found: error
+          path: |
+            desktop/dist-${{ matrix.platform }}-release/*.exe
+            desktop/dist-${{ matrix.platform }}-release/*.zip
+            desktop/dist-${{ matrix.platform }}-release/*.tar
+            desktop/dist-${{ matrix.platform }}-release/*.run
+            desktop/dist-${{ matrix.platform }}-release/*-build.json
+
+  publish:
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: release-output
+      - name: Publish both native desktop downloads
         env:
           GH_TOKEN: ${{ github.token }}
+        shell: bash
         run: |
-          $spec = Get-Content desktop/windows_release.json -Raw | ConvertFrom-Json
-          $tag = $spec.tag
-          $existing = gh release view $tag --json isDraft,targetCommitish 2>$null | ConvertFrom-Json
-          if ($LASTEXITCODE -eq 0) {
-            if (-not $existing.isDraft) { throw 'This version is already published. Bump windows_release.json for a new release.' }
-            if ($existing.targetCommitish -ne $env:GITHUB_SHA) { throw 'A draft from a different source commit already exists.' }
-          } else {
-            gh release create $tag --target $env:GITHUB_SHA --draft --title "Shellground $($spec.version) — Windows" --notes-file docs/WINDOWS_RELEASE_NOTES.md
-            if ($LASTEXITCODE -ne 0) { throw 'Cannot create release draft.' }
-          }
-          $output = 'desktop/dist-windows-release'
-          gh release upload $tag "$output/$($spec.archive)" "$output/$($spec.setup)" "$output/SHA256SUMS.txt" "$output/windows-build.json" --clobber
-          if ($LASTEXITCODE -ne 0) { throw 'Cannot upload verified build outputs.' }
-          gh release edit $tag --draft=false --latest
-          if ($LASTEXITCODE -ne 0) { throw 'Cannot publish release.' }
+          set -euo pipefail
+          tag=$(python3 -c "import json; print(json.load(open('desktop/windows_release.json'))['tag'])")
+          version=$(python3 -c "import json; print(json.load(open('desktop/windows_release.json'))['version'])")
+          if gh release view "$tag" --json isDraft,targetCommitish > release-state.json 2>/dev/null; then
+            python3 -c "import json,os; r=json.load(open('release-state.json')); assert r['isDraft'] and r['targetCommitish']==os.environ['GITHUB_SHA'], 'Bump the release version before publishing again'"
+          else
+            gh release create "$tag" --target "$GITHUB_SHA" --draft --title "Shellground $version — Windows · Linux" --notes-file docs/WINDOWS_RELEASE_NOTES.md
+          fi
+          (cd release-output && sha256sum *.exe *.zip *.tar *.run > SHA256SUMS.txt)
+          gh release upload "$tag" release-output/* --clobber
+          gh release edit "$tag" --draft=false --latest

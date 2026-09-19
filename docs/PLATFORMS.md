@@ -1,13 +1,13 @@
 # Platform status / 운영체제별 상태
 
-Version 4.7.4 / Windows update 4.7.4-windows.3 · 2026-09-19
+Desktop 4.7.5 / Android 4.7.4 · 2026-09-19
 
 [이번 배포의 구체적인 검증 기록 / Verification record](VERIFICATION_4.7.4.md)
 
 | Platform | Produced | What the evidence means |
 | --- | --- | --- |
-| Linux x86-64 | Native executable + bundled guest | Packaged Python, actual Conda/Jupyter and new ROS controls were checked on the development laptop. Existing unchanged course evidence was reused, not replayed. |
-| Windows x64 | Windows executable + bundled Windows QEMU | Native Windows build; current evidence and tested OS/hardware boundary are in the [Windows verification record](WINDOWS_STARTUP_VERIFICATION.md). |
+| Linux x86-64 | Native executable + bundled guest | Native Linux CI build, UI and supervisor lifetime checks. Prior unchanged course evidence is retained; see the [4.7.5 verification record](DESKTOP_4.7.5_VERIFICATION.md). |
+| Windows x64 | Windows executable + bundled Windows QEMU | Native Windows build; current evidence and tested OS/hardware boundary are in the [Windows verification record](DESKTOP_4.7.5_VERIFICATION.md). |
 | Android | Native APK + embedded ARM64 guest | Emulator checks cover new port boundaries. This is not a physical ARM-phone or full-curriculum acceptance claim. |
 | macOS | Not packaged | Outside this release. |
 
