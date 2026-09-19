@@ -1,0 +1,43 @@
+name: Linux installer smoke
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/linux-installer-check.yml]
+  workflow_run:
+    workflows: [Desktop release]
+    types: [completed]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read the published release and verify the installer
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib, urllib.request
+          spec=json.load(open('desktop/windows_release.json'))
+          base='https://github.com/kimwoo666/shellground/releases/download/'+spec['tag']+'/'
+          with urllib.request.urlopen(base+'linux-build.json', timeout=30) as response:
+              receipt=json.load(response)
+          assert receipt['tag']==spec['tag'] and receipt['version']==spec['version']
+          target=pathlib.Path(spec['linux_setup'])
+          assert target.name==str(target)
+          with urllib.request.urlopen(base+target.name, timeout=30) as response:
+              data=response.read()
+          expected=receipt['files'][target.name]
+          assert len(data)==expected['bytes'] and hashlib.sha256(data).hexdigest()==expected['sha256']
+          target.write_bytes(data); target.chmod(0o755)
+          PY
+      - name: Open and close the packaged installation window
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y xvfb
+          xvfb-run -a ./Shellground-Linux-Setup.run --smoke-ui
