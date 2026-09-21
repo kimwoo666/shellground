@@ -1,6 +1,8 @@
 # Platform status / 운영체제별 상태
 
-Desktop 4.7.5 / Android 4.7.4 · 2026-09-19
+Desktop / Android 4.7.6 · 2026-09-22
+
+[4.7.6 changed-feature verification / 최신 변경 기능 검증](VERIFICATION_4.7.6.md): native Windows·Linux builds and targeted Android emulator checks passed. NAS configuration and personal progress are not included in release files. Previous records below describe their own versions, not a new full-course acceptance run.
 
 [이번 배포의 구체적인 검증 기록 / Verification record](VERIFICATION_4.7.4.md)
 

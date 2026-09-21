@@ -49,7 +49,7 @@ Counts describe the included curriculum, not a claim that every upstream command
 
 ## Real results, readable feedback
 
-![Python code and an actual Matplotlib plot](docs/screenshots/python-plot.png)
+![Python code and an actual Matplotlib plot](docs/screenshots/python-plot-476.png)
 
 **Run code and inspect the result.** Python uses bundled CPython and scientific libraries. Plot tasks inspect the actual figure and its data, not a screenshot match.
 
@@ -57,7 +57,7 @@ Counts describe the included curriculum, not a claim that every upstream command
 
 **Fix only what is missing.** The question and grading panels share their space. You can return to the task without restarting the practice environment.
 
-<p align="center"><img src="docs/screenshots/android-notebook.png" width="320" alt="Native Android Jupyter lesson screen"></p>
+<p align="center"><img src="docs/screenshots/android-learning-476.png" width="320" alt="Native Android learning screen"></p>
 
 **Practice on Android without a PC.** Native mobile tabs give the explanation, terminal, notebook and feedback their own usable space. Linux-based practice runs inside the app's bundled ARM64 Linux environment.
 

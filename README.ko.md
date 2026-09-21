@@ -49,7 +49,7 @@ pandas는 기존 내용을 유지하면서 **81개 설명·실행 소단계**로
 
 ## 실행 결과를 보고, 부족한 부분만 고칩니다
 
-![Python 코드와 실제 Matplotlib 그래프](docs/screenshots/python-plot.png)
+![Python 코드와 실제 Matplotlib 그래프](docs/screenshots/python-plot-476.png)
 
 **코드와 결과를 함께 확인합니다.** 내장 CPython과 과학 라이브러리가 코드를 실행합니다. 그래프 문제는 실제 그림 객체의 데이터와 축을 검사합니다.
 
@@ -57,7 +57,7 @@ pandas는 기존 내용을 유지하면서 **81개 설명·실행 소단계**로
 
 **미완료 항목만 이어서 해결합니다.** 문제와 채점 결과가 같은 공간을 탭으로 공유합니다. 문제로 돌아가도 실습 상태가 초기화되지 않습니다.
 
-<p align="center"><img src="docs/screenshots/android-notebook.png" width="320" alt="Android 네이티브 Jupyter 학습 화면"></p>
+<p align="center"><img src="docs/screenshots/android-learning-476.png" width="320" alt="Android 네이티브 학습 화면"></p>
 
 **Android에서도 PC 연결 없이 실행합니다.** 설명·터미널·노트북·채점 탭을 나누어 작은 화면을 활용합니다. Linux 기반 과정은 앱에 포함된 ARM64 Linux 환경에서 실행합니다.
 
