@@ -1,0 +1,4 @@
+ASN-One 0.6.0 — Hierynomus / ASN-One contributors
+https://github.com/hierynomus/asn-one
+
+Licensed under Apache License 2.0, included in apache-2.0.txt.

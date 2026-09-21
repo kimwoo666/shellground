@@ -4,6 +4,9 @@ import sys
 if __name__ == '__main__':
     from stdio_transport import prepare_internal_stdio
     prepare_internal_stdio(sys.argv[1] if len(sys.argv) > 1 else '')
+    if sys.argv[1:2] == ['--sync-nas']:
+        from nas_sync import main
+        raise SystemExit(main(sys.argv[2:]))
     if sys.argv[1:2] == ['--self-test-windows-pipes']:
         from windows_pipe_diagnostics import main
         raise SystemExit(main(sys.argv[2:]))

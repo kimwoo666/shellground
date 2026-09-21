@@ -31,13 +31,15 @@ public final class PythonService extends Service {
                     .callAttr("dispatch",input,getCacheDir().getAbsolutePath()).toString();
                 JSONObject result=new JSONObject(raw);
                 JSONArray figures=result.optJSONArray("figures");
-                if(figures!=null && figures.length()>0) {
-                    File picture=new File(getCacheDir(),"python-preview.png");
+                JSONArray paths=new JSONArray();
+                for(int i=0;figures!=null&&i<Math.min(6,figures.length());i++) {
+                    File picture=new File(getCacheDir(),"python-preview-"+i+".png");
                     try(FileOutputStream stream=new FileOutputStream(picture)) {
-                        stream.write(Base64.decode(figures.getString(0),Base64.DEFAULT));
+                        stream.write(Base64.decode(figures.getString(i),Base64.DEFAULT));
                     }
-                    result.put("figurePath",picture.getAbsolutePath());
+                    paths.put(picture.getAbsolutePath());
                 }
+                result.put("figurePaths",paths);
                 result.remove("figures");
                 output=result.toString();
                 if(output.length()>200000) throw new IllegalStateException("출력 상한을 초과했습니다.");

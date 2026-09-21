@@ -7,7 +7,7 @@ waits for every room's existing asynchronous cleanup, including hidden rooms.
 """
 from pathlib import Path
 from PySide6.QtCore import Qt, QStandardPaths, QTimer
-from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QTabBar, QStackedWidget, QMessageBox
+from PySide6.QtWidgets import QMainWindow, QWidget, QVBoxLayout, QTabBar, QStackedWidget, QMessageBox, QLabel
 from layout_presets import DEFAULT_LAYOUT
 
 
@@ -43,7 +43,17 @@ class StudyWindow(QMainWindow):
         self.stack = QStackedWidget()
         outer.addWidget(self.stack, 1)
         self.mode_tabs.currentChanged.connect(lambda index: self.switch_mode(self.MODES[index]))
-        self.switch_mode('linux' if mode in ('real', 'simulation') else mode)
+        from nas_sync_ui import NasController
+        self.nas_sync = NasController(self, self.base_progress_path.parent)
+        self.sync_wait = QLabel('NAS에서 학습 진도를 확인하고 있습니다…')
+        self.stack.addWidget(self.sync_wait)
+        self.mode_tabs.setEnabled(False)
+        def ready():
+            if self._closing: return
+            self.stack.removeWidget(self.sync_wait); self.sync_wait.deleteLater()
+            self.mode_tabs.setEnabled(True)
+            self.switch_mode('linux' if mode in ('real', 'simulation') else mode)
+        self.nas_sync.startup(ready)
 
     def make_page(self, mode):
         if mode == 'linux':
@@ -134,8 +144,7 @@ class StudyWindow(QMainWindow):
         self._pending_close = set(self.pages)
         self.statusBar().showMessage('진도를 저장하고 열었던 모든 실습 환경을 종료하는 중…')
         if not self._pending_close:
-            self._shutdown_ready = True
-            QTimer.singleShot(0, self.close)
+            self.finish_nas_close()
         for key, page in list(self.pages.items()):
             if hasattr(page, 'simulation_timer'):
                 page.simulation_timer.stop()
@@ -173,8 +182,15 @@ class StudyWindow(QMainWindow):
             self.stack.removeWidget(page)
             page.deleteLater()
         if self._closing and not self._pending_close:
+            self.finish_nas_close()
+
+    def finish_nas_close(self):
+        if getattr(self, '_nas_closing', False): return
+        self._nas_closing = True
+        def finished():
             self._shutdown_ready = True
             QTimer.singleShot(0, self.close)
+        self.nas_sync.finish_close(finished)
 
     def close_failed(self, key, message):
         self._closing = False

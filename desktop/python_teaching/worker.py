@@ -121,17 +121,36 @@ class Kernel:
 
     def inspect(self, names, probes=None):
         values,errors=self.inspect_values(names,probes)
-        figures = []
-        for number in self.plt.get_fignums()[:6]:
-            fig = self.plt.figure(number)
-            stream = io.BytesIO()
-            # Preview size is bounded independently of the learner's physical
-            # figure size; semantic grading still sees the original Figure.
-            preview_dpi=min(90,1600/max(fig.get_size_inches()))
-            fig.savefig(stream, format='png', dpi=preview_dpi)
-            if stream.tell() <= 4 * 1024 * 1024:
-                figures.append(base64.b64encode(stream.getvalue()).decode())
-        return {'ok': True, 'values': values, 'inspection_errors': errors, 'figures': figures}
+        figures,figure_numbers,preview_errors = [],[],[]
+        numbers = self.plt.get_fignums()
+        if numbers:
+            # Prefer the current Figure, not the first (possibly empty) figure
+            # from an earlier execution. Inspecting an empty session must not
+            # create a figure as a side effect.
+            active = self.plt.gcf()
+            ordered = [active.number] + [n for n in reversed(numbers) if n != active.number]
+            try:
+                for number in ordered[:6]:
+                    try:
+                        fig = self.plt.figure(number)
+                        stream = io.BytesIO()
+                        # Bound preview pixels without changing the learner's
+                        # physical size or semantic grading. Isolate failures.
+                        preview_dpi=min(90,1600/max(fig.get_size_inches()))
+                        fig.savefig(stream, format='png', dpi=preview_dpi)
+                        if stream.tell() > 4 * 1024 * 1024:
+                            raise ValueError('그래프 미리보기 크기 제한(4 MiB)을 넘었습니다.')
+                        figures.append(base64.b64encode(stream.getvalue()).decode())
+                        figure_numbers.append(number)
+                    except Exception as exc:
+                        preview_errors.append({'number':number,'error':str(exc)[:1000]})
+            finally:
+                # Do not redirect the next plt.plot/savefig call to a different
+                # Figure simply because we rendered previews for the UI.
+                self.plt.figure(active.number)
+        return {'ok': True, 'values': values, 'inspection_errors': errors, 'figures': figures,
+                'figure_numbers':figure_numbers, 'preview_errors':preview_errors,
+                'figure_count':len(numbers)}
 
     def file_snapshot(self):
         """Bounded inspection of output artifacts, independent of learner variables."""

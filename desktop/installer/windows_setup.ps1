@@ -33,6 +33,7 @@ try {
     $bar = New-Object System.Windows.Forms.ProgressBar; $bar.SetBounds(26,153,518,20); $form.Controls.Add($bar)
     $cancel = New-Object System.Windows.Forms.Button; $cancel.Text='취소'; $cancel.SetBounds(448,192,96,32); $form.Controls.Add($cancel)
     $job = New-Object ShellgroundSetup
+    $job.EmbeddedApplicationPath = Join-Path $PSScriptRoot 'application.zip'
     $cancel.Add_Click({ $job.Cancel(); $cancel.Enabled=$false; $status.Text='중단 중… 확인된 자료는 다음 설치에서 이어 받습니다.' })
     $form.Add_FormClosing({ param($sender,$eventArgs) if (-not $job.Finished) { $eventArgs.Cancel=$true; $job.Cancel(); $cancel.Enabled=$false } })
     $timer = New-Object System.Windows.Forms.Timer; $timer.Interval=200

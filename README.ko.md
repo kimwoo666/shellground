@@ -12,6 +12,12 @@
 
 </div>
 
+## 4.7.6 업데이트
+
+**기기를 바꿔도 NAS로 진도를 이어갑니다.** 개인 NAS 연결은 기기별로 설정하며 주소·계정·비밀번호는 배포본에 포함하지 않습니다. [NAS 설정](docs/NAS_SYNC.ko.md) · [전체 변경 사항](docs/RELEASE_4.7.6.md)
+
+pandas는 기존 내용을 유지하면서 **81개 설명·실행 소단계**로 익힙니다. Matplotlib은 현재 그림을 먼저 보여 주고 여러 그림 선택과 오류 표시를 지원합니다.
+
 ![Linux에서 실행한 Shellground 학습 화면](docs/screenshots/linux-learning.png)
 
 명령어를 한 번 따라 치고 끝내지 않습니다. 짧은 설명을 읽고 직접 실행한 다음, 조건이 다른 활용 문제와 이전 내용을 섞은 복습으로 이어집니다. 정답 문자열이 아니라 **작업 후의 파일·프로세스·변수·표·그래프**를 확인해 채점합니다.
@@ -63,9 +69,9 @@
 
 | 운영체제 | 배포 형식 | 확인한 범위 |
 | --- | --- | --- |
-| Linux x86-64 | [Linux 설치파일.run](https://github.com/kimwoo666/shellground/releases/download/v4.7.5/Shellground-Linux-Setup.run) | Linux 네이티브 빌드 · 미리 부팅 · [검증 범위](docs/DESKTOP_4.7.5_VERIFICATION.md) |
-| Windows x64 | [Windows 설치파일.exe](https://github.com/kimwoo666/shellground/releases/download/v4.7.5/Shellground-Windows-Setup.exe) | Windows 네이티브 빌드 · [실제 Windows 검증 기록](docs/DESKTOP_4.7.5_VERIFICATION.md) |
-| Android | [Android.apk](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-4.7.4-Android.apk) | 기존 검증 APK 유지. **ARM 실휴대폰은 미검증** |
+| Linux x86-64 | [Linux 설치파일.run](https://github.com/kimwoo666/shellground/releases/download/v4.7.6/Shellground-Linux-Setup.run) | NAS·문제·그래프 업데이트 · [변경 사항](docs/RELEASE_4.7.6.md) |
+| Windows x64 | [Windows 설치파일.exe](https://github.com/kimwoo666/shellground/releases/download/v4.7.6/Shellground-Windows-Setup.exe) | NAS·문제·그래프 업데이트 · [검증 범위](docs/PLATFORMS.md) |
+| Android | [Android.apk](https://github.com/kimwoo666/shellground/releases/download/v4.7.6/Shellground-4.7.6-Android.apk) | NAS·소단계·그래프 업데이트. **ARM 실휴대폰은 미검증** |
 | macOS | 없음 | 이번 배포에 포함하지 않음 |
 
 일반 사용자가 Python·Docker·Conda·WSL·Termux·실습 서버를 따로 설치하지 않습니다. 포함된 Linux 환경은 부팅 시간이 필요하고 Python 전용 실습보다 메모리를 더 사용합니다. 인증서 서명/스토어 심사를 받은 제품은 아닙니다.

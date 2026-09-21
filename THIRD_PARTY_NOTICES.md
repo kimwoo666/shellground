@@ -8,6 +8,9 @@ Shellground combines independently licensed components. Their authors retain the
 | Qt / PySide6 | LGPL/GPL/commercial upstream licensing; distributed as dynamically linked libraries on desktop |
 | NumPy, pandas, SciPy, Matplotlib, Seaborn, scikit-learn and dependencies | Respective upstream licenses, included in package metadata and desktop license files |
 | Chaquopy | Its upstream license and bundled Python/package notices |
+| SMBJ / ASN-One | Apache-2.0; Android NAS client and ASN.1 codec; bundled upstream LICENSE / NOTICE files |
+| MBassador / SLF4J | MIT; Android NAS client dependencies; bundled upstream licenses |
+| Bouncy Castle | Bouncy Castle license (MIT-style); Android NAS cryptography dependency; bundled license |
 | GNU/Linux guest packages | Package copyright notices under `/usr/share/doc` inside the guest; Ubuntu package source repositories |
 | QEMU | GPL-2.0 with component exceptions; original COPYING files, sources and build patches retained |
 | GLib / proxy-libintl | LGPL family; see pinned upstream source archives |
@@ -20,7 +23,7 @@ Shellground combines independently licensed components. Their authors retain the
 
 ## Android native runtime source
 
-The [4.7.4 native-source companion](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-preview/Shellground-4.7.4-Native-Sources.tar) contains the exact pinned QEMU/GLib/libffi/PCRE2/libfdt/proxy-libintl source archives, Shellground Android patches, build instructions and license texts. This is corresponding source material, not a VM cache or an old executable. The easy-install release uses the unchanged APK and links this same companion rather than duplicating it.
+The [4.7.4 native-source companion](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-preview/Shellground-4.7.4-Native-Sources.tar) contains the exact pinned QEMU/GLib/libffi/PCRE2/libfdt/proxy-libintl source archives, Shellground Android patches, build instructions and license texts. This is corresponding source material, not a VM cache or an old executable. Version 4.7.6 updates the Android app, courses and NAS client while reusing those unchanged native VM components; the same companion still applies to them.
 
 The exact versions, official URLs and SHA-256 hashes are in [native-sources.json](android/runtime/native-sources.json). Android-specific changes are in [runtime/patches](android/runtime/patches); build scripts are in [android/runtime](android/runtime). FreeType is built from unmodified upstream source with NDKr27c and16KB ELF load alignment; its source, notices and script are included in the companion.
 

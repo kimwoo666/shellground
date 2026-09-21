@@ -62,8 +62,6 @@ next-env.d.ts
 /desktop/notebook_teaching/__pycache__/
 /desktop/.vm-runtime-conda/
 /desktop/.windows-build/
-/desktop/.linux-build/
-/desktop/installer/__pycache__/
 /desktop/conda_teaching/__pycache__/
 /desktop/dist-python/
 # Versioned review bundles contain multi-GB VM images; publish source, not runtimes.
@@ -79,4 +77,23 @@ next-env.d.ts
 memory-v1.json
 memory-v1.json.*.tmp
 
-/desktop/guest/__pycache__/
+# NAS connection details and temporary local build dependencies
+/desktop/.nas-build-env/
+/desktop/.nas-offline/
+nas-sync-config-v1.json
+nas-sync-state-v1.json
+nas-sync.lock
+nas-sync-backup/
+desktop/.pandas-build-env/
+desktop/.pandas-offline/
+desktop/.plot-build-env/
+desktop/.plot-offline/
+desktop/.port-tools/
+desktop/.port-build/
+nas-credentials-v1.enc*
+device-*.json
+python-progress-v1.json
+conda-progress-v1.json
+notebook-progress-v1.json
+progress-v3*.json
+system-concepts-v1.json

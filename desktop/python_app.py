@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt, QStandardPaths, QThread, Signal, QTimer
 from PySide6.QtGui import QFont, QAction, QPixmap
 from PySide6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QComboBox,
                               QListWidget, QPlainTextEdit, QPushButton, QLabel, QSplitter,
-                              QTabWidget, QMessageBox, QScrollArea, QTabBar, QStackedWidget)
+                              QTabWidget, QMessageBox, QScrollArea, QTabBar, QStackedWidget, QSizePolicy)
 from feedback_panel import FeedbackPanel
 from python_teaching.course import lessons
 from python_teaching.engine import PythonEngine
@@ -27,6 +27,32 @@ class PythonJob(QThread):
     def run(self):
         try: self.finished_value.emit(self.function())
         except Exception as exc: self.failed.emit(str(exc))
+
+
+class FigurePreview(QLabel):
+    """Fit the complete plot (including axes) without stretching its aspect."""
+    def __init__(self, text=''):
+        super().__init__(text)
+        self._source_pixmap = QPixmap()
+        self.setMinimumSize(1,1)
+        self.setSizePolicy(QSizePolicy.Policy.Ignored,QSizePolicy.Policy.Ignored)
+
+    def setPixmap(self, pixmap):
+        self._source_pixmap = QPixmap(pixmap)
+        self._fit()
+
+    def _fit(self):
+        if not self._source_pixmap.isNull():
+            super().setPixmap(self._source_pixmap.scaled(self.contentsRect().size(),
+                Qt.AspectRatioMode.KeepAspectRatio,Qt.TransformationMode.SmoothTransformation))
+
+    def resizeEvent(self,event):
+        super().resizeEvent(event)
+        self._fit()
+
+    def clear(self):
+        self._source_pixmap = QPixmap()
+        super().clear()
 
 
 class PythonWindow(StudyPage):
@@ -73,6 +99,9 @@ class PythonWindow(StudyPage):
         top.addWidget(self.status)
         outer.addLayout(top)
         self.menuBar().addAction('사용 안내').triggered.connect(self.show_usage)
+        relearn = self.menuBar().addAction('이 단원 문법 처음부터 (F3)')
+        relearn.setShortcut('F3')
+        relearn.triggered.connect(self.relearn)
         splitter = QSplitter(Qt.Orientation.Horizontal)
         outer.addWidget(splitter, 1)
         left = QWidget()
@@ -113,6 +142,9 @@ class PythonWindow(StudyPage):
         self.previous = QPushButton('← 이전 소단계')
         self.previous.clicked.connect(self.previous_step)
         tools.addWidget(self.previous)
+        self.relearn_button = QPushButton('문법 다시 배우기 (F3)')
+        self.relearn_button.clicked.connect(self.relearn)
+        tools.addWidget(self.relearn_button)
         self.run_button = QPushButton('코드 실행 (Shift+Enter)')
         self.run_button.clicked.connect(self.run_code)
         tools.addWidget(self.run_button)
@@ -132,12 +164,21 @@ class PythonWindow(StudyPage):
         self.output.setReadOnly(True)
         self.output.setFont(QFont(mono_family, settings.terminal_font_size))
         self.output_tabs.addTab(self.output, '실행 출력')
-        self.figure = QLabel('그림을 만들면 여기에 표시됩니다.')
+        self.figure = FigurePreview('그림을 만들면 여기에 표시됩니다.')
         self.figure.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.figure_area = QScrollArea()
         self.figure_area.setWidget(self.figure)
         self.figure_area.setWidgetResizable(True)
-        self.output_tabs.addTab(self.figure_area, '그래프')
+        graph = QWidget()
+        graph_layout = QVBoxLayout(graph)
+        graph_layout.setContentsMargins(0,0,0,0)
+        self.figure_picker = QComboBox()
+        self.figure_picker.setAccessibleName('표시할 Matplotlib 그림')
+        self.figure_picker.currentIndexChanged.connect(self.show_figure)
+        graph_layout.addWidget(self.figure_picker)
+        graph_layout.addWidget(self.figure_area,1)
+        self._figure_previews = []
+        self.output_tabs.addTab(graph, '그래프')
         work.addWidget(self.output_tabs)
         work.setSizes([500,450])
         body.addWidget(work, 3)
@@ -150,6 +191,9 @@ class PythonWindow(StudyPage):
         self.grade_button.clicked.connect(self.grade)
         self.next_button = QPushButton()
         self.next_button.clicked.connect(self.advance)
+        self.load_example_button = QPushButton('소단계 코드 넣기')
+        self.load_example_button.clicked.connect(self.load_learning_example)
+        buttons.addWidget(self.load_example_button)
         for button in (self.hint,self.restart,self.grade_button,self.next_button): buttons.addWidget(button)
         body.addLayout(buttons)
         splitter.addWidget(right)
@@ -167,7 +211,7 @@ class PythonWindow(StudyPage):
         if key == self.units[index].key:
             self.phase = resume.get('phase') if resume.get('phase') in ('learn','example','practice1','practice2') else 'learn'
             self.variant = {'learn':0,'example':0,'practice1':1,'practice2':2}[self.phase]
-            self.step = min(max(resume.get('step',0),0),1) if isinstance(resume.get('step',0),int) else 0
+            self.step = self.unit.clamp_step(resume.get('step',0))
             self.render()
         self.python_sections.currentChanged.connect(self.change_python_section)
 
@@ -213,7 +257,10 @@ class PythonWindow(StudyPage):
             'Python 코드는 별도 프로세스에서 실행되지만 보안 VM은 아닙니다. '
             '신뢰할 수 없는 외부 코드는 실행하지 마세요.')
     @property
-    def problem(self): return self.unit.problems[self.variant]
+    def problem(self):
+        if self.phase == 'learn' and self.unit.guided_steps:
+            return self.unit.guided_steps[self.step].practice
+        return self.unit.problems[self.variant]
 
     def save(self):
         if self.notebook:self.notebook.save()
@@ -245,7 +292,7 @@ class PythonWindow(StudyPage):
         self.status.setText(f"단원 완료 {len(self.progress.data['completed'])}/{len(self.units)}")
 
     def render(self):
-        phase = {'learn':f'소단계 {self.step+1}/2', 'example':'예시 실습', 'practice1':'활용 1', 'practice2':'활용 2', 'random':'올랜덤'}[self.phase]
+        phase = {'learn':f'소단계 {self.step+1}/{len(self.unit.learning_steps)}', 'example':'예시 실습', 'practice1':'활용 1', 'practice2':'활용 2', 'random':'올랜덤'}[self.phase]
         self.heading.setText(f'{self.unit.topic} · {phase}' + (f' — {self.unit.title}' if not self.phase.startswith('practice') and self.phase != 'random' else ''))
         text = '목표: ' + self.problem.goal
         if self.phase == 'learn':
@@ -259,19 +306,22 @@ class PythonWindow(StudyPage):
         if self.problem.files: text += '\n\n실습 폴더의 파일: ' + ', '.join(self.problem.files)
         self.instructions.setPlainText(text)
         self.task_tabs.setCurrentIndex(0)
-        self.next_button.setText(('다음 소단계' if self.step == 0 else '전체 예시 시작') + ' (F6)' if self.phase == 'learn' else '다음 문제 (F6)')
+        self.next_button.setText(('다음 소단계' if self.step + 1 < len(self.unit.learning_steps) else '전체 예시 시작') + ' (F6)' if self.phase == 'learn' else '다음 문제 (F6)')
+        self.load_example_button.setVisible(self.phase == 'learn' and bool(self.unit.guided_steps))
+        self.grade_button.setText('소단계 결과 확인 (F5)' if self.phase == 'learn' and self.unit.guided_steps else '결과 채점 (F5)')
         self.previous.setVisible(self.phase == 'learn')
+        self.relearn_button.setVisible(self.phase != 'learn')
         self.previous.setEnabled(not self.busy and self.step > 0)
         self.exit_random.setVisible(self.phase == 'random')
         self.refresh_course()
         self.controls()
 
     def controls(self):
-        for widget in (self.course,self.topics,self.run_button,self.restart,self.hint,self.quiz_button,self.exit_random,self.previous): widget.setEnabled(not self.busy)
+        for widget in (self.course,self.topics,self.run_button,self.restart,self.hint,self.quiz_button,self.exit_random,self.previous,self.load_example_button,self.relearn_button): widget.setEnabled(not self.busy)
         self.previous.setEnabled(not self.busy and self.step>0)
         self.stop_button.setEnabled(self.busy)
         self.random_button.setEnabled(not self.busy and bool(self.progress.data['completed']))
-        self.grade_button.setEnabled(not self.busy and self.phase != 'learn' and self.engine.process is not None)
+        self.grade_button.setEnabled(not self.busy and (self.phase != 'learn' or bool(self.unit.guided_steps)) and self.engine.process is not None)
         self.next_button.setEnabled(not self.busy and (self.phase == 'learn' or self.solved))
 
     def job(self, function, callback):
@@ -280,7 +330,11 @@ class PythonWindow(StudyPage):
         self.controls()
         self.worker = PythonJob(function)
         self.worker.finished_value.connect(lambda value: callback(value) if not self._close_pending else None)
-        self.worker.failed.connect(lambda error: self.output.appendPlainText(error) if not self._close_pending else None)
+        def failed(error):
+            if not self._close_pending:
+                self.output.appendPlainText(error)
+                self.output_tabs.setCurrentIndex(0)
+        self.worker.failed.connect(failed)
         def finished():
             self.busy = False
             self.controls()
@@ -309,21 +363,49 @@ class PythonWindow(StudyPage):
             return result
         def show(result):
             self.solved = False
-            self.output.appendPlainText(f"In [{result['execution']}]\n" + result['output'])
-            inspection = result.get('inspection', {})
-            if inspection.get('figures'):
-                pixmap = QPixmap()
-                pixmap.loadFromData(base64.b64decode(inspection['figures'][0]))
-                self.figure.setPixmap(pixmap)
-                self.output_tabs.setCurrentIndex(1)
-            else:
-                self.clear_figure()
-                self.output_tabs.setCurrentIndex(0)
+            self.output.appendPlainText(f"In [{result.get('execution','?')}]\n" + result.get('output',''))
+            self.show_inspection(result.get('inspection', {}), execution_ok=result.get('ok',False))
             self.save()
         self.job(run, show)
 
+    def show_inspection(self, inspection, *, execution_ok=True):
+        self.clear_figure()
+        warnings = []
+        if not inspection.get('ok',False):
+            warnings.append('그래프·결과를 불러오지 못했습니다: ' + str(inspection.get('error','응답 없음')))
+        for error in inspection.get('preview_errors',[]):
+            warnings.append(f"Figure {error['number']} 표시 실패: {error['error']}")
+        figures = inspection.get('figures',[]) if inspection.get('ok',False) else []
+        numbers = inspection.get('figure_numbers',[])
+        self._figure_previews = figures
+        self.figure_picker.blockSignals(True)
+        for index in range(len(figures)):
+            number = numbers[index] if index < len(numbers) else index+1
+            self.figure_picker.addItem(f'Figure {number}',number)
+        self.figure_picker.blockSignals(False)
+        self.figure_picker.setEnabled(bool(figures))
+        count = inspection.get('figure_count',len(figures))
+        self.figure_picker.setToolTip(f'열린 그림 {count}개 · 현재 그림을 우선하여 최대 6개 표시')
+        if figures:self.show_figure(0)
+        for warning in warnings:self.output.appendPlainText(warning)
+        # Errors must not be hidden by an old, otherwise valid plot.
+        self.output_tabs.setCurrentIndex(1 if figures and execution_ok and not warnings else 0)
+
+    def show_figure(self,index):
+        if not 0 <= index < len(self._figure_previews):return
+        pixmap = QPixmap()
+        try:
+            valid = pixmap.loadFromData(base64.b64decode(self._figure_previews[index],validate=True))
+        except (ValueError,TypeError):
+            valid = False
+        if valid and not pixmap.isNull():
+            self.figure.setPixmap(pixmap)
+        else:
+            self.figure.clear()
+            self.figure.setText('그래프 이미지를 읽지 못했습니다. 코드를 다시 실행해 보세요.')
+
     def grade(self):
-        if self.busy or self.phase == 'learn': return
+        if self.busy or (self.phase == 'learn' and not self.unit.guided_steps): return
         problem = self.problem
         def show(state):
             result = grade_snapshot(state.get('values', {}), problem.checks)
@@ -331,7 +413,7 @@ class PythonWindow(StudyPage):
             details = [dict(c, label=c['label'] + ('' if c['passed'] else '\n'+c['detail'])) for c in result['checks']]
             self.feedback.set_results('목표 달성' if self.solved else '미완료 항목을 수정하고 다시 채점하세요.', details)
             self.task_tabs.setCurrentIndex(1)
-            if self.solved and self.phase != 'random':
+            if self.solved and self.phase not in ('random','learn'):
                 try: self.progress.passed(self.unit.key, self.variant)
                 except OSError as exc: QMessageBox.warning(self, '진도 저장 실패', str(exc))
                 self.refresh_course()
@@ -344,11 +426,12 @@ class PythonWindow(StudyPage):
         self.engine.close()
         self.index, self.variant, self.phase, self.solved = index, 0, 'learn', False
         step = self.progress.data['learning'].get(self.unit.key,0)
-        self.step = step if isinstance(step,int) and step in (0,1) else 0
+        self.step = self.unit.clamp_step(step)
         saved=self.progress.data['positions'].get(self.unit.key,{})
         if isinstance(saved,dict) and saved.get('phase') in ('learn','example','practice1','practice2'):
             self.phase=saved['phase']
             self.variant={'learn':0,'example':0,'practice1':1,'practice2':2}[self.phase]
+            self.step=self.unit.clamp_step(saved.get('step',self.step))
         self.editor.clear(); self.output.clear()
         self.clear_figure()
         self.random_return = None
@@ -360,18 +443,49 @@ class PythonWindow(StudyPage):
         self.refresh_course()
 
     def clear_figure(self):
+        self._figure_previews = []
+        self.figure_picker.blockSignals(True)
+        self.figure_picker.clear()
+        self.figure_picker.blockSignals(False)
+        self.figure_picker.setEnabled(False)
         self.figure.clear()
         self.figure.setText('그림을 만들면 여기에 표시됩니다.')
 
     def previous_step(self):
         if self.busy or self.phase != 'learn' or self.step == 0: return
+        self.reset_guided_lab()
         self.step -= 1
         self.save(); self.render()
 
+    def reset_guided_lab(self):
+        if self.unit.guided_steps:
+            self.engine.close()
+            self.solved = False
+            self.editor.clear(); self.output.clear(); self.clear_figure()
+            self.feedback.setText('이 소단계의 코드를 실행한 뒤 결과를 확인할 수 있습니다.')
+
+    def load_learning_example(self):
+        if self.busy or self.phase != 'learn' or not self.unit.guided_steps: return
+        if self.editor.toPlainText().strip() and QMessageBox.question(self,'소단계 코드',
+                '현재 입력을 이 소단계의 예시 코드로 바꿀까요?') != QMessageBox.StandardButton.Yes: return
+        self.editor.setPlainText(self.problem.solution)
+        self.editor.setFocus()
+
+    def relearn(self):
+        if self.busy or self._close_pending or self.python_stack.currentIndex() != 0: return
+        if self.editor.toPlainText().strip() and QMessageBox.question(self,'문법 다시 배우기',
+                '완료 진도는 유지합니다. 현재 입력과 임시 실습을 비우고 이 단원 설명으로 돌아갈까요?') != QMessageBox.StandardButton.Yes: return
+        self.engine.close()
+        self.phase,self.variant,self.step,self.solved='learn',0,0,False
+        self.random_return=None
+        self.editor.clear();self.output.clear();self.clear_figure()
+        self.save();self.render()
+
     def advance(self):
         if self.busy: return
-        if self.phase == 'learn' and self.step == 0:
-            self.step = 1
+        if self.phase == 'learn' and self.step + 1 < len(self.unit.learning_steps):
+            self.reset_guided_lab()
+            self.step += 1
             self.save(); self.render(); return
         if self.phase != 'learn' and not self.solved: return
         if self.phase in ('practice2','random'):

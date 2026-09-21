@@ -13,6 +13,8 @@ def export(path):
         data['learning_steps']=unit.learning_steps
         for problem, exported in zip(unit.problems, data['problems']):
             exported['display_initial']=problem.prepared_code
+        for step, exported in zip(unit.guided_steps, data['guided_steps']):
+            exported['practice']['display_initial']=step.practice.prepared_code
         units.append(data)
     quizzes=json.loads((Path(__file__).parent/'python_teaching/quiz_bank.json').read_text(encoding='utf-8'))
     cards=json.loads((Path(__file__).parent/'python_teaching/concept_cards.json').read_text(encoding='utf-8'))['cards']

@@ -109,7 +109,7 @@ def arm_wheel_identity(wheels, verify_online=False):
         tags=('cp312-cp312-manylinux_2_27_aarch64','cp312-cp312-manylinux_2_28_aarch64'))
 
 
-def export(destination, wheels, verify_online=False):
+def export(destination, wheels, verify_online=False, reuse_wheel_identity=False):
     from conda_teaching.engine import SHELL_INIT
     from notebook_teaching.course import lessons, ENV_GUIDE
     destination.mkdir(parents=True, exist_ok=True)
@@ -119,7 +119,13 @@ def export(destination, wheels, verify_online=False):
         notebook_units.append(dict(unit,topic='Jupyter',number=index,
             learning_steps=[dict(title=title,explanation=explanation,commands='',observation='') for title,explanation in unit['steps']]))
     write_json(destination/'notebook-course.json', dict(schema=1, environment=ENV_GUIDE, units=notebook_units))
-    identity=arm_wheel_identity(wheels, verify_online)
+    if reuse_wheel_identity:
+        # Allowed only for a source-only update using the separately pinned APK.
+        # No wheel is installed or replaced in this path.
+        identity=json.loads((wheels/'numpy-official.json').read_text())
+        if identity.get('version')!='2.3.5' or identity.get('name')!='numpy' or not identity.get('sha256'):
+            raise ValueError('Missing previously verified ARM wheel identity')
+    else:identity=arm_wheel_identity(wheels, verify_online)
     sources={}
     real=destination/'real-guest'; real.mkdir(exist_ok=True)
     for source in sorted((DESKTOP/'guest').glob('*.py')):
@@ -170,8 +176,9 @@ def export(destination, wheels, verify_online=False):
             metadata=Parser().parsestr(archive.read(next(n for n in archive.namelist() if n.endswith('.dist-info/METADATA'))).decode())
         records.append(dict(filename=path.name,sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
             size=path.stat().st_size,name=metadata['Name'],version=metadata['Version']))
-    write_json(wheels/'manifest.json',dict(schema=1,platform='linux-aarch64',python='3.12',
-        requirements=['ipykernel==7.3.0','jupyter-client==8.10.0','nbformat==5.11.1'],wheels=records))
+    if not reuse_wheel_identity:
+        write_json(wheels/'manifest.json',dict(schema=1,platform='linux-aarch64',python='3.12',
+            requirements=['ipykernel==7.3.0','jupyter-client==8.10.0','nbformat==5.11.1'],wheels=records))
     write_json(destination/'port-source-manifest.json',dict(schema=1,sources=sources,
         architecture_adapter=identity,conda_problems=60,notebook_problems=18,
         mobile_execution_budgets=dict(conda_guest_seconds=300,conda=MOBILE_CONDA_BUDGETS,notebook=MOBILE_NOTEBOOK_BUDGETS)))
@@ -183,4 +190,5 @@ if __name__=='__main__':
     parser.add_argument('--destination',type=Path,required=True)
     parser.add_argument('--wheels',type=Path,default=ROOT/'android/.native-runtime/port-assets/wheels')
     parser.add_argument('--verify-online',action='store_true')
-    args=parser.parse_args();export(args.destination,args.wheels,args.verify_online)
+    parser.add_argument('--reuse-wheel-identity',action='store_true')
+    args=parser.parse_args();export(args.destination,args.wheels,args.verify_online,args.reuse_wheel_identity)

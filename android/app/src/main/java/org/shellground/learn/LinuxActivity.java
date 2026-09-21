@@ -256,8 +256,10 @@ public final class LinuxActivity extends Activity {
         List<String> items=new ArrayList<>(Arrays.asList("힌트","문제 다시 시작","새 터미널","터미널 선택","전체 기록 복사","배운 범위 올랜덤","올랜덤 종료·복귀","실습 종료"));
         if(phase==0){items.add("이전 소단계");items.add("앞 소단계 준비 보기");}
         if(condaCourse){items.add("실습 파일 보기");items.add("Conda 설치·실행 안내");items.add("Miniconda 설치 실습");}
+        items.add("NAS 진도 동기화");
         new AlertDialog.Builder(this).setItems(items.toArray(new String[0]),(dialog,which)->{
             String chosen=items.get(which);
+            if(chosen.equals("NAS 진도 동기화")){NasSync.get(this).settings(this);return;}
             if(chosen.equals("Miniconda 설치 실습")){if(!busy){setupMode=true;solved=false;if(ready){busy=true;controls();send("conda_setup",new JSONObject());}else start();}return;}
             if(chosen.equals("Conda 설치·실행 안내")){try{showText("Conda 설치·실행 안내",CondaLesson.bootstrap(courseData));}catch(JSONException error){status.setText(error.toString());}return;}
             if(chosen.equals("실습 파일 보기")){if(ready&&!busy){busy=true;controls();send("files",new JSONObject());}else Toast.makeText(this,"실습 시작 후 파일을 볼 수 있습니다.",Toast.LENGTH_SHORT).show();return;}

@@ -23,7 +23,9 @@ def lessons():
     from .library_course import lessons as libraries
     from .coverage_course import lessons as coverage
     # These are explicitly marked supplements, not APIs attributed to the PDFs.
-    return insert_reviews(tuple(course)) + libraries() + coverage()
+    from .pandas_guidance import teach_before_practice
+    return tuple(teach_before_practice(unit) for unit in
+                 insert_reviews(tuple(course)) + libraries() + coverage())
 
 
 def lesson_by_key(key):

@@ -12,6 +12,12 @@ A native practice app for **Linux · Docker · ROS 2 · Python · Conda · Jupyt
 
 </div>
 
+## New in 4.7.6
+
+**Continue across devices with your own NAS.** Configure each device privately; no NAS address, account or password is included in the app downloads. [NAS setup](docs/NAS_SYNC.md) · [Full release notes](docs/RELEASE_4.7.6.md)
+
+Learn pandas through **81 guided explanation-and-execution steps** without removing existing content. Matplotlib prioritizes the current figure, supports multiple previews and keeps errors visible.
+
 ![Shellground's native Linux learning screen](docs/screenshots/linux-learning.png)
 
 Shellground turns a command or a library into a sequence of short, hands-on lessons. Read a concept, try it, solve a different task, then revisit what you learned in mixed practice. It checks the resulting files, processes, variables and plots—not just whether you typed a sample answer.
@@ -63,9 +69,9 @@ These are captures of the application, not concept mockups. Desktop captures are
 
 | Platform | Package | Verification boundary |
 | --- | --- | --- |
-| Linux x86-64 | [Linux Setup.run](https://github.com/kimwoo666/shellground/releases/download/v4.7.5/Shellground-Linux-Setup.run) | Native Linux build with background startup; [verification](docs/DESKTOP_4.7.5_VERIFICATION.md) |
-| Windows x64 | [Windows Setup.exe](https://github.com/kimwoo666/shellground/releases/download/v4.7.5/Shellground-Windows-Setup.exe) | Native Windows build; [Windows verification](docs/DESKTOP_4.7.5_VERIFICATION.md) |
-| Android | [Android.apk](https://github.com/kimwoo666/shellground/releases/download/v4.7.4-setup.1/Shellground-4.7.4-Android.apk) | Unchanged standalone APK; **physical ARM phones unverified** |
+| Linux x86-64 | [Linux Setup.run](https://github.com/kimwoo666/shellground/releases/download/v4.7.6/Shellground-Linux-Setup.run) | NAS, curriculum and plot update · [release notes](docs/RELEASE_4.7.6.md) |
+| Windows x64 | [Windows Setup.exe](https://github.com/kimwoo666/shellground/releases/download/v4.7.6/Shellground-Windows-Setup.exe) | NAS, curriculum and plot update · [verification scope](docs/PLATFORMS.md) |
+| Android | [Android.apk](https://github.com/kimwoo666/shellground/releases/download/v4.7.6/Shellground-4.7.6-Android.apk) | NAS, guided steps and plots updated. **Physical ARM phones unverified** |
 | macOS | — | Not included in this release |
 
 No separate Python, Docker, Conda, WSL, Termux or practice server is required for the bundled courses. Booting the included Linux environment takes time and uses more memory than the Python-only workspace. The packages are unsigned/development-signed; they are not store-certified releases.

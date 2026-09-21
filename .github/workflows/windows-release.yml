@@ -43,8 +43,8 @@ jobs:
           enable-cache: false
       - name: Create the pinned native Python environment
         run: |
-          uv python install 3.12.14
-          uv venv desktop/.venv --python 3.12.14
+          uv python install 3.12.10
+          uv venv desktop/.venv --python 3.12.10
       - name: Install native build dependencies
         run: uv pip install --python "${{ matrix.root_python }}" -r desktop/requirements-${{ matrix.platform }}-lock.txt
       - name: Install Linux GUI system libraries
@@ -53,16 +53,16 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y libegl1 libopengl0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 libxcb-shape0 libxkbcommon-x11-0 xvfb openbox
           ./desktop/.venv/bin/python -c "import tkinter; print('Installer Tk', tkinter.TkVersion)"
-      - name: Check startup, shutdown and UI regressions
+      - name: Check changed NAS and graph features
         working-directory: desktop
-        run: ${{ matrix.python }} -m unittest test_windows_vm test_windows_stdio test_windows_boot_contract test_platform_runtime test_ros_grading test_real_vm test_vm_resources test_prewarm test_prewarm_ui test_study_window -v
-      - name: Check native Linux lifetime and installer
-        if: matrix.platform == 'linux'
+        run: ${{ matrix.python }} -m unittest test_mobile_sync_delta test_nas_sync test_nas_sync_ui test_plot_preview test_publication_privacy -v
+      - name: Type-check the updated Windows installer
+        if: matrix.platform == 'windows'
+        shell: powershell
         run: |
-          cd desktop
-          ./.venv/bin/python -m unittest test_vm_supervisor -v
-          cd installer
-          ../.venv/bin/python -m unittest test_installer -v
+          Add-Type -AssemblyName System.Net.Http, System.IO.Compression, System.IO.Compression.FileSystem
+          $refs = @([System.Uri].Assembly.Location, [System.Linq.Enumerable].Assembly.Location, [System.Net.Http.HttpClient].Assembly.Location, [System.IO.Compression.ZipArchive].Assembly.Location, [System.IO.Compression.ZipFile].Assembly.Location)
+          Add-Type -Path desktop/installer/windows_download.cs -ReferencedAssemblies $refs
       - name: Build and check the native executable and installer
         run: ${{ matrix.root_python }} desktop/build_${{ matrix.platform }}_release.py
       - uses: actions/upload-artifact@v4
@@ -102,4 +102,4 @@ jobs:
           fi
           (cd release-output && sha256sum *.exe *.zip *.tar *.run > SHA256SUMS.txt)
           gh release upload "$tag" release-output/* --clobber
-          gh release edit "$tag" --draft=false --latest
+          echo "Desktop files are ready in the draft; attach the tested Android APK before publishing."

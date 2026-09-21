@@ -9,17 +9,30 @@ _kernel=None
 _temporary=None
 _unit=None
 _variant=None
+_step=None
+
+
+def select_problem(request):
+    from python_teaching.course import lesson_by_key
+    unit = lesson_by_key(request['unit'])
+    step = request.get('step') if request.get('phase') == 'learn' and unit.guided_steps else None
+    if step is not None:
+        if type(step) is not int or not 0 <= step < len(unit.guided_steps):
+            raise ValueError('잘못된 소단계')
+        return unit.guided_steps[step].practice, step
+    variant = int(request.get('variant', 0))
+    if not 0 <= variant < len(unit.problems): raise ValueError('잘못된 문제 번호')
+    return unit.problems[variant], None
 
 
 def dispatch(message,cache_directory):
-    global _kernel,_temporary,_unit,_variant
+    global _kernel,_temporary,_unit,_variant,_step
     request=json.loads(message)
     from python_teaching.course import lesson_by_key
     from python_teaching.values import grade_snapshot
     from python_teaching.worker import Kernel,install_guardrails
     key,variant=request['unit'],int(request.get('variant',0))
-    unit=lesson_by_key(key)
-    problem=unit.problems[variant]
+    problem,step=select_problem(request)
     if _kernel is None:
         # The only interpreter service is a private single process. Its previous
         # process may have been killed mid-cell; remove only our marked sessions.
@@ -53,15 +66,16 @@ def dispatch(message,cache_directory):
         install_guardrails(root)
         prepared=_kernel.execute(problem.initial)
         if not prepared['ok']: return json.dumps(prepared,ensure_ascii=False)
-        _unit,_variant=key,variant
-    if (key,variant)!=(_unit,_variant):
+        _unit,_variant,_step=key,variant,step
+    if (key,variant,step)!=(_unit,_variant,_step):
         raise RuntimeError('문제가 바뀌었습니다. 별도 Python 프로세스를 재시작하세요.')
     action=request['action']
     if action=='start': result={'ok':True,'output':'실제 Python 환경이 준비되었습니다.'}
     elif action=='execute':
         result=_kernel.execute(request.get('code',''))
         inspection=_kernel.inspect(problem.targets,problem.probes)
-        result['figures']=inspection['figures']
+        for field in ('figures','figure_numbers','figure_count','preview_errors'):
+            result[field]=inspection[field]
     elif action=='grade':
         values,errors=_kernel.inspect_values(problem.targets,problem.probes)
         result={'ok':True,'grade':grade_snapshot(values,problem.checks),'inspection_errors':errors}

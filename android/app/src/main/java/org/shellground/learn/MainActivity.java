@@ -19,7 +19,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.*;
 import org.json.*;
 
-/** Native study screen. No WebView, network account, or external Python app. */
+/** Native study screen. Optional private NAS sync; no external Python app. */
 public final class MainActivity extends Activity {
     private JSONArray units, quizzes, cards;
     private int index=0,phase=0,step=0,variant=0,requestId=0;
@@ -38,6 +38,8 @@ public final class MainActivity extends Activity {
     private boolean keyboardVisible=false,compactActions=false;
     private EditText editor;
     private ImageView image;
+    private Spinner figurePicker;
+    private JSONArray figurePaths=new JSONArray();
     private Button execute,grade,next,stop;
     private String feedback="아직 채점하지 않았습니다.",pending=null;
     private Messenger service;
@@ -53,10 +55,9 @@ public final class MainActivity extends Activity {
                 solved=false;
                 output.append("\n"+result.optString("output",""));
                 if(output.length()>70000) output.setText(output.getText().subSequence(output.length()-65000,output.length()));
-                if(result.has("figurePath")) {
-                    image.setImageBitmap(BitmapFactory.decodeFile(result.getString("figurePath")));
-                    image.setVisibility(View.VISIBLE);
-                } else image.setVisibility(View.GONE);
+                showFigures(result);
+                JSONArray previewErrors=result.optJSONArray("preview_errors");
+                if(previewErrors!=null&&previewErrors.length()>0)output.append("\n그래프 표시 오류: "+previewErrors.toString());
                 outputEmpty.setText(result.optBoolean("ok")?"실행을 마쳤습니다.\n화면 출력이 없는 코드입니다. 결과는 채점으로 확인할 수 있습니다.":"실행 결과를 확인하세요.");
                 showPane(2);
             }
@@ -76,6 +77,10 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        TextView waiting=new TextView(this);waiting.setText("학습 진도를 불러오는 중…");setContentView(waiting);
+        NasSync.get(this).startup(()->{if(!isFinishing()&&!isDestroyed())openStudy();});
+    }
+    private void openStudy(){
         progress=getSharedPreferences("python-progress-v1",MODE_PRIVATE);
         try {
             ByteArrayOutputStream bytes=new ByteArrayOutputStream();
@@ -158,7 +163,9 @@ public final class MainActivity extends Activity {
         LinearLayout results=vertical();results.setPadding(dp(18),dp(20),dp(18),dp(24));resultsScroll.addView(results);
         outputEmpty=text(15);outputEmpty.setText("아직 실행 결과가 없습니다.\n코드 탭에서 입력한 뒤 실행해 보세요.");outputEmpty.setTextColor(MUTED);outputEmpty.setPadding(0,dp(24),0,dp(24));results.addView(outputEmpty);
         output=text(14);output.setTag("output");output.setTypeface(Typeface.MONOSPACE);output.setTextIsSelectable(true);output.setLineSpacing(dp(4),1);results.addView(output);
-        image=new ImageView(this); image.setAdjustViewBounds(true); image.setVisibility(View.GONE); results.addView(image);
+        figurePicker=new Spinner(this);figurePicker.setVisibility(View.GONE);results.addView(figurePicker);
+        figurePicker.setOnItemSelectedListener(new SimpleSelection(){public void onItemSelected(AdapterView<?> p,View v,int at,long id){showFigure(at);}});
+        image=new ImageView(this); image.setAdjustViewBounds(true);image.setScaleType(ImageView.ScaleType.FIT_CENTER); image.setVisibility(View.GONE); results.addView(image,new LinearLayout.LayoutParams(-1,-2));
         ScrollView gradeScroll=new ScrollView(this);gradeScroll.setFillViewport(true);panes[3]=gradeScroll;
         gradeContent=vertical();gradeContent.setPadding(dp(20),dp(24),dp(20),dp(24));gradeScroll.addView(gradeContent);
         for(int i=0;i<panes.length;i++){panes[i].setTag("pane-"+i);workspace.addView(panes[i],new FrameLayout.LayoutParams(-1,-1));}
@@ -220,16 +227,18 @@ public final class MainActivity extends Activity {
         editor.setSelection(Math.min(start,end)+insertion.length()-(insertion.length()==2?1:0));editor.requestFocus();
     }
     private JSONObject unit(){ return units.optJSONObject(index); }
-    private JSONObject task(){ return unit().optJSONArray("problems").optJSONObject(variant); }
+    private boolean guided(){JSONArray pages=unit().optJSONArray("guided_steps");return phase==0&&pages!=null&&pages.length()>0;}
+    private int stepCount(){JSONArray pages=unit().optJSONArray("learning_steps");return pages==null?2:Math.max(1,pages.length());}
+    private JSONObject task(){return guided()?unit().optJSONArray("guided_steps").optJSONObject(step).optJSONObject("practice"):unit().optJSONArray("problems").optJSONObject(variant);}
     private String key(){ return unit().optString("key"); }
-    private void loadPosition(){ phase=Math.max(0,Math.min(3,progress.getInt(key()+".phase",0))); step=Math.max(0,Math.min(1,progress.getInt(key()+".step",0))); variant=Math.max(0,phase-1); }
+    private void loadPosition(){ phase=Math.max(0,Math.min(3,progress.getInt(key()+".phase",0))); step=Math.max(0,Math.min(stepCount()-1,progress.getInt(key()+".step",0))); variant=Math.max(0,phase-1); }
     private void save(){
         if(phase==4) return;
         progress.edit().putString("last",key()).putInt(key()+".phase",phase).putInt(key()+".step",step).apply();
     }
     private boolean completed(String key){ return progress.getBoolean(key+":1",false)&&progress.getBoolean(key+":2",false); }
     private void render(){
-        String phaseText=new String[]{"배우기 "+(step+1)+"/2","예시","활용 1","활용 2","올랜덤"}[phase];
+        String phaseText=new String[]{"배우기 "+(step+1)+"/"+stepCount(),"예시","활용 1","활용 2","올랜덤"}[phase];
         heading.setText(unit().optString("topic")+"  /  "+unitNumber(index)+(completed(key())?"  ·  완료":""));phaseLabel.setText(phaseText);
         unitTitle.setText(phase<2?unit().optString("title"):(phase==4?"배운 범위 올랜덤":"활용 문제"));
         progressTrack.removeAllViews();
@@ -242,9 +251,10 @@ public final class MainActivity extends Activity {
     private void renderProblem(){
         questionContent.removeAllViews();
         if(phase==0){
-            section(questionContent,step==0?"개념과 인자":"작게 실행하고 해석",step==0?unit().optString("explanation"):unit().optJSONArray("problems").optJSONObject(0).optString("goal"));
-            codeBlock(questionContent,step==0?"기본 형태":"직접 해볼 코드",step==0?unit().optString("syntax"):unit().optJSONArray("problems").optJSONObject(0).optString("solution"));
-            if(step==1)section(questionContent,"주의할 점",unit().optString("pitfall"));
+            JSONArray page=unit().optJSONArray("learning_steps").optJSONArray(step);
+            section(questionContent,page.optString(0),page.optString(1));
+            if(guided())questionContent.addView(button("소단계 코드 넣기",()->replaceCode(()->{editor.setText(task().optString("solution"));showPane(1);})));
+            if(step>0)questionContent.addView(button("← 이전 소단계",()->replaceCode(()->{cancelWorker();step--;solved=false;clearWork();render();})));
         }else{
             section(questionContent,"이번 실습의 목표",task().optString("goal"));
             if(phase==1)codeBlock(questionContent,"직접 입력할 예시",task().optString("solution"));
@@ -268,7 +278,7 @@ public final class MainActivity extends Activity {
     private void controls(){
         if(execute==null)return;
         execute.setVisibility(busy?View.GONE:View.VISIBLE);stop.setVisibility(busy?View.VISIBLE:View.GONE);
-        grade.setEnabled(!busy&&phase>0);next.setEnabled(!busy&&(phase==0||solved));unitPicker.setEnabled(!busy);
+        grade.setEnabled(!busy&&(phase>0||guided()));grade.setText(guided()?"결과 확인":"채점");next.setEnabled(!busy&&(phase==0||solved||progress.getBoolean(key()+":"+variant,false)));unitPicker.setEnabled(!busy);
         execute.setBackground(shape(GREEN,8,0));execute.setTextColor(Color.WHITE);
         stop.setBackground(shape(0xfffae9e5,8,0));stop.setTextColor(0xffad4230);
         grade.setBackground(shape(Color.WHITE,8,LINE));next.setBackground(shape(next.isEnabled()?0xffe1eee9:0xffe9edef,8,0));
@@ -312,7 +322,11 @@ public final class MainActivity extends Activity {
         for(int i=0;i<labels.length;i++)popup.getMenu().add(0,i,i,labels[i]).setEnabled(!busy||i==4);
         if(BuildConfig.LINUX_RUNTIME)popup.getMenu().add(0,5,5,"Linux · Docker · ROS 2").setEnabled(!busy);
         if(BuildConfig.LINUX_RUNTIME){popup.getMenu().add(0,6,6,"Conda · pip").setEnabled(!busy);popup.getMenu().add(0,7,7,"Jupyter 노트북").setEnabled(!busy);}
+        popup.getMenu().add(0,8,8,"NAS 진도 동기화");
+        popup.getMenu().add(0,9,9,"이 단원 문법 처음부터").setEnabled(!busy);
         popup.setOnMenuItemClickListener(item->{switch(item.getItemId()){
+            case 8:NasSync.get(this).settings(this);break;
+            case 9:replaceCode(()->{cancelWorker();randomReturn=null;phase=0;step=0;variant=0;solved=false;clearWork();render();});break;
             case 5:save();cancelWorker();startActivity(new Intent(this,LinuxActivity.class));break;
             case 6:save();cancelWorker();startActivity(new Intent(this,LinuxActivity.class).putExtra("course","conda"));break;
             case 7:save();cancelWorker();startActivity(new Intent(this,LinuxActivity.class).putExtra("course","notebook"));break;
@@ -326,12 +340,13 @@ public final class MainActivity extends Activity {
         else select(selected);
     }
     private void select(int selected){ save(); cancelWorker(); index=selected; randomReturn=null; loadPosition(); solved=false; clearWork(); render(); }
-    private void clearWork(){ editor.setText(""); output.setText("");outputEmpty.setText("아직 실행 결과가 없습니다.\n코드 탭에서 입력한 뒤 실행해 보세요.");image.setVisibility(View.GONE);feedback="아직 채점하지 않았습니다.";renderGrade(null); }
+    private void clearWork(){ editor.setText(""); output.setText("");outputEmpty.setText("아직 실행 결과가 없습니다.\n코드 탭에서 입력한 뒤 실행해 보세요.");image.setVisibility(View.GONE);figurePicker.setVisibility(View.GONE);figurePaths=new JSONArray();feedback="아직 채점하지 않았습니다.";renderGrade(null); }
     private void run(){if(busy)return;if(editor.getText().toString().trim().isEmpty()){showPane(1);editor.requestFocus();Toast.makeText(this,"실행할 코드를 입력하세요.",Toast.LENGTH_SHORT).show();return;}hideKeyboard();request("execute");}
     private void request(String action){
         if(busy) return;
         try {
             JSONObject request=new JSONObject().put("action",action).put("unit",key()).put("variant",variant);
+            if(phase==0)request.put("phase","learn").put("step",step);
             if(action.equals("execute")) request.put("code",editor.getText().toString());
             busy=true; requestId++; controls(); handler.postDelayed(timeout,service==null?30000:8000);
             if(service==null) {
@@ -357,7 +372,7 @@ public final class MainActivity extends Activity {
         JSONArray checks=result.optJSONArray("checks");
         for(int i=0;i<checks.length();i++){ JSONObject check=checks.optJSONObject(i); lines.append("\n").append(check.optBoolean("passed")?"✓ ":"· ").append(check.optString("label")); if(!check.optBoolean("passed")) lines.append("\n").append(check.optString("detail")); }
         feedback=lines.toString();renderGrade(result);showPane(3);
-        if(solved&&phase!=4) progress.edit().putBoolean(key()+":"+variant,true).apply();
+        if(solved&&phase>0&&phase!=4) progress.edit().putBoolean(key()+":"+variant,true).apply();
     }
     private void renderGrade(JSONObject result){
         gradeContent.removeAllViews();gradeContent.setPadding(dp(20),dp(16),dp(20),dp(16));gradeSummary=text(20);gradeSummary.setTypeface(null,Typeface.BOLD);gradeSummary.setPadding(0,0,0,dp(8));gradeContent.addView(gradeSummary);
@@ -376,7 +391,7 @@ public final class MainActivity extends Activity {
         ((ScrollView)panes[3]).scrollTo(0,0);
     }
     private void advance(){
-        if(phase==0&&step==0){ step=1;render();return; }
+        if(phase==0&&step+1<stepCount()){replaceCode(()->{cancelWorker();step++;solved=false;clearWork();render();});return;}
         if(phase!=0&&!solved) return;
         cancelWorker(); solved=false;clearWork();
         if(phase==4){pickRandom();return;}
@@ -443,10 +458,30 @@ public final class MainActivity extends Activity {
     @Override public boolean onKeyUp(int keyCode,KeyEvent event){
         if(keyCode==KeyEvent.KEYCODE_F1){hint();return true;}
         if(keyCode==KeyEvent.KEYCODE_F2){restart();return true;}
-        if(keyCode==KeyEvent.KEYCODE_F5&&!busy&&phase>0){request("grade");return true;}
+        if(keyCode==KeyEvent.KEYCODE_F5&&!busy&&(phase>0||guided())){request("grade");return true;}
         if(keyCode==KeyEvent.KEYCODE_F6&&!busy){advance();return true;}
         if(keyCode==KeyEvent.KEYCODE_ENTER&&event.isShiftPressed()&&!busy){run();return true;}
         return super.onKeyUp(keyCode,event);
     }
-    @Override protected void onStop(){ if(units!=null)save(); cancelWorker(); super.onStop(); }
+    @Override public boolean dispatchKeyEvent(KeyEvent event){
+        if(editor!=null&&(event.getKeyCode()==KeyEvent.KEYCODE_ENTER||event.getKeyCode()==KeyEvent.KEYCODE_NUMPAD_ENTER)&&event.isShiftPressed()){
+            if(event.getAction()==KeyEvent.ACTION_DOWN&&event.getRepeatCount()==0&&!busy)run();return true;
+        }
+        return super.dispatchKeyEvent(event);
+    }
+    private void replaceCode(Runnable action){if(editor.length()==0)action.run();else new AlertDialog.Builder(this).setMessage("완료 진도는 유지하고 입력 코드를 바꿀까요?").setNegativeButton("취소",null).setPositiveButton("계속",(d,w)->action.run()).show();}
+    private static abstract class SimpleSelection implements AdapterView.OnItemSelectedListener {public void onNothingSelected(AdapterView<?> parent){}}
+    private void showFigures(JSONObject result){
+        figurePaths=result.optJSONArray("figurePaths");if(figurePaths==null)figurePaths=new JSONArray();
+        JSONArray numbers=result.optJSONArray("figure_numbers");ArrayList<String> labels=new ArrayList<>();
+        for(int i=0;i<figurePaths.length();i++)labels.add("Figure "+(numbers==null?i+1:numbers.optInt(i,i+1))+(i==0?" · 현재 그림":""));
+        figurePicker.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,labels));
+        figurePicker.setVisibility(labels.size()>1?View.VISIBLE:View.GONE);showFigure(0);
+    }
+    private void showFigure(int at){
+        Bitmap picture=at<figurePaths.length()?BitmapFactory.decodeFile(figurePaths.optString(at)):null;
+        image.setImageBitmap(picture);image.setVisibility(picture==null?View.GONE:View.VISIBLE);
+        if(picture==null&&figurePaths.length()>0)output.append("\n그래프 이미지를 읽지 못했습니다.");
+    }
+    @Override protected void onStop(){ if(units!=null)save(); if(execute!=null)cancelWorker();NasSync.get(this).flush(); super.onStop(); }
 }

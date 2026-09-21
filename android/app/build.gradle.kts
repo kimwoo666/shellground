@@ -4,6 +4,7 @@ plugins {
 }
 val linuxRuntime = providers.gradleProperty("linuxRuntime").orNull == "true"
 val bundleLinuxPack = providers.gradleProperty("bundleLinuxPack").orNull == "true"
+val reuseReleaseRuntime = providers.gradleProperty("reuseReleaseRuntime").orNull
 android {
     namespace = "org.shellground.learn"
     compileSdk = 35
@@ -11,8 +12,8 @@ android {
         applicationId = "org.shellground.learn"
         minSdk = 24
         targetSdk = 35
-        versionCode = 474
-        versionName = "4.7.4"
+        versionCode = 476
+        versionName = "4.7.6"
         buildConfigField("boolean", "LINUX_RUNTIME", linuxRuntime.toString())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
@@ -39,10 +40,12 @@ android {
     sourceSets.getByName("main").java.srcDir("../runtime/src/main/java")
 }
 val stageLinuxRuntime by tasks.registering(Exec::class) {
+    onlyIf { reuseReleaseRuntime == null }
     commandLine("python3", "../runtime/stage_candidates.py", "--destination",
         layout.buildDirectory.dir("generated/realJniLibs").get().asFile.absolutePath)
 }
 val stageLinuxPack by tasks.registering(Exec::class) {
+    onlyIf { reuseReleaseRuntime == null }
     // Java/UI-only edits must not hash and rewrite the entire 1.7GB guest on
     // every build. Gradle invalidates this local up-to-date check when either
     // a source, the verifier, or any generated output changes. The stage tool
@@ -55,6 +58,8 @@ val stageLinuxPack by tasks.registering(Exec::class) {
         layout.buildDirectory.dir("generated/realAssets/training-pack").get().asFile.absolutePath)
 }
 dependencies {
+    implementation("com.hierynomus:smbj:0.14.0")
+    runtimeOnly("org.slf4j:slf4j-nop:2.0.16")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
 }
@@ -62,6 +67,7 @@ val stagePython by tasks.registering(Sync::class) {
     from("../../desktop/python_teaching") { into("python_teaching"); include("*.py", "quiz_bank.json", "concept_cards.json"); exclude("engine.py") }
     from("../../desktop/assets/NotoSansCJK-Regular.ttc") { into("assets") }
     from("src/main/python")
+    from("../../desktop/nas_sync.py")
     // Same existing VT parser as desktop; no shell simulation or host exec.
     from("../../desktop/.runtime/pyte") { into("pyte"); include("**/*.py") }
     from("../../desktop/.runtime/wcwidth") { into("wcwidth"); include("**/*.py") }
@@ -82,14 +88,24 @@ val exportCourse by tasks.registering(Exec::class) {
     outputs.file(layout.buildDirectory.file("generated/assets/python-course.json"))
 }
 val exportPortCourses by tasks.registering(Exec::class) {
-    commandLine(System.getenv("SHELLGROUND_BUILD_PYTHON") ?: "python3.13", "../runtime/export_port_assets.py", "--destination",
+    val arguments=mutableListOf(System.getenv("SHELLGROUND_BUILD_PYTHON") ?: "python3.13", "../runtime/export_port_assets.py", "--destination",
         layout.buildDirectory.dir("generated/portAssets").get().asFile.absolutePath)
+    if(reuseReleaseRuntime != null)arguments.add("--reuse-wheel-identity")
+    commandLine(arguments)
     inputs.files(fileTree("../../desktop/conda_teaching") { include("*.py", "*course_spec.json") })
     inputs.files(fileTree("../../desktop/notebook_teaching") { include("*.py") })
     inputs.files(fileTree("../../desktop/guest") { include("*.py", "bashrc") })
     inputs.files("../runtime/export_port_assets.py", "../../desktop/lab/lab.py")
     outputs.dir(layout.buildDirectory.dir("generated/portAssets"))
 }
+val restoreReleaseRuntime by tasks.registering(Exec::class) {
+    onlyIf { reuseReleaseRuntime != null }
+    commandLine("python3", "../runtime/reuse_release_runtime.py", reuseReleaseRuntime?.let { rootProject.file(it).absolutePath } ?: "")
+    if(reuseReleaseRuntime != null)inputs.file(rootProject.file(reuseReleaseRuntime))
+    inputs.file("../runtime/reuse_release_runtime.py")
+    outputs.dirs(layout.buildDirectory.dir("generated/realJniLibs"),layout.buildDirectory.dir("generated/realAssets"))
+}
+tasks.named("exportPortCourses") { if(reuseReleaseRuntime != null)dependsOn(restoreReleaseRuntime) }
 android.sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/portAssets"))
 chaquopy {
     defaultConfig {

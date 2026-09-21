@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using System.IO.Compression;
+using System.Runtime.InteropServices;
 
 public sealed class ReleasePart {
     public string Name;
@@ -18,7 +19,7 @@ public sealed class ReleasePart {
 public sealed class ShellgroundSetup {
     const string Owner = "shellground-setup-v1";
     const string BaseUrl = "https://github.com/kimwoo666/shellground/releases/download/v4.7.4-preview/";
-    const string Version = "4.7.5";
+    const string Version = "4.7.6";
     const string AppBaseUrl = "https://github.com/kimwoo666/shellground/releases/download/v" + Version + "/";
     readonly CancellationTokenSource cancellation = new CancellationTokenSource();
     public volatile string Stage = "설치 준비 중";
@@ -28,6 +29,9 @@ public sealed class ShellgroundSetup {
     public long Current;
     public long Total;
     public string Application;
+    public string EmbeddedApplicationPath;
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    static extern bool CreateHardLink(string link, string existing, IntPtr reserved);
     public void Cancel() { cancellation.Cancel(); }
     static string HashFile(string path) {
         using (var input = File.OpenRead(path))
@@ -107,6 +111,23 @@ public sealed class ShellgroundSetup {
         }
         File.Move(partial, path); File.Delete(checkpoint);
     }
+    void ReuseDisk(string root, string target, string hash, long bytes) {
+        if (File.Exists(target)) return;
+        // Only known, installed releases under this installer-owned root.
+        foreach (string version in new string[] { "4.7.5", "4.7.4" }) {
+            string old = Path.Combine(root, "app-" + version);
+            string receipt = Path.Combine(old, "installed.sha256");
+            string disk = Path.Combine(old, "runtime", "windows-x86_64", "base.qcow2");
+            SafePath(old); SafePath(receipt); SafePath(disk);
+            if (!File.Exists(receipt) || !File.Exists(disk)) continue;
+            if (!File.ReadAllText(receipt).StartsWith(hash + ":", StringComparison.Ordinal)) continue;
+            Stage = "기존 실습 자료 확인 · 재다운로드 방지";
+            if (new FileInfo(disk).Length != bytes || HashFile(disk) != hash) continue;
+            StopCheck();
+            // Practice always uses separate overlays; this base stays immutable.
+            if (CreateHardLink(target, disk, IntPtr.Zero)) return;
+        }
+    }
     void Extract(string archive, string destination) {
         Stage = "프로그램 설치 중";
         string prefix = Path.GetFullPath(destination) + Path.DirectorySeparatorChar;
@@ -152,13 +173,21 @@ public sealed class ShellgroundSetup {
                     ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
                     using (var client = new HttpClient()) {
                         client.Timeout = TimeSpan.FromSeconds(30);
-                        client.DefaultRequestHeaders.UserAgent.ParseAdd("Shellground-Setup/4.7.4");
+                        client.DefaultRequestHeaders.UserAgent.ParseAdd("Shellground-Setup/" + Version);
                         if (!File.Exists(ready)) {
                             string payload = Path.Combine(root, "application.zip.partial"); SafePath(payload);
-                            if (!File.Exists(payload) || HashFile(payload) != archive.Hash) Receive(client, archive, payload, 0, archive.Bytes, true);
-                            Extract(payload, incoming); File.WriteAllText(ready, archive.Hash); File.Delete(payload);
+                            bool embedded = !String.IsNullOrEmpty(EmbeddedApplicationPath) && File.Exists(EmbeddedApplicationPath);
+                            if (embedded) {
+                                payload = EmbeddedApplicationPath; SafePath(payload);
+                                if (new FileInfo(payload).Length != archive.Bytes || HashFile(payload) != archive.Hash)
+                                    throw new IOException("내장 프로그램 파일 검증 실패");
+                            } else if (!File.Exists(payload) || HashFile(payload) != archive.Hash) Receive(client, archive, payload, 0, archive.Bytes, true);
+                            Extract(payload, incoming); File.WriteAllText(ready, archive.Hash);
+                            if (!embedded) File.Delete(payload);
                         } else if (File.ReadAllText(ready) != archive.Hash) throw new IOException("설치 자료 버전 불일치");
-                        Disk(client, Path.Combine(incoming, "runtime", "windows-x86_64", "base.qcow2"), parts, diskHash, diskBytes);
+                        string targetDisk = Path.Combine(incoming, "runtime", "windows-x86_64", "base.qcow2");
+                        ReuseDisk(root, targetDisk, diskHash, diskBytes);
+                        Disk(client, targetDisk, parts, diskHash, diskBytes);
                     }
                     StopCheck(); File.WriteAllText(Path.Combine(incoming, "installed.sha256"), identity);
                     Directory.Move(incoming, Application); Succeeded = true;

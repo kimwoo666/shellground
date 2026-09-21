@@ -61,8 +61,10 @@ def main():
     parser.add_argument('--makensis', type=Path)
     parser.add_argument('--output', type=Path, default=ROOT/'dist-windows-release')
     parser.add_argument('--link-disk', action='store_true')
+    parser.add_argument('--prebuilt', type=Path, help='Package an existing Windows bundle without building or claiming native verification')
+    parser.add_argument('--host-license-root', type=Path, help='Site-packages of the prebuilt Windows dependencies')
     args = parser.parse_args()
-    if sys.platform != 'win32':
+    if sys.platform != 'win32' and args.prebuilt is None:
         raise RuntimeError('Build this release on native Windows')
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
@@ -79,9 +81,12 @@ def main():
         path = notebook/'wheels-linux-x86_64'/wheel['filename']
         if path.stat().st_size != wheel['size'] or digest(path) != wheel['sha256']:
             raise ValueError('Unverified notebook wheel: ' + wheel['filename'])
-    subprocess.run([sys.executable, str(ROOT/'build.py'), '--skip-vm-pack',
-        '--dist-dir', str(output/'build'), '--verification', 'incremental'], cwd=ROOT, check=True)
-    bundle = output/'build/Shellground'
+    if args.prebuilt is None:
+        subprocess.run([sys.executable, str(ROOT/'build.py'), '--skip-vm-pack',
+            '--dist-dir', str(output/'build'), '--verification', 'incremental'], cwd=ROOT, check=True)
+    bundle = args.prebuilt.resolve() if args.prebuilt else output/'build/Shellground'
+    if not (bundle/'Shellground.exe').is_file():
+        raise ValueError('Windows application executable is missing')
     shutil.copytree(runtime, bundle/'runtime/windows-x86_64', dirs_exist_ok=True,
         ignore=shutil.ignore_patterns('base.qcow2'))
     if args.link_disk:
@@ -101,7 +106,8 @@ def main():
     shutil.copy2(ROOT.parent/'THIRD_PARTY_NOTICES.md', bundle/'THIRD_PARTY_NOTICES.md')
     # Ship notices for the newly installed host dependencies as well.
     import importlib.metadata
-    for distribution in importlib.metadata.distributions():
+    distributions = importlib.metadata.distributions(path=[str(args.host_license_root.resolve())]) if args.host_license_root else importlib.metadata.distributions()
+    for distribution in distributions:
         for item in distribution.files or ():
             if '.dist-info/' in str(item).replace('\\', '/') and any(
                     marker in Path(str(item)).name.upper() for marker in ('LICENSE', 'COPYING', 'NOTICE')):
@@ -128,9 +134,11 @@ def main():
         extract(package, cache/'nsis')
         compiler = cache/'nsis/nsis-3.11/makensis.exe'
     setup = output/CONFIG['setup']
-    subprocess.run([str(compiler.resolve()), '/V2', '/DOUTPUT='+str(setup), 'windows_setup.nsi'],
+    option = '/' if sys.platform == 'win32' else '-'
+    subprocess.run([str(compiler.resolve()), option+'V2', option+'DOUTPUT='+str(setup), option+'DAPP_ARCHIVE='+str(archive.resolve()), 'windows_setup.nsi'],
         cwd=stage, check=True)
     receipt = dict(tag=CONFIG['tag'], version=CONFIG['version'], platform='windows-x86_64',
+        packaging_host=sys.platform, prebuilt=bool(args.prebuilt),
         files={p.name:dict(bytes=p.stat().st_size,sha256=digest(p)) for p in (archive,setup)})
     (output/'windows-build.json').write_text(json.dumps(receipt, indent=2)+'\n', encoding='utf-8')
     (output/'SHA256SUMS.txt').write_text(''.join(v['sha256']+'  '+k+'\n' for k,v in receipt['files'].items()),encoding='utf-8')

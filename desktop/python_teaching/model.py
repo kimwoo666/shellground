@@ -24,6 +24,21 @@ class Problem:
 
 
 @dataclass(frozen=True)
+class GuidedStep:
+    """An independent, runnable worked example, not a scored application task."""
+    title: str
+    explanation: str
+    observation: str
+    practice: Problem
+
+    @property
+    def description(self):
+        return (self.explanation + '\n\n직접 해볼 코드\n' + self.practice.solution
+                + '\n\n결과 읽기\n' + self.observation
+                + '\n\n각 소단계 코드는 독립 실행할 수 있습니다. 값을 바꾸어 다시 실행해 보세요.')
+
+
+@dataclass(frozen=True)
 class Lesson:
     key: str
     topic: str
@@ -36,13 +51,23 @@ class Lesson:
     problems: tuple
     prerequisites: tuple = ()
     provenance_note: str = ''
+    guided_steps: tuple = ()
 
     @property
     def learning_steps(self):
+        if self.guided_steps:
+            steps = [(step.title, step.description) for step in self.guided_steps]
+            title, description = steps[-1]
+            steps[-1] = (title, description + '\n\n단원 정리\n' + self.explanation
+                         + '\n\n주의할 점\n' + self.pitfall)
+            return tuple(steps)
         return (
             ('개념과 인자', self.explanation + '\n\n기본 형태\n' + self.syntax),
             ('작게 실행하고 해석', self.problems[0].goal + '\n\n직접 해볼 코드\n' + self.problems[0].solution + '\n\n주의할 점\n' + self.pitfall),
         )
+
+    def clamp_step(self, value):
+        return min(max(value, 0), len(self.learning_steps)-1) if type(value) is int else 0
 
 
 def check(target, expected, path=(), label=None, feedback=None):
