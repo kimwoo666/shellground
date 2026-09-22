@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.*;
+import java.io.ByteArrayOutputStream;
+import java.util.zip.DeflaterOutputStream;
 
 /** Verify bundled guest files first; don't retransmit unchanged source at boot. */
 final class GuestAssets {
@@ -13,6 +15,7 @@ final class GuestAssets {
         JSONObject expected=new JSONObject();
         for(Map.Entry<String,byte[]> entry:files.entrySet()){
             if(!entry.getKey().matches("/opt/shellground/(notebook-assets/)?[a-zA-Z0-9_.]+"))throw new IOException("잘못된 채점 자료 경로");
+            if(entry.getValue().length>512*1024)throw new IOException("채점 자료 크기 제한 초과");
             StringBuilder hash=new StringBuilder();for(byte b:MessageDigest.getInstance("SHA-256").digest(entry.getValue()))hash.append(String.format(Locale.ROOT,"%02x",b&255));
             expected.put(entry.getKey(),hash.toString());
         }
@@ -20,16 +23,33 @@ final class GuestAssets {
         JSONArray missing=new JSONArray(exec(transport,check,new JSONArray(),expected.toString().getBytes(StandardCharsets.UTF_8)));
         for(int i=0;i<missing.length();i++){
             String name=missing.getString(i);byte[] data=files.get(name);if(data==null)throw new IOException("예상하지 않은 자료 응답");
-            // The existing guest serial reader is byte-oriented. Bounded chunks
-            // avoid sending large source files as one slow control transaction.
-            for(int offset=0;offset<data.length;offset+=4096){
-                String write="import sys;from pathlib import Path;p=Path(sys.argv[1]+'.new');f=p.open(sys.argv[2]);f.write(sys.stdin.buffer.read());f.close()";
-                exec(transport,write,new JSONArray().put(name).put(offset==0?"wb":"ab"),Arrays.copyOfRange(data,offset,Math.min(data.length,offset+4096)));
-            }
-            String finish="import sys,hashlib;from pathlib import Path;p=Path(sys.argv[1]+'.new');assert hashlib.sha256(p.read_bytes()).hexdigest()==sys.argv[2];p.chmod(0o644);p.replace(sys.argv[1])";
-            exec(transport,finish,new JSONArray().put(name).put(expected.getString(name)),null);
+            // Compress before crossing the guest serial link. One Python process
+            // per changed file replaces one process per 4 KB of source.
+            ByteArrayOutputStream packed=new ByteArrayOutputStream();
+            try(DeflaterOutputStream zip=new DeflaterOutputStream(packed)){zip.write(data);}
+            exec(transport,INSTALL,new JSONArray().put(name).put(expected.getString(name)),packed.toByteArray());
         }
     }
+    static final String INSTALL="""
+        import sys,hashlib,zlib,tempfile,os
+        from pathlib import Path
+        target=Path(sys.argv[1])
+        decoder=zlib.decompressobj()
+        data=decoder.decompress(sys.stdin.buffer.read(600000),524289)
+        if len(data)>524288 or not decoder.eof or decoder.unused_data or decoder.unconsumed_tail:
+            raise ValueError('Invalid compressed teaching asset')
+        if hashlib.sha256(data).hexdigest()!=sys.argv[2]:
+            raise ValueError('Teaching asset checksum mismatch')
+        temporary=None
+        try:
+            with tempfile.NamedTemporaryFile(dir=target.parent,prefix='.sg-asset-',delete=False) as output:
+                temporary=Path(output.name)
+                output.write(data)
+            temporary.chmod(0o644)
+            os.replace(temporary,target)
+        finally:
+            if temporary is not None: temporary.unlink(missing_ok=True)
+        """;
     private static String exec(CondaGuest.Transport transport,String script,JSONArray args,byte[] input)throws Exception{
         JSONArray argv=new JSONArray().put("/usr/bin/python3").put("-c").put(script);
         for(int i=0;i<args.length();i++)argv.put(args.get(i));

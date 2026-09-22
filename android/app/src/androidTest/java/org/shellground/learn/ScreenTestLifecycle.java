@@ -13,6 +13,14 @@ import static org.junit.Assert.assertTrue;
 
 /** Wait for actual Android lifecycle/input readiness, not just an idle looper. */
 final class ScreenTestLifecycle {
+    static void studyReady(Instrumentation inst,Activity activity,String tag){
+        boolean[] ready={false};long deadline=SystemClock.uptimeMillis()+60000;
+        while(SystemClock.uptimeMillis()<deadline){
+            inst.runOnMainSync(()->{View view=activity.getWindow().getDecorView().findViewWithTag(tag);ready[0]=view!=null&&view.getHeight()>0;});
+            if(ready[0])return;SystemClock.sleep(50);
+        }
+        assertTrue("Study screen loaded after asynchronous progress restore",ready[0]);
+    }
     static void showKeyboard(Instrumentation inst, Activity activity, View editor) {
         InputMethodManager manager=(InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE);
         boolean[] ready={false};long deadline=SystemClock.uptimeMillis()+10000;

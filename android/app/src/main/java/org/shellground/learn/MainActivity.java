@@ -28,7 +28,7 @@ public final class MainActivity extends Activity {
     private SharedPreferences progress;
     private static final int INK=0xff202b33, MUTED=0xff64717b, GREEN=0xff16725d,
         PAPER=0xfff5f6f8, LINE=0xffdce2e5, TERMINAL=0xff111d25;
-    private TextView heading,unitTitle,phaseLabel,status,output,outputEmpty,gradeSummary;
+    private TextView heading,unitTitle,phaseLabel,status,output,outputEmpty,gradeSummary,completion;
     private LinearLayout root,toolbar,lessonHeader,questionContent,gradeContent,actionRow,progressTrack,codeTitle,codeKeys,statusRow,tabRow,bottom;
     private FrameLayout workspace;
     private final View[] panes=new View[4];
@@ -77,6 +77,9 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
+        if(Intent.ACTION_MAIN.equals(getIntent().getAction())&&BuildConfig.LINUX_RUNTIME&&Build.VERSION.SDK_INT>=28){
+            startActivity(new Intent(this,LinuxActivity.class).putExtra("prewarm",true));finish();return;
+        }
         TextView waiting=new TextView(this);waiting.setText("학습 진도를 불러오는 중…");setContentView(waiting);
         NasSync.get(this).startup(()->{if(!isFinishing()&&!isDestroyed())openStudy();});
     }
@@ -123,6 +126,7 @@ public final class MainActivity extends Activity {
         TextView brand=text(13);brand.setSingleLine(true);brand.setText("›_ SHELLGROUND");brand.setTypeface(Typeface.MONOSPACE,Typeface.BOLD);toolbar.addView(brand,weight());
         more=button("⋮",this::menu);more.setTextSize(26);more.setContentDescription("학습 메뉴");more.setTag("more");
         toolbar.addView(more,new LinearLayout.LayoutParams(dp(48),dp(48)));
+        root.addView(StudyNavigation.courses(this,"python",go->replaceCode(()->{save();cancelWorker();go.run();})));
 
         lessonHeader=vertical();lessonHeader.setPadding(dp(20),dp(4),dp(16),dp(12));root.addView(lessonHeader);
         LinearLayout meta=row();meta.setGravity(Gravity.CENTER_VERTICAL);lessonHeader.addView(meta);
@@ -131,6 +135,7 @@ public final class MainActivity extends Activity {
         unitTitle=text(19);unitTitle.setTypeface(null,Typeface.BOLD);unitTitle.setLineSpacing(dp(2),1);unitTitle.setMaxLines(2);
         unitTitle.setPadding(0,dp(8),0,dp(6));unitTitle.setTag("unit-title");lessonHeader.addView(unitTitle);
         progressTrack=row();lessonHeader.addView(progressTrack,new LinearLayout.LayoutParams(-1,dp(3)));
+        completion=text(12);completion.setTag("progress-summary");completion.setPadding(0,dp(6),0,0);lessonHeader.addView(completion);
         unitPicker=button("단원 선택  ⌄",this::pickUnit);unitPicker.setTextSize(12);unitPicker.setTag("unit-picker");
         // The full title remains readable; the separate 48dp target opens all units.
         toolbar.addView(unitPicker,1,new LinearLayout.LayoutParams(-2,dp(48)));
@@ -140,6 +145,7 @@ public final class MainActivity extends Activity {
         for(int i=0;i<4;i++){final int page=i;tabs[i]=button(names[i],()->showPane(page));tabs[i].setTag("tab-"+i);tabRow.addView(tabs[i],new LinearLayout.LayoutParams(0,dp(48),1));}
         workspace=new FrameLayout(this);workspace.setTag("workspace");workspace.setBackgroundColor(Color.WHITE);
         root.addView(workspace,new LinearLayout.LayoutParams(-1,0,1));
+        workspace.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->{if(panes[3]!=null)StudyNavigation.panes(this,workspace,panes,activePane);});
         ScrollView questionScroll=new ScrollView(this);questionScroll.setFillViewport(true);questionScroll.setTag("question-scroll");
         questionContent=vertical();questionContent.setPadding(dp(20),dp(22),dp(20),dp(24));questionScroll.addView(questionContent);panes[0]=questionScroll;
 
@@ -195,6 +201,7 @@ public final class MainActivity extends Activity {
         boolean compact=keyboardVisible||getResources().getConfiguration().screenHeightDp<440;
         lessonHeader.setVisibility(compact?View.GONE:View.VISIBLE);
         toolbar.setVisibility(keyboardVisible?View.GONE:View.VISIBLE);
+        root.findViewWithTag("course-navigation").setVisibility(keyboardVisible?View.GONE:View.VISIBLE);
         boolean shortScreen=getResources().getConfiguration().screenHeightDp<620;
         if(codeTitle!=null)codeTitle.setVisibility(compact||shortScreen?View.GONE:View.VISIBLE);
         if(statusRow!=null)statusRow.setVisibility(compact||shortScreen||activePane==3?View.GONE:View.VISIBLE);
@@ -219,6 +226,7 @@ public final class MainActivity extends Activity {
             tabs[i].setTypeface(null,i==selected?Typeface.BOLD:Typeface.NORMAL);
         }
         if(outputEmpty!=null)outputEmpty.setVisibility(output.length()==0&&image.getVisibility()!=View.VISIBLE?View.VISIBLE:View.GONE);
+        StudyNavigation.panes(this,workspace,panes,selected);
         compactHeader();
     }
     private void insertCode(String insertion){
@@ -239,14 +247,17 @@ public final class MainActivity extends Activity {
     private boolean completed(String key){ return progress.getBoolean(key+":1",false)&&progress.getBoolean(key+":2",false); }
     private void render(){
         String phaseText=new String[]{"배우기 "+(step+1)+"/"+stepCount(),"예시","활용 1","활용 2","올랜덤"}[phase];
-        heading.setText(unit().optString("topic")+"  /  "+unitNumber(index)+(completed(key())?"  ·  완료":""));phaseLabel.setText(phaseText);
+        heading.setText(unit().optString("topic")+"  /  "+unitNumber(index));phaseLabel.setText(phaseText);
         unitTitle.setText(phase<2?unit().optString("title"):(phase==4?"배운 범위 올랜덤":"활용 문제"));
         progressTrack.removeAllViews();
         for(int i=0;i<4;i++){
-            View segment=new View(this);segment.setBackground(shape(i<=phase?GREEN:LINE,2,0));
+            View segment=new View(this);segment.setBackground(shape(i==phase?0xff246586:i>0&&StudyNavigation.done(progress,key(),true,i-1)?GREEN:LINE,2,0));
             LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(0,-1,1);p.setMargins(0,0,i<3?dp(4):0,0);progressTrack.addView(segment,p);
         }
-        renderProblem();showPane(0);controls();save();
+        save();updateCompletion();renderProblem();showPane(0);controls();
+    }
+    private void updateCompletion(){
+        if(completion!=null)completion.setText((phase==4?"올랜덤 연습":StudyNavigation.state(progress,key(),true))+" · "+StudyNavigation.checks(progress,key(),true));
     }
     private void renderProblem(){
         questionContent.removeAllViews();
@@ -291,30 +302,8 @@ public final class MainActivity extends Activity {
     }
     private void pickUnit(){
         if(busy)return;
-        LinearLayout content=vertical();content.setPadding(dp(16),dp(4),dp(16),0);
-        Spinner topics=new Spinner(this);content.addView(topics,new LinearLayout.LayoutParams(-1,dp(52)));
-        ArrayList<String> names=new ArrayList<>();for(int i=0;i<units.length();i++){String topic=units.optJSONObject(i).optString("topic");if(!names.contains(topic))names.add(topic);}
-        topics.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,names));
-        ListView list=new ListView(this);list.setDividerHeight(dp(1));content.addView(list,new LinearLayout.LayoutParams(-1,0,1));
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("학습 단원").setView(content).setNegativeButton("닫기",null).create();
-        topics.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener(){
-            public void onNothingSelected(AdapterView<?> p){}
-            public void onItemSelected(AdapterView<?> p,View v,int position,long id){
-                ArrayList<Integer> positions=new ArrayList<>();for(int i=0;i<units.length();i++)if(units.optJSONObject(i).optString("topic").equals(names.get(position)))positions.add(i);
-                list.setAdapter(new BaseAdapter(){
-                    public int getCount(){return positions.size();}public Object getItem(int n){return positions.get(n);}public long getItemId(int n){return positions.get(n);}
-                    public View getView(int n,View old,ViewGroup parent){
-                        int at=positions.get(n);JSONObject u=units.optJSONObject(at);TextView label=text(15);label.setPadding(dp(8),dp(14),dp(8),dp(14));label.setMinHeight(dp(64));label.setLineSpacing(dp(4),1);
-                        label.setText(unitNumber(at)+"  ·  "+(completed(u.optString("key"))?"완료":"미완료")+"\n"+(phase<2?u.optString("title"):"학습 단원"));
-                        if(at==index){label.setBackground(shape(0xffe5f1ec,6,0));label.setTextColor(GREEN);}return label;
-                    }
-                });
-                list.setOnItemClickListener((parent,view,n,itemId)->{dialog.dismiss();if(positions.get(n)!=index)choose(positions.get(n));});
-                int selected=positions.indexOf(index);if(selected>=0)list.setSelection(selected);
-            }
-        });
-        topics.setSelection(names.indexOf(unit().optString("topic")));dialog.show();
-        dialog.getWindow().setLayout(-1,Math.round(getResources().getDisplayMetrics().heightPixels*0.8f));
+        ArrayList<JSONObject> choices=new ArrayList<>();for(int i=0;i<units.length();i++)choices.add(units.optJSONObject(i));
+        StudyNavigation.pick(this,choices,index,progress,true,at->{if(at!=index)choose(at);});
     }
     private void menu(){
         PopupMenu popup=new PopupMenu(this,more);
@@ -373,6 +362,7 @@ public final class MainActivity extends Activity {
         for(int i=0;i<checks.length();i++){ JSONObject check=checks.optJSONObject(i); lines.append("\n").append(check.optBoolean("passed")?"✓ ":"· ").append(check.optString("label")); if(!check.optBoolean("passed")) lines.append("\n").append(check.optString("detail")); }
         feedback=lines.toString();renderGrade(result);showPane(3);
         if(solved&&phase>0&&phase!=4) progress.edit().putBoolean(key()+":"+variant,true).apply();
+        updateCompletion();
     }
     private void renderGrade(JSONObject result){
         gradeContent.removeAllViews();gradeContent.setPadding(dp(20),dp(16),dp(20),dp(16));gradeSummary=text(20);gradeSummary.setTypeface(null,Typeface.BOLD);gradeSummary.setPadding(0,0,0,dp(8));gradeContent.addView(gradeSummary);
@@ -392,7 +382,7 @@ public final class MainActivity extends Activity {
     }
     private void advance(){
         if(phase==0&&step+1<stepCount()){replaceCode(()->{cancelWorker();step++;solved=false;clearWork();render();});return;}
-        if(phase!=0&&!solved) return;
+        if(phase!=0&&!solved&&(phase==4||!StudyNavigation.done(progress,key(),true,variant))) return;
         cancelWorker(); solved=false;clearWork();
         if(phase==4){pickRandom();return;}
         if(phase==3){ if(index+1<units.length()) select(index+1); return; }
