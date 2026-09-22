@@ -25,7 +25,8 @@ public final class LinuxScreenTest {
     private LinuxActivity open(){
         inst.getTargetContext().getSharedPreferences("real-linux-progress-v1",0).edit()
             .putString("last","navigate").putInt("navigate:phase",0).putInt("navigate:step",0).commit();
-        return (LinuxActivity)inst.startActivitySync(new Intent(inst.getTargetContext(),LinuxActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        LinuxActivity activity=(LinuxActivity)inst.startActivitySync(new Intent(inst.getTargetContext(),LinuxActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        ScreenTestLifecycle.studyReady(inst,activity,"linux-workspace");return activity;
     }
     private Button button(View root,String text){
         if(root instanceof Button&&((Button)root).getText().toString().equals(text))return (Button)root;
@@ -112,6 +113,7 @@ public final class LinuxScreenTest {
         progress.edit().putString("last",key).putInt(key+":phase",0).putInt(key+":step",1).commit();
         LinuxActivity activity=(LinuxActivity)inst.startActivitySync(new Intent(inst.getTargetContext(),LinuxActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         try{
+            ScreenTestLifecycle.studyReady(inst,activity,"linux-workspace");
             inst.waitForIdleSync();
             java.lang.reflect.Method preparation=LinuxActivity.class.getDeclaredMethod("preparationText");preparation.setAccessible(true);
             String text=(String)preparation.invoke(activity);
@@ -143,8 +145,11 @@ public final class LinuxScreenTest {
         inst.getTargetContext().getSharedPreferences("real-linux-progress-v1",0).edit().putString("last","edit").putInt("edit:phase",1).putInt("edit:step",0).remove("edit:done:0").commit();
         LinuxActivity activity=(LinuxActivity)inst.startActivitySync(new Intent(inst.getTargetContext(),LinuxActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         try{
+            ScreenTestLifecycle.studyReady(inst,activity,"linux-workspace");
             inst.waitForIdleSync();inst.runOnMainSync(()->tag(activity,"linux-start").performClick());
-            await(activity,()->tag(activity,"linux-grade").isEnabled(),240);
+            // The host emulator runs an ARM guest through TCG. Account for
+            // both the bounded boot and prepare transactions in this opt-in test.
+            await(activity,()->tag(activity,"linux-grade").isEnabled(),900);
             inst.runOnMainSync(()->button(activity.getWindow().getDecorView(),"터미널").performClick());
             type(activity,"nano note.txt\r");await(activity,()->visibleTerminal(activity).contains("GNU nano"),30);capture("real-nano");
             type(activity,"\u000bstatus=ready\u000f");await(activity,()->visibleTerminal(activity).contains("File Name to Write"),30);
@@ -154,6 +159,9 @@ public final class LinuxScreenTest {
             await(activity,()->tag(activity,"linux-pane-2").getVisibility()==View.VISIBLE&&tag(activity,"linux-next").isEnabled(),60);capture("real-grade");
             inst.runOnMainSync(()->assertTrue(((TextView)tag(activity,"linux-assessment")).getText().toString().startsWith("목표를 완료했습니다.")));
             assertTrue(inst.getTargetContext().getSharedPreferences("real-linux-progress-v1",0).getBoolean("edit:done:0",false));
+        }catch(Throwable failure){
+            capture("real-failure");
+            throw failure;
         }finally{
             inst.runOnMainSync(activity::finish);inst.waitForIdleSync();
             // Do not let the test runner kill the UID before onStop's actual

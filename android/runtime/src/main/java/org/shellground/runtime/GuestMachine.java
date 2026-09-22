@@ -8,7 +8,6 @@ import org.json.JSONObject;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -40,21 +39,11 @@ public final class GuestMachine implements AutoCloseable {
         }
     }
 
-    private static String hash(File file) throws Exception {
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        try (InputStream input = new FileInputStream(file)) {
-            byte[] buffer = new byte[1024 * 1024]; int count;
-            while ((count = input.read(buffer)) != -1) {
-                if (Thread.currentThread().isInterrupted()) throw new InterruptedException("실습 시작 취소");
-                digest.update(buffer, 0, count);
-            }
-        }
-        StringBuilder result = new StringBuilder();
-        for (byte b : digest.digest()) result.append(String.format(Locale.ROOT, "%02x", b & 255));
-        return result.toString();
+    public void boot(Context context, File pack, GuestChannel.Events events) throws Exception {
+        boot(context,pack,events,message->{});
     }
 
-    public void boot(Context context, File pack, GuestChannel.Events events) throws Exception {
+    public void boot(Context context, File pack, GuestChannel.Events events, java.util.function.Consumer<String> stage) throws Exception {
         workerOnly();
         if(closed)throw new IOException("Linux 시작이 취소되었습니다.");
         String allowed = context.getFilesDir().getCanonicalPath() + File.separator;
@@ -66,13 +55,8 @@ public final class GuestMachine implements AutoCloseable {
         if (manifest.optInt("schema") != 1 || !"aarch64".equals(manifest.optString("guest_arch")))
             throw new IOException("지원하지 않는 실습 이미지 형식입니다.");
         JSONObject files = manifest.getJSONObject("files");
-        for (String name : new String[]{"base.qcow2", "kernel", "initrd"}) {
-            File file = new File(pack, name);
-            if (!file.getCanonicalPath().equals(new File(pack.getCanonicalFile(), name).getAbsolutePath())
-                    || !file.isFile() || file.length() != files.getJSONObject(name).getLong("size")
-                    || !hash(file).equals(files.getJSONObject(name).getString("sha256")))
-                throw new IOException("실습 이미지 무결성 확인 실패: " + name);
-        }
+        PackVerifier.verify(context,pack,files,stage);
+        stage.accept("Linux 부팅 중 · 설명을 계속 읽을 수 있습니다.");
         File executable = new File(context.getApplicationInfo().nativeLibraryDir, "libshellground_qemu.so");
         if (!executable.canExecute()) throw new IOException("Android Linux 실행기가 포함되지 않았습니다.");
         synchronized(this){
@@ -118,6 +102,7 @@ public final class GuestMachine implements AutoCloseable {
             if (!"shellground".equals(state.optString("guest")) || state.optInt("protocol") != 1
                     || !state.optBoolean("provisioned")) throw new IOException("실습 환경 준비가 완료되지 않았습니다: " + state);
         } catch (Exception error) {
+            PackVerifier.invalidate(context);
             throw new IOException("Linux 실습 환경을 시작하지 못했습니다.\n" + diagnosticLog(), error);
         } finally {
             acceptor.shutdownNow();

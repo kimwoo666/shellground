@@ -32,7 +32,8 @@ public class NativeScreenTest {
         return null;
     }
     private MainActivity open(){
-        return (MainActivity)inst.startActivitySync(new Intent(inst.getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        MainActivity activity=(MainActivity)inst.startActivitySync(new Intent(inst.getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        ScreenTestLifecycle.studyReady(inst,activity,"workspace");return activity;
     }
     private void firstUnit(int phase){
         inst.getTargetContext().getSharedPreferences("python-progress-v1",0).edit().putString("last","py_values")

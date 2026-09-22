@@ -5,6 +5,10 @@ plugins {
 val linuxRuntime = providers.gradleProperty("linuxRuntime").orNull == "true"
 val bundleLinuxPack = providers.gradleProperty("bundleLinuxPack").orNull == "true"
 val reuseReleaseRuntime = providers.gradleProperty("reuseReleaseRuntime").orNull
+val reuseJavaPayload = providers.gradleProperty("reuseJavaPayload").orNull
+require(reuseJavaPayload == null || (linuxRuntime && bundleLinuxPack && reuseReleaseRuntime == null)) {
+    "reuseJavaPayload requires linuxRuntime=true, bundleLinuxPack=true, and no reuseReleaseRuntime"
+}
 android {
     namespace = "org.shellground.learn"
     compileSdk = 35
@@ -12,8 +16,8 @@ android {
         applicationId = "org.shellground.learn"
         minSdk = 24
         targetSdk = 35
-        versionCode = 476
-        versionName = "4.7.6"
+        versionCode = 477
+        versionName = "4.7.7"
         buildConfigField("boolean", "LINUX_RUNTIME", linuxRuntime.toString())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
@@ -31,13 +35,17 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     signingConfigs.getByName("debug") {
-        storeFile = file("../../desktop/.android-tools/debug.keystore")
+        storeFile = file(System.getenv("SHELLGROUND_ANDROID_KEYSTORE") ?: "../../desktop/.android-tools/debug.keystore")
         storePassword = "android"
         keyAlias = "androiddebugkey"
         keyPassword = "android"
     }
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/assets"))
     sourceSets.getByName("main").java.srcDir("../runtime/src/main/java")
+    if (reuseJavaPayload != null) {
+        sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/javaPayload/assets"))
+        sourceSets.getByName("main").jniLibs.srcDir(layout.buildDirectory.dir("generated/javaPayload/jniLibs"))
+    }
 }
 val stageLinuxRuntime by tasks.registering(Exec::class) {
     onlyIf { reuseReleaseRuntime == null }
@@ -58,6 +66,8 @@ val stageLinuxPack by tasks.registering(Exec::class) {
         layout.buildDirectory.dir("generated/realAssets/training-pack").get().asFile.absolutePath)
 }
 dependencies {
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.16.1")
     implementation("com.hierynomus:smbj:0.14.0")
     runtimeOnly("org.slf4j:slf4j-nop:2.0.16")
     androidTestImplementation("androidx.test:runner:1.6.2")
@@ -132,4 +142,17 @@ tasks.named("preBuild") {
 }
 tasks.configureEach {
     if (name.contains("PythonSources")) dependsOn(stagePython)
+    if (reuseJavaPayload != null && (name.contains("Python") ||
+        name in setOf("stagePython", "stageLinuxRuntime", "stageLinuxPack", "exportCourse", "exportRealCourse", "exportPortCourses"))) {
+        enabled = false
+    }
 }
+
+val restoreJavaPayload by tasks.registering(Exec::class) {
+    onlyIf { reuseJavaPayload != null }
+    commandLine(System.getenv("SHELLGROUND_BUILD_PYTHON") ?: "python3.13", "../runtime/reuse_java_payload.py",
+        reuseJavaPayload?.let { rootProject.file(it).absolutePath } ?: "")
+    // Always recheck the source guard; changes in course inputs must not silently
+    // reuse stale Python just because the APK itself is unchanged.
+}
+tasks.named("preBuild") { if (reuseJavaPayload != null) dependsOn(restoreJavaPayload) }

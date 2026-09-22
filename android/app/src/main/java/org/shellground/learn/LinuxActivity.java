@@ -20,17 +20,22 @@ public final class LinuxActivity extends Activity {
     private final List<JSONObject> units=new ArrayList<>();
     private final LinkedHashMap<String,String> sessions=new LinkedHashMap<>();
     private SharedPreferences progress;
-    private int index,phase,step,requestId,activePane;
+    private int index,phase,step,requestId,activePane,firstReply;
     private int[] randomReturn;
     private String session="";
-    private boolean bound,ready,busy,solved;
+    private boolean bound,ready,busy,solved,booting,foreground,prewarmPending;
+    private long bootStarted;
+    private boolean restartAfterStop,preparing;
+    private String preparingLesson="";
+    private View courseNavigation;
+    private ProgressBar startupProgress;
     private boolean condaCourse,notebookCourse,setupMode;
     private NotebookEditor notebookEditor;
     private JSONObject courseData;
     private CondaAnswerForm condaAnswers;
     private String runtimeStatus="";
     private Messenger remote;
-    private TextView title,status,lesson,assessment;
+    private TextView title,status,lesson,assessment,completion;
     private Button start,grade,next;
     private FrameLayout workspace;
     private LinearLayout toolbar,tabBar,actionBar,rootLayout;
@@ -40,23 +45,28 @@ public final class LinuxActivity extends Activity {
     private View[] panes;
     private Button[] tabButtons;
     private final Messenger replies=new Messenger(new Handler(Looper.getMainLooper(),message->{
+        if(!bound)return true; // Ignore queued replies after leaving or cancelling this room.
         try{
             JSONObject result=new JSONObject(message.getData().getString("result","{}"));
             if(message.what==LinuxService.FRAME){if(session.equals(result.optString("session")))terminal.display(result);return true;}
             if(message.what==LinuxService.EVENT){
+                if(result.has("startup"))status.setText(result.getString("startup"));
                 if(result.has("error"))status.setText(result.getString("error"));
                 if(result.has("ended"))status.setText("터미널이 종료되었습니다. 메뉴에서 새 터미널을 열 수 있습니다.");return true;
             }
             if(message.what!=LinuxService.RESULT)return false;
-            if(result.has("error")){busy=false;status.setText(result.getString("error"));if(!ready)closeRoom();controls();return true;}
-            if(result.optBoolean("ready")){ready=true;if(setupMode)send("conda_setup",new JSONObject());else prepare();return true;}
+            if(message.arg1<firstReply)return true;
+            if(result.optBoolean("stopping")){restartAfterStop=true;status.setText("이전 실습을 종료한 뒤 새 과정을 시작합니다…");return true;}
+            if(result.has("error")){busy=false;preparing=false;status.setText(result.getString("error"));if(!ready)closeRoom();controls();return true;}
+            if(result.optBoolean("ready")){booting=false;ready=true;if(setupMode){busy=true;controls();send("conda_setup",new JSONObject());}else prepare();return true;}
             if(result.has("session")){
                 session=result.getString("session");sessions.put(session,"터미널 "+(sessions.size()+1));
                 JSONObject prepared=result.optJSONObject("preparation");
+                if(prepared!=null){preparing=false;if(!preparingLesson.equals(lessonIdentity())){prepare();return true;}}
                 if(condaCourse&&prepared!=null){JSONObject actual=prepared.getJSONObject("runtime");runtimeStatus="실제 Linux guest · "+actual.getString("platform")+" · Conda "+actual.getString("conda_version");}
                 if(notebookCourse&&prepared!=null){notebookEditor.kernels(prepared.getJSONArray("kernels"));notebookEditor.identity(prepared.getJSONObject("notebook").getJSONObject("identity"));}
                 if(result.has("setup"))showSetup(result.getJSONObject("setup"));
-                busy=false;resize(terminal.columns(),terminal.rows());status.setText(setupMode?"Miniconda 설치 실습":condaCourse?runtimeStatus:notebookCourse?"Jupyter · 학습 진도 자동 저장":"Linux · 학습 진도 자동 저장");controls();return true;
+                busy=false;resize(terminal.columns(),terminal.rows());status.setText(setupMode?"Miniconda 설치 실습":condaCourse?runtimeStatus:notebookCourse?"Jupyter · 학습 진도 자동 저장":"Linux · 학습 진도 자동 저장");if(bootStarted>0){long elapsed=(SystemClock.elapsedRealtime()-bootStarted)/1000;status.append(" · 준비 "+elapsed+"초");bootStarted=0;}controls();return true;
             }
             if(result.has("notebook_result")){busy=false;notebookEditor.result(result.getString("operation"),result.getJSONObject("notebook_result"));controls();return true;}
             if(result.has("grade")){
@@ -66,20 +76,31 @@ public final class LinuxActivity extends Activity {
                 for(int i=0;i<checks.length();i++){JSONObject check=checks.getJSONObject(i);text.append(check.optBoolean("passed")?"✓ ":"○ ").append(check.optString("label")).append('\n');
                     if(check.has("detail"))text.append(check.getString("detail")).append('\n');text.append('\n');}
                 assessment.setText(text);if(solved){progress.edit().putBoolean(setupMode?"conda_install_once:done":key()+":done:"+variant(),true).apply();if(!setupMode)save();}
-                showPane(2);controls();return true;
+                updateCompletion();showPane(2);controls();return true;
             }
             if(result.has("copy")){((ClipboardManager)getSystemService(CLIPBOARD_SERVICE)).setPrimaryClip(ClipData.newPlainText("Linux 터미널",result.getString("copy")));Toast.makeText(this,"터미널 기록을 복사했습니다.",Toast.LENGTH_SHORT).show();}
             if(result.has("files")){busy=false;showFiles(result.getJSONObject("files"));controls();}
         }catch(Exception error){busy=false;status.setText(error.toString());controls();}return true;
     }));
     private final ServiceConnection connection=new ServiceConnection(){
-        public void onServiceConnected(ComponentName name,IBinder binder){remote=new Messenger(binder);send("start",object("course",notebookCourse?"notebook":condaCourse?"conda":"linux"));}
-        public void onServiceDisconnected(ComponentName name){remote=null;ready=false;busy=false;status.setText("Linux 연결이 종료되었습니다. 다시 시작할 수 있습니다.");controls();}
+        public void onServiceConnected(ComponentName name,IBinder binder){if(!bound)return;remote=new Messenger(binder);send("start",object("course",notebookCourse?"notebook":condaCourse?"conda":"linux"));}
+        public void onServiceDisconnected(ComponentName name){
+            if(bound){unbindService(this);bound=false;}
+            remote=null;ready=false;booting=false;preparing=false;busy=false;firstReply=requestId+1;
+            boolean retry=restartAfterStop&&foreground;restartAfterStop=false;
+            status.setText("Linux 연결이 종료되었습니다. 다시 시작할 수 있습니다.");controls();
+            if(retry)start();
+        }
     };
 
     @Override public void onCreate(Bundle state){
         super.onCreate(state);condaCourse="conda".equals(getIntent().getStringExtra("course"));
         notebookCourse="notebook".equals(getIntent().getStringExtra("course"));
+        prewarmPending=getIntent().getBooleanExtra("prewarm",false);
+        TextView waiting=new TextView(this);waiting.setText("학습 진도를 불러오는 중…");setContentView(waiting);
+        NasSync.get(this).startup(()->{if(!isFinishing()&&!isDestroyed())openStudy();});
+    }
+    private void openStudy(){
         progress=getSharedPreferences(notebookCourse?"real-notebook-progress-v1":condaCourse?"real-conda-progress-v1":"real-linux-progress-v1",MODE_PRIVATE);
         try(InputStream input=getAssets().open(notebookCourse?"notebook-course.json":condaCourse?"conda-course.json":"real-course.json")){
             ByteArrayOutputStream bytes=new ByteArrayOutputStream();byte[] block=new byte[8192];int n;
@@ -92,7 +113,7 @@ public final class LinuxActivity extends Activity {
                 for(int j=0;j<reviews.length();j++){JSONObject review=reviews.getJSONObject(j);if(review.getString("after").equals(unit.getString("key")))units.add(review);}
             }
             String last=progress.getString("last","");for(int i=0;i<units.size();i++)if(units.get(i).getString("key").equals(last))index=i;
-            restore();build();render();
+            restore();build();render();maybePrewarm();
         }catch(Exception error){TextView text=new TextView(this);text.setText("실습 자료를 열지 못했습니다.\n"+error);setContentView(text);}
     }
     private int dp(int value){return Math.round(value*getResources().getDisplayMetrics().density);}
@@ -111,9 +132,14 @@ public final class LinuxActivity extends Activity {
             else{v.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());keyboard=insets.getSystemWindowInsetBottom()>dp(160);}
             compact(keyboard);return insets;
         });root.requestApplyInsets();
-        LinearLayout top=row();toolbar=top;root.addView(top);top.addView(button("‹ Python",this::finish));
+        LinearLayout top=row();toolbar=top;root.addView(top);TextView brand=text(17);brand.setText("Shellground");top.addView(brand);
         top.addView(button("단원 선택",this::pickUnit),new LinearLayout.LayoutParams(0,dp(48),1));top.addView(button("메뉴",this::menu));
+        courseNavigation=StudyNavigation.courses(this,notebookCourse?"notebook":condaCourse?"conda":"linux",go->{
+            Runnable leave=()->{save();closeRoom();go.run();};
+            if(ready&&!session.isEmpty())new AlertDialog.Builder(this).setMessage("과목을 바꾸면 현재 터미널과 임시 실습 파일은 종료됩니다. 학습 진도는 유지됩니다.").setNegativeButton("취소",null).setPositiveButton("과목 변경",(d,n)->leave.run()).show();else leave.run();
+        });root.addView(courseNavigation);
         title=text(15);title.setMaxLines(2);root.addView(title);
+        completion=text(12);completion.setTag("progress-summary");completion.setPadding(dp(16),0,dp(16),dp(6));root.addView(completion);
         LinearLayout tabs=row();tabBar=tabs;root.addView(tabs);
         tabs.setPadding(dp(8),dp(4),dp(8),dp(4));
         String[] names=notebookCourse?new String[]{"문제·설명","Bash","채점","노트북"}:new String[]{"문제·설명","터미널","채점"};
@@ -123,7 +149,7 @@ public final class LinuxActivity extends Activity {
         condaAnswers=new CondaAnswerForm(this);condaAnswers.setVisibility(View.GONE);question.addView(condaAnswers);
         scroll.addView(question);scroll.setFillViewport(true);
         terminal=new LinuxTerminalView(this,new LinuxTerminalView.Actions(){
-            public void input(String text){if(ready&&!session.isEmpty())send("input",object("data",Base64.encodeToString(text.getBytes(StandardCharsets.UTF_8),Base64.NO_WRAP)));}
+            public void input(String text){if(ready&&!busy&&!session.isEmpty())send("input",object("data",Base64.encodeToString(text.getBytes(StandardCharsets.UTF_8),Base64.NO_WRAP)));}
             public void resize(int c,int r){LinuxActivity.this.resize(c,r);}
             public void scroll(int delta){if(ready)send("scroll",object("delta",delta));}
             public void copy(){if(ready)send("copy",new JSONObject());}
@@ -143,7 +169,9 @@ public final class LinuxActivity extends Activity {
             panes=new View[]{scroll,terminalPane,grades,notebookEditor};
         }else panes=new View[]{scroll,terminalPane,grades};
         for(int i=0;i<panes.length;i++){panes[i].setTag("linux-pane-"+i);workspace.addView(panes[i],new FrameLayout.LayoutParams(-1,-1));}
-        status=text(11);status.setMaxLines(2);status.setText("앱 내부 실제 Linux · 학습 진도만 저장");root.addView(status);
+        workspace.addOnLayoutChangeListener((v,l,t,r,b,ol,ot,or,ob)->StudyNavigation.panes(this,workspace,panes,activePane));
+        startupProgress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);startupProgress.setIndeterminate(true);startupProgress.setTag("linux-startup-progress");root.addView(startupProgress,new LinearLayout.LayoutParams(-1,dp(3)));
+        status=text(11);status.setMaxLines(2);status.setText("Linux · 학습 진도 자동 저장");root.addView(status);
         LinearLayout actions=row();actions.setPadding(dp(10),dp(4),dp(10),dp(8));actionBar=actions;root.addView(actions);
         start=button("실습 시작",this::start);grade=button("채점",()->{
             try{JSONObject request=new JSONObject();if(condaCourse)request.put("answers",condaAnswers.answers());if(notebookCourse)request.put("cells",notebookEditor.snapshot());busy=true;controls();send("grade",request);}
@@ -190,15 +218,26 @@ public final class LinuxActivity extends Activity {
             else lesson.setText(unit().optString("title")+"\n\n앞서 배운 내용을 조합해 목표를 해결합니다.\n\n"+mission().optString("prompt"));}
         else lesson.setText("시작 위치: "+mission().optString("start")+"\n\n목표\n"+mission().optString("prompt")+(phase==1?"\n\n예시\n"+mission().optString("solution"):""));
         if(phase==0&&step>0&&!ready)lesson.append("\n\n학습 위치만 복원됩니다. 실습 환경은 새로 준비하므로 필요한 이전 작업은 메뉴의 ‘앞 소단계 준비 보기’에서 확인하세요.");
-        controls();save();
+        save();updateCompletion();controls();
     }
-    private void controls(){if(start==null)return;start.setEnabled(!busy);start.setText(ready?(notebookCourse?"노트북":activePane==1?"단축키":"터미널"):"실습 시작");start.setBackground(surface(busy?0xffdce2e5:0xff16725d,0));start.setTextColor(busy?0xff64717b:Color.WHITE);grade.setEnabled(ready&&!busy&&(phase>0||setupMode));next.setText(setupMode?"단원 복귀":"다음");next.setEnabled(!busy&&(setupMode||phase==0||solved||progress.getBoolean(key()+":done:"+variant(),false)));next.setBackground(surface(0xffe5f1ec,0));if(notebookEditor!=null)notebookEditor.available(ready&&!busy);}
+    private void updateCompletion(){completion.setText((setupMode?"설치 실습":randomReturn!=null?"올랜덤 연습":StudyNavigation.state(progress,key(),false))+"\n"+StudyNavigation.checks(progress,key(),false));}
+    private void controls(){
+        if(start==null)return;
+        start.setEnabled(!busy||booting||preparing);start.setText(booting||preparing?"준비 취소":ready?(notebookCourse?"노트북":activePane==1?"단축키":"터미널"):"실습 시작");
+        start.setBackground(surface(busy?0xffdce2e5:0xff16725d,0));start.setTextColor(busy?0xff64717b:Color.WHITE);
+        startupProgress.setVisibility(booting||busy?View.VISIBLE:View.GONE);
+        grade.setEnabled(ready&&!busy&&(phase>0||setupMode));next.setText(setupMode?"단원 복귀":"다음");
+        next.setEnabled((!busy||preparing)&&(setupMode||phase==0||solved||progress.getBoolean(key()+":done:"+variant(),false)));
+        next.setBackground(surface(0xffe5f1ec,0));if(notebookEditor!=null)notebookEditor.available(ready&&!busy);
+    }
     private void showPane(int pane){activePane=pane;for(int i=0;i<panes.length;i++){panes[i].setVisibility(i==pane?View.VISIBLE:View.GONE);tabButtons[i].setBackground(surface(i==pane?0xffe5f1ec:Color.TRANSPARENT,0));tabButtons[i].setTextColor(i==pane?0xff16725d:0xff64717b);}
+        StudyNavigation.panes(this,workspace,panes,pane);
         if(pane!=1&&pane!=3)((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(terminal.getWindowToken(),0);else if(pane==1)terminal.requestFocus();controls();}
     private void compact(boolean keyboard){
         if(toolbar==null||actionBar==null)return;
         boolean landscape=getResources().getConfiguration().orientation==android.content.res.Configuration.ORIENTATION_LANDSCAPE;
         toolbar.setVisibility(keyboard?View.GONE:View.VISIBLE);title.setVisibility(keyboard||landscape?View.GONE:View.VISIBLE);status.setVisibility(keyboard||landscape?View.GONE:View.VISIBLE);
+        courseNavigation.setVisibility(keyboard?View.GONE:View.VISIBLE);completion.setVisibility(keyboard||landscape?View.GONE:View.VISIBLE);
         boolean combine=landscape;
         shortcutBar.setVisibility(combine?View.GONE:View.VISIBLE);
         if(combine!=compactActions){((ViewGroup)actionBar.getParent()).removeView(actionBar);compactActions=combine;
@@ -210,10 +249,15 @@ public final class LinuxActivity extends Activity {
         String[] keys={"\r","\t","\u0003","\u000f","\u0018","\u000b","\u001b","\u001b[A","\u001b[B","\u001b[D","\u001b[C"};
         new AlertDialog.Builder(this).setTitle("터미널 키").setItems(names,(d,n)->send("input",object("data",Base64.encodeToString(keys[n].getBytes(StandardCharsets.UTF_8),Base64.NO_WRAP)))).show();
     }
+    private void maybePrewarm(){
+        if(foreground&&rootLayout!=null&&prewarmPending){prewarmPending=false;start();}
+    }
+    @Override protected void onResume(){super.onResume();foreground=true;maybePrewarm();}
     private void start(){
+        if(booting||preparing){closeRoom();status.setText("Linux 준비를 취소했습니다. 설명은 계속 읽을 수 있습니다.");controls();return;}
         if(ready){if(notebookCourse)showPane(3);else if(activePane==1)shortcuts();else showPane(1);return;}
         if(bound)return;
-        busy=true;controls();status.setText("실제 Linux를 준비하고 있습니다…");
+        booting=true;busy=false;bootStarted=SystemClock.elapsedRealtime();controls();status.setText("Linux 준비 중 · 설명을 읽거나 단원을 선택할 수 있습니다.");
         Intent service=new Intent(this,LinuxService.class);
         try{
             // Start while this Activity is foreground. Keep the service alive
@@ -223,16 +267,22 @@ public final class LinuxActivity extends Activity {
             bound=bindService(service,connection,BIND_AUTO_CREATE);
             if(!bound)throw new IllegalStateException("실습 서비스를 연결하지 못했습니다.");
         }catch(Exception error){
-            stopService(service);busy=false;status.setText(error.toString());controls();
+            stopService(service);booting=false;busy=false;status.setText(error.toString());controls();
         }
     }
     private void send(String action,JSONObject request){
         if(remote==null)return;
+        if(Arrays.asList("input","live","copy","scroll").contains(action)&&(!ready||busy||session.isEmpty()))return;
         try{request.put("action",action);String raw=request.toString();if(raw.getBytes(StandardCharsets.UTF_8).length>512*1024)throw new IllegalArgumentException("한 번에 전송할 코드가 너무 큽니다. 셀을 나누거나 줄여 주세요.");Message message=Message.obtain(null,LinuxService.REQUEST);message.arg1=++requestId;message.replyTo=replies;Bundle data=new Bundle();data.putString("request",raw);message.setData(data);remote.send(message);}
         catch(Exception error){busy=false;status.setText(error.toString());controls();}
     }
     private void resize(int c,int r){if(ready)try{send("resize",new JSONObject().put("columns",c).put("rows",r));}catch(JSONException ignored){}}
-    private void prepare(){setupMode=false;sessions.clear();session="";solved=false;busy=true;if(notebookCourse)notebookEditor.load(currentProblem().optJSONArray("cells"));controls();status.setText("문제 환경을 준비하고 있습니다…");send("prepare",object("mission",mission()));}
+    private String lessonIdentity(){return key()+":"+variant();}
+    private void prepare(){
+        if(preparing)return; // The current request will prepare the latest selected lesson when it completes.
+        preparing=true;preparingLesson=lessonIdentity();setupMode=false;sessions.clear();session="";solved=false;busy=true;
+        if(notebookCourse)notebookEditor.load(currentProblem().optJSONArray("cells"));controls();status.setText("문제 환경을 준비하고 있습니다…");send("prepare",object("mission",mission()));
+    }
     private void next(){
         if(setupMode){setupMode=false;render();showPane(0);if(ready)prepare();return;}
         if(randomReturn!=null){randomNext();return;}
@@ -242,15 +292,10 @@ public final class LinuxActivity extends Activity {
         solved=false;render();showPane(0);if(ready)prepare();
     }
     private void pickUnit(){
-        if(busy)return;
-        TreeSet<String> topics=new TreeSet<>();for(JSONObject unit:units)topics.add(unit.optString("topic"));String[] choices=topics.toArray(new String[0]);
-        new AlertDialog.Builder(this).setTitle("분야 선택").setItems(choices,(dialog,which)->{
-            List<Integer> targets=new ArrayList<>();List<String> names=new ArrayList<>();
-            for(int i=0;i<units.size();i++){JSONObject unit=units.get(i);if(!choices[which].equals(unit.optString("topic")))continue;targets.add(i);
-                String name=(unit.has("number")?String.format(Locale.ROOT,"%02d",unit.optInt("number")):"복습")+" · "+(phase>=2?"학습 단원":unit.optString("title"));
-                if(completed(unit))name+=" ✓";names.add(name);}
-            new AlertDialog.Builder(this).setTitle(choices[which]).setItems(names.toArray(new String[0]),(d,n)->{index=targets.get(n);randomReturn=null;restore();solved=false;render();showPane(0);if(ready)prepare();}).show();
-        }).show();
+        if(busy&&!preparing)return;
+        StudyNavigation.pick(this,units,index,progress,false,at->{
+            if((busy&&!preparing)||at==index)return;index=at;randomReturn=null;restore();solved=false;render();showPane(0);if(ready)prepare();
+        });
     }
     private void menu(){
         List<String> items=new ArrayList<>(Arrays.asList("힌트","문제 다시 시작","새 터미널","터미널 선택","전체 기록 복사","배운 범위 올랜덤","올랜덤 종료·복귀","실습 종료"));
@@ -334,12 +379,13 @@ public final class LinuxActivity extends Activity {
         // If binding was cancelled before the Messenger arrived there is no
         // stop message. No VM has been requested in that case.
         if(remote==null)stopService(new Intent(this,LinuxService.class));
-        remote=null;ready=false;busy=false;
+        remote=null;ready=false;busy=false;booting=false;preparing=false;restartAfterStop=false;bootStarted=0;firstReply=requestId+1;
     }
     @Override protected void onStop(){
+        foreground=false;
         if(progress!=null&&!units.isEmpty())save();
         closeRoom();
-        super.onStop();
+        NasSync.get(this).flush();super.onStop();
     }
-    @Override protected void onRestart(){super.onRestart();controls();status.setText("학습 위치를 복원했습니다. 실습 시작으로 환경을 다시 준비하세요.");}
+    @Override protected void onRestart(){super.onRestart();prewarmPending=getIntent().getBooleanExtra("prewarm",false);controls();if(status!=null)status.setText("학습 위치를 복원했습니다.");}
 }

@@ -39,22 +39,26 @@ public final class LinuxService extends Service {
     private int columns=80,rows=24;
     private final Messenger binder=new Messenger(new Handler(Looper.getMainLooper(),message->{
         if(message.what!=REQUEST)return false;
-        client=message.replyTo;
+        final Messenger destination=message.replyTo;
+        if(!closing)client=destination;
         final String raw=message.getData().getString("request","{}");final int id=message.arg1;
         try {
             JSONObject request=new JSONObject(raw);
             if("stop".equals(request.optString("action"))){stopOwned();return true;}
             if("notebook_interrupt".equals(request.optString("action"))){
-                new Thread(()->{try{NotebookGuest n=notebook;if(n!=null)n.interrupt();reply(EVENT,id,new JSONObject().put("interrupted",true));}
-                    catch(Exception error){reply(EVENT,id,error(error));}},"notebook-interrupt").start();return true;
+                new Thread(()->{try{NotebookGuest n=notebook;if(n!=null)n.interrupt();reply(destination,EVENT,id,new JSONObject().put("interrupted",true));}
+                    catch(Exception error){reply(destination,EVENT,id,error(error));}},"notebook-interrupt").start();return true;
             }
-            if(closing)throw new IOException("Linux 종료 중입니다.");
+            if(closing){
+                if("start".equals(request.optString("action"))){reply(destination,RESULT,id,new JSONObject().put("stopping",true));return true;}
+                throw new IOException("Linux 종료 중입니다.");
+            }
             worker.execute(()->{
                 android.os.Process.setThreadPriority(android.os.Process.THREAD_PRIORITY_BACKGROUND);
-                try {reply(RESULT,id,dispatch(request));}
-                catch(Exception error){reply(RESULT,id,error(error));}
+                try {reply(destination,RESULT,id,dispatch(request));}
+                catch(Exception error){reply(destination,RESULT,id,error(error));}
             });
-        }catch(Exception error){reply(RESULT,id,error(error));}
+        }catch(Exception error){reply(destination,RESULT,id,error(error));}
         return true;
     }));
 
@@ -63,7 +67,10 @@ public final class LinuxService extends Service {
         catch(JSONException impossible){return new JSONObject();}
     }
     private void reply(int what,int id,JSONObject result){
-        Messenger destination=client;if(destination==null)return;
+        reply(client,what,id,result);
+    }
+    private void reply(Messenger destination,int what,int id,JSONObject result){
+        if(destination==null)return;
         Message message=Message.obtain(null,what);message.arg1=id;
         Bundle data=new Bundle();data.putString("result",result.toString());message.setData(data);
         try{destination.send(message);}catch(RemoteException ignored){}
@@ -71,6 +78,9 @@ public final class LinuxService extends Service {
     private void sendKeys(String sid,String encoded)throws Exception{
         GuestMachine guest=machine;if(guest==null||closing)return;
         guest.channel().send(new JSONObject().put("action","input").put("session",sid).put("data",encoded));
+    }
+    private void startup(String message){
+        try{reply(EVENT,0,new JSONObject().put("startup",message));}catch(JSONException ignored){}
     }
     private void paint(String sid,PyObject terminal)throws Exception{
         JSONObject frame=new JSONObject(terminal.callAttr("frame").toString());
@@ -102,6 +112,7 @@ public final class LinuxService extends Service {
             if(!Arrays.asList("linux","conda","notebook").contains(requested))throw new IOException("지원하지 않는 과정입니다.");
             if(machine!=null&&!course.equals(requested))throw new IOException("실습을 종료한 뒤 다른 과정을 시작하세요.");
             if(machine==null){
+                startup("터미널 실행기 준비 중");
                 if(!Python.isStarted())Python.start(new AndroidPlatform(this));
                 terminalModule=Python.getInstance().getModule("linux_terminal");
                 File pack=new File(getFilesDir(),"training-pack-4.7.4");
@@ -122,16 +133,19 @@ public final class LinuxService extends Service {
                 }
                 try{
                     android.util.Log.i("ShellgroundLinux","Booting verified guest");
-                    owned.boot(this,pack,this::output);
+                    owned.boot(this,pack,this::output,this::startup);
                     android.util.Log.i("ShellgroundLinux","Guest boot ready; checking grader assets");
                     cleanupPreviousPack();
+                    startup("Linux 부팅 완료 · 채점 자료 확인 중");
                     configureGraders(owned,requested);
                     android.util.Log.i("ShellgroundLinux","Grader assets ready");
                     if(requested.equals("conda")){
+                        startup("Conda 실습 준비 중");
                         CondaGuest adapter=new CondaGuest((a,p,t)->owned.channel().request(a,p,t),this::condaAsset);
                         adapter.configure();conda=adapter;
                     }
                     if(requested.equals("notebook")){
+                        startup("Jupyter 실습 준비 중");
                         NotebookGuest adapter=new NotebookGuest((a,p,t)->owned.channel().request(a,p,t));
                         adapter.start();notebook=adapter;
                     }
@@ -164,6 +178,7 @@ public final class LinuxService extends Service {
             return open(guest).put("setup",prepared);
         }
         if("prepare".equals(action)){
+            startup("선택한 문제의 실습 환경 준비 중");
             JSONObject next=request.getJSONObject("mission");
             if(("conda".equals(next.optString("kind")))!=course.equals("conda"))throw new IOException("실행 중인 과정과 문제가 다릅니다.");
             mission=null;startDirectory=null;
@@ -293,11 +308,12 @@ public final class LinuxService extends Service {
         if(required<1||getFilesDir().getUsableSpace()+replaceable<required+512L*1024*1024)throw new IOException(String.format(Locale.ROOT,"실습 준비에 약 %.1fGB의 추가 여유 공간이 필요합니다.",(required+512L*1024*1024)/1e9));
         try(OutputStream out=new FileOutputStream(new File(pending,"base.qcow2"))){
             byte[] bytes=new byte[1024*1024];
+            long copied=0;int reported=-1;
             for(int i=0;i<parts.length();i++){
                 String name=parts.getJSONObject(i).getString("name");
                 if(!name.matches("base-[0-9]{4}\\.sgpart"))throw new IOException("잘못된 실습 이미지 조각 이름");
                 try(InputStream input=getAssets().open("training-pack/"+name)){
-                    int count;while((count=input.read(bytes))!=-1){if(Thread.currentThread().isInterrupted())throw new InterruptedException("설치 취소");out.write(bytes,0,count);}
+                    int count;while((count=input.read(bytes))!=-1){if(Thread.currentThread().isInterrupted())throw new InterruptedException("설치 취소");out.write(bytes,0,count);copied+=count;int percent=(int)Math.min(100,copied*100/required);if(percent!=reported){reported=percent;startup("첫 실행 · 실습 이미지 설치 "+percent+"%");}}
                 }
             }
         }
