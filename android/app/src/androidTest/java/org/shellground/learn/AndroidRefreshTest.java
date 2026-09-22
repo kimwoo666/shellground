@@ -40,6 +40,24 @@ public class AndroidRefreshTest {
             tagged(a,"linux-start").performClick();assertEquals("실습 시작",((Button)tagged(a,"linux-start")).getText().toString());assertFalse(tagged(a,"linux-grade").isEnabled());
         });
     }
+    @Test public void failedPreparationReturnsToStart()throws Exception{
+        context.getSharedPreferences("real-linux-progress-v1",0).edit().putString("last","navigate").putInt("navigate:phase",2).commit();
+        LinuxActivity a=open(true);
+        inst.runOnMainSync(()->{
+            try{
+                for(String name:new String[]{"ready","busy","preparing"}){java.lang.reflect.Field field=LinuxActivity.class.getDeclaredField(name);field.setAccessible(true);field.setBoolean(a,true);}
+                java.lang.reflect.Field field=LinuxActivity.class.getDeclaredField("replies");field.setAccessible(true);
+                Message result=Message.obtain(null,LinuxService.RESULT);result.arg1=Integer.MAX_VALUE;
+                Bundle data=new Bundle();data.putString("result","{\"error\":\"Test preparation failure\"}");result.setData(data);
+                ((Messenger)field.get(a)).send(result);
+            }catch(Exception failure){throw new AssertionError(failure);}
+        });
+        inst.waitForIdleSync();
+        inst.runOnMainSync(()->{
+            assertEquals("Failed preparation can restart from the main button","실습 시작",((Button)tagged(a,"linux-start")).getText().toString());
+            assertTrue(tagged(a,"linux-start").isEnabled());assertFalse("No grading without a prepared session",tagged(a,"linux-grade").isEnabled());
+        });
+    }
     @Test public void launcherOpensLinux(){
         Instrumentation.ActivityMonitor monitor=inst.addMonitor(LinuxActivity.class.getName(),null,false);
         try{

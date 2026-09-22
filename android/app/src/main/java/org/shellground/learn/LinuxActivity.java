@@ -57,7 +57,7 @@ public final class LinuxActivity extends Activity {
             if(message.what!=LinuxService.RESULT)return false;
             if(message.arg1<firstReply)return true;
             if(result.optBoolean("stopping")){restartAfterStop=true;status.setText("이전 실습을 종료한 뒤 새 과정을 시작합니다…");return true;}
-            if(result.has("error")){busy=false;preparing=false;status.setText(result.getString("error"));if(!ready)closeRoom();controls();return true;}
+            if(result.has("error")){busy=false;preparing=false;status.setText(result.getString("error"));if(!ready||session.isEmpty())closeRoom();controls();return true;}
             if(result.optBoolean("ready")){booting=false;ready=true;if(setupMode){busy=true;controls();send("conda_setup",new JSONObject());}else prepare();return true;}
             if(result.has("session")){
                 session=result.getString("session");sessions.put(session,"터미널 "+(sessions.size()+1));
@@ -226,7 +226,7 @@ public final class LinuxActivity extends Activity {
         start.setEnabled(!busy||booting||preparing);start.setText(booting||preparing?"준비 취소":ready?(notebookCourse?"노트북":activePane==1?"단축키":"터미널"):"실습 시작");
         start.setBackground(surface(busy?0xffdce2e5:0xff16725d,0));start.setTextColor(busy?0xff64717b:Color.WHITE);
         startupProgress.setVisibility(booting||busy?View.VISIBLE:View.GONE);
-        grade.setEnabled(ready&&!busy&&(phase>0||setupMode));next.setText(setupMode?"단원 복귀":"다음");
+        grade.setEnabled(ready&&!busy&&!session.isEmpty()&&(phase>0||setupMode));next.setText(setupMode?"단원 복귀":"다음");
         next.setEnabled((!busy||preparing)&&(setupMode||phase==0||solved||progress.getBoolean(key()+":done:"+variant(),false)));
         next.setBackground(surface(0xffe5f1ec,0));if(notebookEditor!=null)notebookEditor.available(ready&&!busy);
     }

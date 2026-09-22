@@ -71,7 +71,7 @@ pandas는 기존 내용을 유지하면서 **81개 설명·실행 소단계**로
 | --- | --- | --- |
 | Linux x86-64 | [Linux 설치파일.run](https://github.com/kimwoo666/shellground/releases/download/v4.7.6/Shellground-Linux-Setup.run) | NAS·문제·그래프 업데이트 · [변경 사항](docs/RELEASE_4.7.6.md) |
 | Windows x64 | [Windows 설치파일.exe](https://github.com/kimwoo666/shellground/releases/download/v4.7.6/Shellground-Windows-Setup.exe) | NAS·문제·그래프 업데이트 · [검증 범위](docs/PLATFORMS.md) |
-| Android | [Android.apk](https://github.com/kimwoo666/shellground/releases/download/v4.7.6/Shellground-4.7.6-Android.apk) | NAS·소단계·그래프 업데이트. **ARM 실휴대폰은 미검증** |
+| Android | [Android.apk](https://github.com/kimwoo666/shellground/releases/download/v4.7.7-android/Shellground-4.7.7-Android.apk) | 4.7.7: 과목 순서·완료 표시·Linux 시작 개선. [상세 내용](docs/ANDROID_4.7.7.md). **ARM 실휴대폰은 미검증** |
 | macOS | 없음 | 이번 배포에 포함하지 않음 |
 
 일반 사용자가 Python·Docker·Conda·WSL·Termux·실습 서버를 따로 설치하지 않습니다. 포함된 Linux 환경은 부팅 시간이 필요하고 Python 전용 실습보다 메모리를 더 사용합니다. 인증서 서명/스토어 심사를 받은 제품은 아닙니다.
