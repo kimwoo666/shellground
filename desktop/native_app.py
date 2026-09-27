@@ -27,7 +27,7 @@ from learning_progress import read_records, cursor_for, remember, confirmed_coun
 from app_settings import SettingsDialog, load_settings, save_settings, theme_palette
 from study_page import StudyPage
 
-APP_VERSION = '4.7.8'
+APP_VERSION = '4.7.9'
 
 
 class Worker(QThread):
@@ -457,9 +457,19 @@ class Window(StudyPage):
 
     def restore_course_selection(self, center=True):
         row = self.checkpoint_rows[self.checkpoint_end] if self.checkpoint_end else self.unit_rows[self.index]
-        self.course.setCurrentRow(row)
+        item = self.course.item(row)
+        self.course.setCurrentItem(item)
         if center:
-            self.course.scrollToItem(self.course.item(row), QAbstractItemView.ScrollHint.PositionAtCenter)
+            self.course.scrollToItem(item, QAbstractItemView.ScrollHint.PositionAtCenter)
+            # A newly created page can still be hidden inside StudyWindow here.
+            # Reposition after Qt has laid out the visible list and hidden tabs.
+            selected = item.data(Qt.ItemDataRole.UserRole)
+            QTimer.singleShot(0, lambda: self.center_course_item_after_layout(selected))
+
+    def center_course_item_after_layout(self, selected):
+        item = self.course.currentItem()
+        if item is not None and item.data(Qt.ItemDataRole.UserRole) == selected:
+            self.course.scrollToItem(item, QAbstractItemView.ScrollHint.PositionAtCenter)
 
     def select_course_item(self, item):
         kind, number = item.data(Qt.ItemDataRole.UserRole)

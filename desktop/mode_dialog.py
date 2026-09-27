@@ -36,7 +36,7 @@ class ModeDialog(QDialog):
         self.setWindowTitle('Shellground — 실습 모드 선택')
         self.resize(680, 500)
         layout = QVBoxLayout(self)
-        heading = QLabel('실습 방식을 선택하세요. 시뮬레이션과 실제 환경은 서로 다릅니다.')
+        heading = QLabel('실습 방식을 선택하세요. 아래 숫자는 이 기기에 저장된 기록입니다. NAS 진도는 모드를 선택한 뒤 불러옵니다.')
         heading.setWordWrap(True)
         layout.addWidget(heading)
         self.buttons = {}

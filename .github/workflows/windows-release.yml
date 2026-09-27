@@ -55,7 +55,7 @@ jobs:
           ./desktop/.venv/bin/python -c "import tkinter; print('Installer Tk', tkinter.TkVersion)"
       - name: Check changed NAS and graph features
         working-directory: desktop
-        run: ${{ matrix.python }} -m unittest test_mobile_sync_delta test_nas_sync test_nas_sync_ui test_python_libraries test_native_ui.NativeUITests.test_sidebar_refresh_keeps_the_user_scroll_position test_checkpoints.CheckpointUITests.test_selected_pending_review_survives_restart test_plot_preview test_publication_privacy -v
+        run: ${{ matrix.python }} -m unittest test_mobile_sync_delta test_nas_sync test_nas_sync_ui test_python_libraries test_native_ui.NativeUITests.test_sidebar_refresh_keeps_the_user_scroll_position test_native_ui.NativeUITests.test_sidebar_centers_selected_lesson_after_hidden_page_is_shown test_native_ui.NativeUITests.test_shared_window_shows_restored_docker_lesson_in_sidebar test_checkpoints.CheckpointUITests.test_selected_pending_review_survives_restart test_plot_preview test_publication_privacy -v
       - name: Type-check the updated Windows installer
         if: matrix.platform == 'windows'
         shell: powershell
@@ -98,7 +98,7 @@ jobs:
           if gh release view "$tag" --json isDraft,targetCommitish > release-state.json 2>/dev/null; then
             python3 -c "import json,os; r=json.load(open('release-state.json')); assert r['isDraft'] and r['targetCommitish']==os.environ['GITHUB_SHA'], 'Bump the release version before publishing again'"
           else
-            gh release create "$tag" --target "$GITHUB_SHA" --draft --title "Shellground $version — Windows · Linux" --notes-file docs/WINDOWS_RELEASE_NOTES.md
+            gh release create "$tag" --target "$GITHUB_SHA" --draft --title "Shellground $version — Windows · Linux" --notes-file docs/RELEASE_4.7.9.md
           fi
           (cd release-output && sha256sum *.exe *.zip *.tar *.run > SHA256SUMS.txt)
           gh release upload "$tag" release-output/* --clobber

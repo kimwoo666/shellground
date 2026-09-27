@@ -210,6 +210,38 @@ class NativeUITests(unittest.TestCase):
             self.assertEqual(window.course.currentItem().data(Qt.ItemDataRole.UserRole), ('unit', 35))
             window.hide(); window.deleteLater(); self.app.processEvents()
 
+    def test_sidebar_centers_selected_lesson_after_hidden_page_is_shown(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            window = Window(self.ui, self.mono, Path(temporary) / 'progress.json')
+            window.select_lesson(35, initial=True)
+            window.show(); self.app.processEvents()
+            item = window.course.currentItem()
+            self.assertEqual(item.data(Qt.ItemDataRole.UserRole), ('unit', 35))
+            self.assertTrue(window.course.visualItemRect(item).intersects(window.course.viewport().rect()))
+            window.hide(); window.deleteLater(); self.app.processEvents()
+
+    def test_shared_window_shows_restored_docker_lesson_in_sidebar(self):
+        from course_topics import topic_of
+        from mode_curriculum import curriculum
+        from study_window import StudyWindow
+        with tempfile.TemporaryDirectory() as temporary:
+            path = Path(temporary) / 'progress-v3.json'
+            units, _ = curriculum('simulation')
+            index = next(i for i, unit in enumerate(units) if topic_of(unit) == 'Docker')
+            key = units[index].key
+            path.write_text(json.dumps({
+                'schema': 3, 'completed': [], 'last_learning': key,
+                'learning': {key: {'cursor': '', 'confirmed': []}},
+            }), encoding='utf-8')
+            host = StudyWindow(self.ui, self.mono, path, mode='simulation')
+            host.show(); self.app.processEvents()
+            page = host.pages['linux']
+            item = page.course.currentItem()
+            self.assertEqual(item.data(Qt.ItemDataRole.UserRole), ('unit', index))
+            self.assertTrue(page.course.visualItemRect(item).intersects(page.course.viewport().rect()))
+            host.close(); self.app.processEvents()
+            host.deleteLater(); self.app.processEvents()
+
     def test_corrupt_progress_and_worker_error(self):
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / 'progress.json'
