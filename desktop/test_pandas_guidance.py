@@ -41,7 +41,7 @@ class GuidanceStructureTests(unittest.TestCase):
         from python_teaching.integration_course import insertions
         from python_teaching.coverage_course import lessons as coverage
         originals = {u.key:u for u in (*original(), *insertions().values(), *coverage())}
-        self.assertEqual(len(lessons()), 95)
+        self.assertEqual(len(lessons()), 98)
         for key in sequences():
             unit, old = lesson_by_key(key), originals[key]
             self.assertEqual(unit.problems, old.problems, key)
@@ -82,10 +82,11 @@ class GuidanceExecutionTests(unittest.TestCase):
     def test_each_new_example_runs_fresh_and_repeatedly(self):
         from python_teaching.worker import Kernel
         original = Path.cwd()
-        try:
-            with tempfile.TemporaryDirectory(prefix='shellground-pandas-new-') as folder:
+        previous_mpl = os.environ.get('MPLCONFIGDIR')
+        with tempfile.TemporaryDirectory(prefix='shellground-pandas-new-') as folder:
+            try:
                 os.chdir(folder)
-                os.environ.setdefault('MPLCONFIGDIR', str(Path(folder)/'.mpl-cache'))
+                os.environ['MPLCONFIGDIR'] = str(Path(folder)/'.mpl-cache')
                 kernel = Kernel(folder)
                 count = 0
                 for unit in lessons():
@@ -109,9 +110,10 @@ class GuidanceExecutionTests(unittest.TestCase):
                             count += 1
                 kernel.plt.close('all')
                 self.assertEqual(count,81)
-
-        finally:
-            os.chdir(original)
+            finally:
+                os.chdir(original)
+                if previous_mpl is None: os.environ.pop('MPLCONFIGDIR', None)
+                else: os.environ['MPLCONFIGDIR'] = previous_mpl
 
 
 if __name__ == '__main__': unittest.main()

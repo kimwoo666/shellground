@@ -31,6 +31,18 @@ class NasSyncTests(unittest.TestCase):
         self.sync(self.a); self.sync(self.b); self.sync(self.a)
         self.assertEqual(set(self.data(self.a)['completed']), {'navigate','pwdpaths'})
         self.assertEqual(set(self.data(self.a)['learning']['navigate']['confirmed']), {'A','B'})
+    def test_checkpoint_completion_and_pending_selection_roundtrip(self):
+        self.write(self.a, ['navigate'], checkpoints=['real-linux-v2-05'],
+                   last_checkpoint='real-linux-v2-10')
+        self.sync(self.a); self.sync(self.b)
+        self.assertEqual(self.data(self.b)['checkpoints'], ['real-linux-v2-05'])
+        self.assertEqual(self.data(self.b)['last_checkpoint'], 'real-linux-v2-10')
+        self.write(self.b, ['navigate'], checkpoints=['real-linux-v2-05', 'real-linux-v2-10'],
+                   last_checkpoint='')
+        self.sync(self.b); self.sync(self.a)
+        self.assertEqual(set(self.data(self.a)['checkpoints']),
+                         {'real-linux-v2-05', 'real-linux-v2-10'})
+        self.assertEqual(self.data(self.a)['last_checkpoint'], '')
     def test_active_session_does_not_replace_local_files(self):
         self.write(self.a, ['navigate']); self.write(self.b, ['pwdpaths'])
         self.sync(self.a); self.sync(self.b, apply=False)

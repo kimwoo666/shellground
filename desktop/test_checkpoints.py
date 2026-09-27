@@ -127,6 +127,17 @@ class CheckpointUITests(unittest.TestCase):
         self.assertIsNone(again.mission)
         restored.deleteLater(); again.deleteLater()
 
+    def test_selected_pending_review_survives_restart(self):
+        w=self.window
+        w.select_checkpoint(10)
+        stored=json.loads(self.path.read_text())
+        self.assertEqual(stored['last_checkpoint'],'checkpoint-10')
+        restored=Window(self.ui,self.mono,self.path)
+        self.assertEqual((restored.phase,restored.checkpoint_end),('checkpoint_ready',10))
+        restored.select_lesson(0)
+        self.assertEqual(json.loads(self.path.read_text())['last_checkpoint'],'')
+        restored.deleteLater()
+
     def test_checkpoint_options_scope_hints_and_repeat(self):
         w = self.window
         w.completed = [u.key for u in UNITS]

@@ -45,8 +45,9 @@ class CourseExecutionTests(unittest.TestCase):
         from python_teaching.worker import Kernel
         from python_teaching.values import snapshot
         original = Path.cwd()
-        try:
-            with tempfile.TemporaryDirectory(prefix='shellground-course-test-') as folder:
+        previous_mpl = os.environ.get('MPLCONFIGDIR')
+        with tempfile.TemporaryDirectory(prefix='shellground-course-test-') as folder:
+            try:
                 os.chdir(folder)
                 os.environ['MPLCONFIGDIR'] = str(Path(folder)/'.mpl-cache')
                 kernel = Kernel(folder)
@@ -69,7 +70,10 @@ class CourseExecutionTests(unittest.TestCase):
                             grade = grade_snapshot(state(),problem.checks)
                             self.assertTrue(grade['passed'],str(grade))
                 kernel.plt.close('all')
-        finally: os.chdir(original)
+            finally:
+                os.chdir(original)
+                if previous_mpl is None: os.environ.pop('MPLCONFIGDIR', None)
+                else: os.environ['MPLCONFIGDIR'] = previous_mpl
 
 
 if __name__ == '__main__': unittest.main()

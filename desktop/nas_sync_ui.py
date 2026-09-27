@@ -17,7 +17,7 @@ class SyncDialog(QDialog):
         self.setWindowTitle('NAS 학습 진도 동기화'); self.resize(630, 340)
         layout = QVBoxLayout(self)
         label = QLabel('두 컴퓨터에서 같은 NAS 진도 폴더를 선택하세요.\n'
-            '완료·소단계·퀴즈·기억노트만 전송합니다. 실습 파일과 비밀번호는 전송하지 않습니다.\n'
+            '단원·종합 복습 완료, 마지막 복습 위치, 소단계·퀴즈·기억노트만 전송합니다. 실습 파일과 비밀번호는 전송하지 않습니다.\n'
             '받은 진도는 앱을 시작할 때 적용합니다. 공부 중 화면을 임의로 바꾸지 않습니다.')
         label.setWordWrap(True); layout.addWidget(label)
         self.enabled = QCheckBox('자동 동기화 사용'); self.enabled.setChecked(config.get('enabled', True))
@@ -133,7 +133,7 @@ class NasController(QObject):
         else:
             self.config = result['config']; self.fingerprint = result['fingerprint']
             self.status.setText('NAS 저장 완료' + (' · 받은 진도는 다음 시작에 적용' if result['remote_changes'] and not result['applied'] else ''))
-            self.status.setToolTip('완료·소단계·퀴즈·기억노트 동기화. 현재 실습 파일은 전송하지 않습니다.')
+            self.status.setToolTip('단원·종합 복습 완료, 마지막 복습 위치, 소단계·퀴즈·기억노트 동기화. 현재 실습 파일은 전송하지 않습니다.')
         if self._startup is not None:
             callback, self._startup = self._startup, None
             callback()

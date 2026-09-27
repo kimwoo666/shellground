@@ -88,7 +88,7 @@ class NativeUITests(unittest.TestCase):
             window.grade(); self.wait_job(window)
             self.assertEqual(window.completed, [UNITS[0].key])
             self.assertTrue(path.is_file())
-            self.assertEqual(json.loads(path.read_text()), {'schema': 3, 'completed': [UNITS[0].key]})
+            self.assertEqual(json.loads(path.read_text()), {'schema': 3, 'completed': [UNITS[0].key], 'last_checkpoint': ''})
             self.assertIn('자동 저장됨', window.progress_note.text())
             window.start_random()
             self.assertEqual(window.mission.kind, UNITS[0].key)
@@ -196,6 +196,19 @@ class NativeUITests(unittest.TestCase):
             window.select_lesson(0, initial=True)
             self.assertIn('pwd', window.course.item(0).text())
             window.deleteLater(); self.app.processEvents()
+
+    def test_sidebar_refresh_keeps_the_user_scroll_position(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            window = Window(self.ui, self.mono, Path(temporary) / 'progress.json')
+            window.show(); self.app.processEvents()
+            window.select_lesson(35); self.app.processEvents()
+            bar = window.course.verticalScrollBar()
+            self.assertGreater(bar.maximum(), 0)
+            bar.setValue(0); self.app.processEvents()
+            window.refresh_course(); self.app.processEvents()
+            self.assertEqual(bar.value(), 0)
+            self.assertEqual(window.course.currentItem().data(Qt.ItemDataRole.UserRole), ('unit', 35))
+            window.hide(); window.deleteLater(); self.app.processEvents()
 
     def test_corrupt_progress_and_worker_error(self):
         with tempfile.TemporaryDirectory() as temporary:

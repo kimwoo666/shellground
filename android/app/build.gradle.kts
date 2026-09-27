@@ -16,8 +16,8 @@ android {
         applicationId = "org.shellground.learn"
         minSdk = 24
         targetSdk = 35
-        versionCode = 477
-        versionName = "4.7.7"
+        versionCode = 478
+        versionName = "4.7.8"
         buildConfigField("boolean", "LINUX_RUNTIME", linuxRuntime.toString())
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         ndk { abiFilters += listOf("arm64-v8a", "x86_64") }

@@ -33,7 +33,7 @@ units=lessons()
 scope=__SCOPE__
 changed={'pd_datetime_index','pd_weather_audit','pd_series_charts','pd_concat_labels'}
 selected=[u for u in units if scope=='full' or u.key in changed]
-assert len(selected)==(95 if scope=='full' else 4),[u.key for u in selected]
+assert len(selected)==(98 if scope=='full' else 4),[u.key for u in selected]
 checked=0
 for unit in selected:
     for number,task in enumerate(unit.problems):
@@ -74,8 +74,8 @@ for case in all_cases:
         assert grade['passed']==expected,(case['lesson'],case['problem'],kind,grade,errors)
         variants+=1
 kernel.plt.close('all')
-assert len(units)==95 and checked==3*len(selected) and variants==2*len(all_cases),(len(units),checked,variants)
-if scope=='full':assert len(validation_cases())==23 and len(review_cases())>=9
+assert len(units)==98 and checked==3*len(selected) and variants==2*len(all_cases),(len(units),checked,variants)
+if scope=='full':assert len(validation_cases())==26 and len(review_cases())>=9
 print('BUNDLED_REAL_COURSE_OK',scope,len(selected),checked,variants)
 '''
         code=code.replace('__SCOPE__',repr(scope))
@@ -89,7 +89,7 @@ print('BUNDLED_REAL_COURSE_OK',scope,len(selected),checked,variants)
             messages=[json.loads(line) for line in result.stdout.splitlines()]
             self.assertTrue(messages[0]['ready'])
             self.assertTrue(messages[1]['ok'],messages[1])
-            self.assertIn('BUNDLED_REAL_COURSE_OK '+scope+(' 95 285 ' if scope=='full' else ' 4 12 '),messages[1]['output'])
+            self.assertIn('BUNDLED_REAL_COURSE_OK '+scope+(' 98 294 ' if scope=='full' else ' 4 12 '),messages[1]['output'])
             print(messages[1]['output'].strip())
 
 

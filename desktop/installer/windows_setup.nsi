@@ -7,15 +7,15 @@ InstallDir "$LOCALAPPDATA\Programs\Shellground"
 RequestExecutionLevel user
 SetCompressor /SOLID zlib
 BrandingText "Shellground · Linux · Docker · ROS 2 · Python"
-VIProductVersion "4.7.6.0"
+VIProductVersion "4.7.8.0"
 VIAddVersionKey "ProductName" "Shellground Setup"
 VIAddVersionKey "FileDescription" "Shellground 설치 프로그램"
-VIAddVersionKey "FileVersion" "4.7.6.0"
+VIAddVersionKey "FileVersion" "4.7.8.0"
 VIAddVersionKey "LegalCopyright" "Shellground contributors"
 !define MUI_ABORTWARNING
 !define MUI_WELCOMEPAGE_TITLE "Shellground 설치"
 !define MUI_WELCOMEPAGE_TEXT "실습 자료는 설치 중 자동으로 내려받습니다.$\r$\n$\r$\n인터넷 연결과 약 9GB의 여유 공간이 필요합니다.$\r$\n파일을 따로 받거나 합칠 필요가 없습니다.$\r$\n$\r$\n개인 Docker·WSL·Python 환경과 학습 진도는 변경하지 않습니다."
-!define APPDIR "app-4.7.6"
+!define APPDIR "app-4.7.8"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${APPDIR}\Shellground.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Shellground 실행"
 !define MUI_FINISHPAGE_TEXT "설치가 완료됐습니다. 시작 메뉴 또는 바탕화면의 Shellground로 실행하세요."
@@ -55,12 +55,14 @@ Section "Shellground" Main
   SetOutPath "$INSTDIR\${APPDIR}"
   CreateShortCut "$SMPROGRAMS\Shellground.lnk" "$INSTDIR\${APPDIR}\Shellground.exe"
   CreateShortCut "$DESKTOP\Shellground.lnk" "$INSTDIR\${APPDIR}\Shellground.exe"
+  IfFileExists "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\Shellground.lnk" 0 +2
+    CreateShortCut "$APPDATA\Microsoft\Internet Explorer\Quick Launch\User Pinned\TaskBar\Shellground.lnk" "$INSTDIR\${APPDIR}\Shellground.exe"
   WriteUninstaller "$INSTDIR\Shellground-Uninstall.exe"
   SetOutPath "$INSTDIR"
   File "Installer-Licenses.txt"
   SetOutPath "$INSTDIR\${APPDIR}"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Shellground" "DisplayName" "Shellground"
-  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Shellground" "DisplayVersion" "4.7.6"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Shellground" "DisplayVersion" "4.7.8"
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Shellground" "UninstallString" '"$INSTDIR\Shellground-Uninstall.exe"'
   WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Uninstall\Shellground" "InstallLocation" "$INSTDIR"
 SectionEnd

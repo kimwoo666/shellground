@@ -43,6 +43,17 @@ class MobileDeltaTests(unittest.TestCase):
             for key,value in values.items():
                 if key not in ('password','editor'):self.assertEqual(restored[scope][key],value)
 
+    def test_android_restores_pending_linux_review_selection(self):
+        prefs={'real-linux-progress-v1':{'last':'review','review:done:1':True,
+                                         'review:done:2':True}}
+        docs=export_preferences(prefs,self.catalogs,{})
+        self.assertEqual(docs['progress-v3-real.json']['checkpoints'],['review'])
+        self.assertEqual(docs['progress-v3-real.json']['last_checkpoint'],'review')
+        self.assertEqual(import_preferences(docs,self.catalogs,{})['real-linux-progress-v1']['last'],'review')
+        prefs['real-linux-progress-v1']['last']='unit'
+        docs=export_preferences(prefs,self.catalogs,docs)
+        self.assertEqual(docs['progress-v3-real.json']['last_checkpoint'],'')
+
     def test_pc_android_pc_roundtrip_and_offline_preserve(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);nas=root/'nas';nas.mkdir();pc=root/'pc';pc.mkdir();phone=root/'phone';phone.mkdir()

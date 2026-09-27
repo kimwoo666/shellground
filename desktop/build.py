@@ -120,6 +120,7 @@ subprocess.run([
     '--add-data', f'{root / "python_teaching" / "system_info_concept_draft.json"}:python_teaching',
     '--hidden-import', 'scipy.stats', '--hidden-import', 'sklearn.linear_model',
     '--hidden-import', 'sklearn.model_selection', '--hidden-import', 'sklearn.metrics',
+    '--hidden-import', 'sklearn.pipeline', '--hidden-import', 'sklearn.preprocessing',
     '--hidden-import', 'seaborn', '--hidden-import', 'python_teaching.review_validation',
     '--hidden-import', 'matplotlib.backends.backend_agg',
     '--hidden-import', 'matplotlib.backends.backend_svg',

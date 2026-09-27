@@ -15,7 +15,9 @@ class IncrementalBuildTests(unittest.TestCase):
     def test_default_is_packaged_smoke_not_old_courses(self):
         commands = verification_commands('Shellground', 'out', 'runtime', 'python', conda=True, notebook=True)
         flags = [command[1] for command in commands]
-        self.assertEqual(flags, ['--self-test-release', '--self-test-study-ui', '--self-test-conda', '--self-test-notebook-package'])
+        expected = ['--self-test-release', '--self-test-study-ui', '--self-test-conda', '--self-test-notebook-package']
+        if __import__('sys').platform == 'win32': expected.insert(0, '--self-test-windows-pipes')
+        self.assertEqual(flags, expected)
         text = repr(commands)
         for flag in ('--self-test-real', '--self-test-python', '--self-test-ros-course', '--self-test-notebook-ui'):
             self.assertNotIn(flag, text)
@@ -34,7 +36,7 @@ class IncrementalBuildTests(unittest.TestCase):
         self.assertIn('docker_sessions_attach', value['catalog']['units'])
         self.assertIn('system_clock', value['catalog']['units'])
         self.assertEqual(len(value['catalog']['units']), 138)
-        self.assertEqual(len(value['catalog']['python']), 95)
+        self.assertEqual(len(value['catalog']['python']), 98)
         self.assertTrue(all(len(digest) == 64 for digest in value['resources'].values()))
 
     def test_source_execution_cannot_be_mislabeled_as_frozen(self):

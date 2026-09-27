@@ -7,7 +7,7 @@ import threading
 from PySide6.QtCore import Qt, QStandardPaths, Signal, QThread, QTimer
 from PySide6.QtGui import QFont, QFontDatabase, QAction
 from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-                              QSplitter, QListWidget, QLabel, QPushButton, QPlainTextEdit,
+                              QSplitter, QListWidget, QAbstractItemView, QLabel, QPushButton, QPlainTextEdit,
                               QMessageBox, QProgressBar, QDialog, QTabWidget, QTabBar)
 from engine import resource_path
 from execution_modes import SIMULATION, MODES, create_engine, mode_progress_path, mode_available
@@ -27,7 +27,7 @@ from learning_progress import read_records, cursor_for, remember, confirmed_coun
 from app_settings import SettingsDialog, load_settings, save_settings, theme_palette
 from study_page import StudyPage
 
-APP_VERSION = '4.7.6'
+APP_VERSION = '4.7.8'
 
 
 class Worker(QThread):
@@ -327,11 +327,14 @@ class Window(StudyPage):
         self.archived_checkpoints = []
         self.learning_progress = {}
         self.last_learning = ''
+        self.last_checkpoint = ''
         try:
             data = json.loads(self.progress_path.read_text(encoding='utf-8'))
             self.learning_progress = read_records(data.get('learning'))
             last = data.get('last_learning', '')
             if isinstance(last, str): self.last_learning = last
+            last_checkpoint = data.get('last_checkpoint', '')
+            if isinstance(last_checkpoint, str): self.last_checkpoint = last_checkpoint
             known_units = {u.key for u in self.units}
             known_checks = {c.key for c in self.checkpoints}
             self.archived_completed = [key for key in data.get('completed', []) if isinstance(key, str) and key not in known_units]
@@ -351,6 +354,7 @@ class Window(StudyPage):
             data = {'schema': 3, 'completed': list(dict.fromkeys(self.completed + self.archived_completed))}
             if self.learning_progress: data['learning'] = self.learning_progress
             if self.last_learning: data['last_learning'] = self.last_learning
+            data['last_checkpoint'] = self.last_checkpoint
             if self.completed_checkpoints or self.archived_checkpoints:
                 data['checkpoints'] = list(dict.fromkeys(self.completed_checkpoints + self.archived_checkpoints))
             temporary.write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
@@ -363,6 +367,9 @@ class Window(StudyPage):
             return False
 
     def refresh_course(self):
+        previous = self.course.currentItem()
+        previous_key = previous.data(Qt.ItemDataRole.UserRole) if previous else None
+        previous_scroll = self.course.verticalScrollBar().value()
         self.course.clear()
         testing = self.phase in ('practice', 'random', 'checkpoint')
         self.unit_rows, self.checkpoint_rows = {}, {}
@@ -385,7 +392,10 @@ class Window(StudyPage):
                 self.course.addItem(f'◆ {number - 4:02d}–{number:02d} 종합 복습\n[{mark}]\n{detail}')
                 self.course.item(self.course.count() - 1).setData(Qt.ItemDataRole.UserRole, ('checkpoint', checkpoint.end))
                 self.course.item(self.course.count() - 1).setHidden(topic_of(unit) != self.topic)
-        self.restore_course_selection()
+        selected_key = ('checkpoint', self.checkpoint_end) if self.checkpoint_end else ('unit', self.index)
+        self.restore_course_selection(center=previous_key != selected_key)
+        if previous_key == selected_key:
+            self.course.verticalScrollBar().setValue(previous_scroll)
         indices = topic_indices(self.units, self.topic)
         self.progress.setMaximum(len(indices))
         self.progress.setFormat(self.topic + ' %v / %m 단계 숙달')
@@ -445,9 +455,11 @@ class Window(StudyPage):
     def checkpoint_unlocked(self, end):
         return any(c.end == end for c in self.checkpoints)
 
-    def restore_course_selection(self):
+    def restore_course_selection(self, center=True):
         row = self.checkpoint_rows[self.checkpoint_end] if self.checkpoint_end else self.unit_rows[self.index]
         self.course.setCurrentRow(row)
+        if center:
+            self.course.scrollToItem(self.course.item(row), QAbstractItemView.ScrollHint.PositionAtCenter)
 
     def select_course_item(self, item):
         kind, number = item.data(Qt.ItemDataRole.UserRole)
@@ -455,6 +467,10 @@ class Window(StudyPage):
         else: self.select_lesson(number)
 
     def select_initial(self):
+        for checkpoint in self.checkpoints:
+            if checkpoint.key == self.last_checkpoint and checkpoint.key not in self.completed_checkpoints:
+                self.select_checkpoint(checkpoint.end, initial=True)
+                return
         for index, unit in enumerate(self.units):
             if unit.key == self.last_learning and unit.key in self.learning_progress:
                 self.select_lesson(index, initial=True)
@@ -481,6 +497,8 @@ class Window(StudyPage):
                 return
         self.clear_random()
         self.index, self.checkpoint_end = end - 1, end
+        self.last_checkpoint = checkpoint_at(end, self.mode).key
+        self.save_progress()
         self.topic = topic_of(self.units[self.index])
         self.phase, self.mission, self.passed = 'checkpoint_ready', None, False
         self.task_tabs.setCurrentIndex(0)
@@ -735,6 +753,9 @@ class Window(StudyPage):
                 self.restore_course_selection(); return
         self.clear_random()
         self.index, self.phase, self.mission, self.passed = index, 'learn', None, False
+        if self.last_checkpoint:
+            self.last_checkpoint = ''
+            self.save_progress()
         self.learning_sequence = learning_steps(self.units[index], self.mode)
         self.learning_step = cursor_for(self.learning_progress, self.units[index].key, self.learning_sequence)
         self.learning_resume_from = self.learning_step

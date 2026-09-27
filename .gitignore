@@ -52,6 +52,7 @@ next-env.d.ts
 /android/.native-runtime/
 /android/runtime-probe/build/
 /android/runtime/__pycache__/
+/android/app/src/main/python/__pycache__/
 /desktop/tmp/
 /desktop/python_teaching/__pycache__/
 /desktop/.native-libs/

@@ -25,6 +25,10 @@ def export_preferences(preferences, catalogs, existing):
         python = scope == 'python-progress-v1'
         separator = '.' if python else ':'
         last = prefs.get('last')
+        if linux:
+            reviews = {unit['key'] for unit in catalogs[scope] if unit.get('review')}
+            if last in {unit['key'] for unit in catalogs[scope]}:
+                data['last_checkpoint'] = last if last in reviews else ''
         for unit in catalogs[scope]:
             key = unit['key']
             passed = [v for v in range(3) if prefs.get(key+(':' if python else ':done:')+str(v)) is True]
@@ -89,7 +93,7 @@ def import_preferences(documents, catalogs, existing):
                 if position.get('phase') in PHASES:
                     prefs[key+separator+'phase'] = PHASES.index(position['phase'])
                     prefs[key+separator+'step'] = max(0, min(int(position.get('step',0)), max(0,len(unit.get('learning_steps', []))-1)))
-        last = data.get('last_learning') if linux else data.get('resume', {}).get('unit')
+        last = (data.get('last_checkpoint') or data.get('last_learning')) if linux else data.get('resume', {}).get('unit')
         if last in {unit['key'] for unit in catalogs[scope]}: prefs['last'] = last
         if python:
             for number, quiz in enumerate(catalogs.get('quizzes', [])):

@@ -112,7 +112,7 @@ class ShutdownTests(unittest.TestCase):
         state = self.run_scenario('progress')
         self.assertFalse(state['timed_out'], state)
         self.assertFalse(state['visible'], state)
-        self.assertEqual(state['saved_data'], {'schema': 3, 'completed': ['navigate']})
+        self.assertEqual(state['saved_data'], {'schema': 3, 'completed': ['navigate'], 'last_checkpoint': ''})
         self.assertEqual(state['restored_completed'], ['navigate'])
         self.assertEqual(state['restored_index'], 1)
         self.assertEqual(state['restored_terminal'], '')

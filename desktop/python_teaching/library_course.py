@@ -14,6 +14,13 @@ SNS = 'import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\
 SPLIT = 'import numpy as np\nfrom sklearn.model_selection import train_test_split\n'
 REGRESSION = 'import numpy as np\nfrom sklearn.linear_model import LinearRegression\n'
 METRICS = REGRESSION + 'from sklearn.metrics import mean_absolute_error\n'
+CLASSIFICATION = ('import numpy as np\nfrom sklearn.linear_model import LogisticRegression\n'
+                  'from sklearn.metrics import accuracy_score, confusion_matrix, recall_score\n')
+PIPELINE = ('import numpy as np\nfrom sklearn.pipeline import make_pipeline, Pipeline\n'
+            'from sklearn.preprocessing import StandardScaler\n'
+            'from sklearn.linear_model import LinearRegression\n')
+VALIDATION = ('import numpy as np\nfrom sklearn.model_selection import KFold, TimeSeriesSplit, cross_val_score\n'
+              'from sklearn.linear_model import LinearRegression\n')
 
 # These supplied observation helpers are not code the learner must recreate.
 # Sorting removes irrelevant artist/row order while retaining duplicate points.
@@ -116,6 +123,18 @@ def _model_predictions(rows):
         raise TypeError('model은 실제 LinearRegression 객체여야 합니다.')
     return model.predict(np.asarray(rows, dtype=float))
 '''
+CLASSIFIER_PROBE = '''
+def _classifier_predictions(rows):
+    if not isinstance(model, LogisticRegression):
+        raise TypeError('model은 실제 LogisticRegression 객체여야 합니다.')
+    return model.predict(np.asarray(rows, dtype=float))
+'''
+PIPELINE_PROBE = '''
+def _pipeline_predictions(rows):
+    if not isinstance(model, Pipeline) or not isinstance(model.steps[0][1], StandardScaler):
+        raise TypeError('model은 훈련 데이터에 맞춘 StandardScaler 파이프라인이어야 합니다.')
+    return model.predict(np.asarray(rows, dtype=float))
+'''
 
 SEABORN_NOTE = (
     '보충 과정: PDF는 Seaborn의 역할 소개 수준이며 여기의 API 실습은 추가 내용입니다. '
@@ -130,6 +149,8 @@ SKLEARN_NOTE = (
     '공식 근거: https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html ; '
     'https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.LinearRegression.html ; '
     'https://scikit-learn.org/stable/modules/generated/sklearn.metrics.mean_absolute_error.html ; '
+    'https://scikit-learn.org/stable/modules/cross_validation.html ; '
+    'https://scikit-learn.org/stable/modules/compose.html ; '
     'https://scikit-learn.org/stable/common_pitfalls.html'
 )
 
@@ -171,15 +192,15 @@ def _points(points, number=0, probe_number=0):
     )
 
 
-def _model_checks(expected_predictions):
+def _model_checks(expected_predictions, probe='_model_predictions'):
     checks = []
     for i, expected in enumerate(expected_predictions):
         checks.extend((
-            C('__probes__', 'array', ['_model_predictions', i, 'kind'],
+            C('__probes__', 'array', [probe, i, 'kind'],
               '실제 학습 모델의 예측 배열'),
-            C('__probes__', [len(expected)], ['_model_predictions', i, 'shape'],
+            C('__probes__', [len(expected)], [probe, i, 'shape'],
               '새 표본별 예측 shape'),
-            C('__probes__', expected, ['_model_predictions', i, 'data'],
+            C('__probes__', expected, [probe, i, 'data'],
               '새 입력에 대한 실제 모델 예측',
               'model을 훈련 자료로 fit했는지 확인하세요. 예측 숫자만 적거나 시험 정답을 학습에 넣지 않습니다.'),
         ))
@@ -187,7 +208,7 @@ def _model_checks(expected_predictions):
 
 
 def lessons():
-    """Return three Seaborn units, then three scikit-learn units (18 problems)."""
+    """Return three Seaborn units, then six scikit-learn units (27 problems)."""
     result = []
 
     result.append(Lesson(
@@ -367,10 +388,109 @@ def lessons():
               probes={'_model_predictions': [[[[-1],[6]]]]}),
         ), ('sk_fit_predict',), SKLEARN_NOTE))
 
+    result.append(Lesson(
+        'sk_classification', 'scikit-learn', '분류 모델과 예측 결과 읽기',
+        '회귀는 수치를 예측하고 분류는 범주를 예측합니다. LogisticRegression은 이름에 Regression이 있지만 분류 모델입니다. '
+        'X는 표본×특성의 2차원 배열이고 y는 표본별 범주입니다. 훈련 자료로 fit한 뒤 새 X만 predict에 넣습니다. '
+        '정확도는 맞힌 비율이지만, 특정 범주가 드문 자료에서는 그 범주를 전부 놓쳐도 높게 나올 수 있습니다. '
+        '혼동 행렬은 행이 실제 범주, 열이 예측 범주입니다. recall은 실제 양성 중 찾은 비율입니다.\n'
+        '작게 실행: ① X와 y의 행을 맞춥니다. ② 훈련 자료로 분류기를 학습합니다. ③ 새 자료를 예측하고 오분류 종류를 봅니다.',
+        'model=LogisticRegression().fit(X_train,y_train)\npredictions=model.predict(X_test)\n'
+        'matrix=confusion_matrix(y_test,predictions,labels=[0,1])',
+        '정확도 하나만 보고 드문 양성을 잘 찾는다고 결론 내리지 않습니다. 정답을 fit에 넣은 자료와 독립 평가 자료를 구분합니다.',
+        'supplement', (), (
+            P('두 범주를 실제 LogisticRegression model로 학습하고 X_test의 predictions를 만드세요.',
+              CLASSIFICATION + 'X_train=np.array([[-3],[-2],[-1],[1],[2],[3]])\n'
+              'y_train=np.array([0,0,0,1,1,1])\nX_test=np.array([[-2],[2]])\n' + CLASSIFIER_PROBE,
+              'model=LogisticRegression().fit(X_train,y_train)\npredictions=model.predict(X_test)',
+              A('predictions',[0,1],(2,)) + _model_checks([ [0,1] ],'_classifier_predictions'),
+              probes={'_classifier_predictions': [[[[-4],[4]]]]}),
+            P('두 특성 모두를 사용해 model을 학습하고 X_test 두 행의 predictions를 만드세요.',
+              CLASSIFICATION + 'X_train=np.array([[0,0],[0,1],[1,0],[3,3],[3,4],[4,3]])\n'
+              'y_train=np.array([0,0,0,1,1,1])\nX_test=np.array([[0,2],[4,4]])\n' + CLASSIFIER_PROBE,
+              'model=LogisticRegression().fit(X_train,y_train)\npredictions=model.predict(X_test)',
+              A('predictions',[0,1],(2,)) + _model_checks([[0,1]],'_classifier_predictions'),
+              probes={'_classifier_predictions': [[[[0,0],[4,3]]]]}),
+            P('양성이 1개뿐인 평가 자료에서 모두 0으로 예측했을 때 accuracy와 양성 recall, matrix를 구하세요. 높은 정확도가 양성 탐지를 뜻하는지도 positive_detected에 bool로 답하세요.',
+              CLASSIFICATION + 'y_true=np.array([0,0,0,0,0,0,0,0,0,1])\n'
+              'y_pred=np.zeros(10,dtype=int)\n',
+              'accuracy=accuracy_score(y_true,y_pred)\nrecall=recall_score(y_true,y_pred)\n'
+              'matrix=confusion_matrix(y_true,y_pred,labels=[0,1])\npositive_detected=False',
+              (C('accuracy',0.9,label='전체 정확도'), C('recall',0.0,label='양성 재현율'),
+               C('positive_detected',False,label='드문 양성 탐지 해석')) +
+              A('matrix',[[9,0],[1,0]],(2,2))),
+        ), ('sk_evaluation',), SKLEARN_NOTE))
+
+    result.append(Lesson(
+        'sk_pipeline', 'scikit-learn', '훈련 자료만으로 전처리하고 같은 규칙으로 예측하기',
+        '표준화는 훈련 자료에서 평균과 표준편차를 배운 다음 그 기준으로 값을 바꿉니다. 테스트 자료까지 섞어 평균을 구하면 미래 정보가 학습에 새어 들어갑니다. '
+        'Pipeline은 StandardScaler와 LinearRegression을 연결합니다. fit(X_train,y_train)은 훈련 자료로만 두 단계를 맞추고, predict(X_test)는 같은 변환을 테스트 입력에 적용합니다. '
+        '전처리를 직접 따로 fit하거나 테스트 입력의 특성 열 순서를 바꾸지 않습니다.\n'
+        '작게 실행: ① 훈련·테스트를 나눕니다. ② 모델을 파이프라인으로 묶습니다. ③ 훈련 자료만 fit하고 테스트 입력을 predict합니다.',
+        'model=make_pipeline(StandardScaler(),LinearRegression())\n'
+        'model.fit(X_train,y_train)\npredictions=model.predict(X_test)',
+        '테스트 자료에 scaler.fit이나 fit_transform을 다시 호출하면 학습 때의 좌표계가 달라집니다. '
+        '작은 인공 자료의 완벽한 직선 예측은 실제 성능 보장이 아닙니다.',
+        'supplement', (), (
+            P('StandardScaler와 LinearRegression을 연결한 model을 훈련 자료로만 학습하세요. X_test의 predictions와 scaler_mean을 저장하세요.',
+              PIPELINE + 'X_train=np.array([[0],[1],[2],[3]])\ny_train=np.array([1,3,5,7])\n'
+              'X_test=np.array([[4],[5]])\n' + PIPELINE_PROBE,
+              'model=make_pipeline(StandardScaler(),LinearRegression())\nmodel.fit(X_train,y_train)\n'
+              'predictions=model.predict(X_test)\nscaler_mean=model.steps[0][1].mean_',
+              A('predictions',[9,11],(2,)) + A('scaler_mean',[1.5],(1,)) +
+              _model_checks([[13]],'_pipeline_predictions'),
+              probes={'_pipeline_predictions': [[[[6]]]]}),
+            P('테스트에 큰 값 100이 있어도 표준화 평균은 훈련 자료만으로 구하세요. model을 만들고 predictions와 scaler_mean을 저장하세요.',
+              PIPELINE + 'X_train=np.array([[0],[1],[2],[3]])\ny_train=np.array([1,3,5,7])\n'
+              'X_test=np.array([[100]])\n' + PIPELINE_PROBE,
+              'model=make_pipeline(StandardScaler(),LinearRegression())\nmodel.fit(X_train,y_train)\n'
+              'predictions=model.predict(X_test)\nscaler_mean=model.steps[0][1].mean_',
+              A('predictions',[201],(1,)) + A('scaler_mean',[1.5],(1,)) +
+              _model_checks([[11]],'_pipeline_predictions'),
+              probes={'_pipeline_predictions': [[[[5]]]]}),
+            P('특성 두 열을 가진 자료로 같은 파이프라인을 학습하세요. 새 행의 predictions와 훈련 데이터의 scaler_mean을 저장하세요.',
+              PIPELINE + 'X_train=np.array([[0,0],[1,0],[0,1],[1,1]])\n'
+              'y_train=np.array([1,3,4,6])\nX_test=np.array([[2,1]])\n' + PIPELINE_PROBE,
+              'model=make_pipeline(StandardScaler(),LinearRegression())\nmodel.fit(X_train,y_train)\n'
+              'predictions=model.predict(X_test)\nscaler_mean=model.steps[0][1].mean_',
+              A('predictions',[8],(1,)) + A('scaler_mean',[0.5,0.5],(2,)) +
+              _model_checks([[8]],'_pipeline_predictions'),
+              probes={'_pipeline_predictions': [[[[2,1]]]]}),
+        ), ('sk_classification',), SKLEARN_NOTE))
+
+    result.append(Lesson(
+        'sk_cross_validation', 'scikit-learn', '교차 검증과 시간 순서 검증',
+        '한 번의 훈련·테스트 분할은 어떤 표본이 테스트에 들어갔는지에 따라 점수가 달라집니다. '
+        'KFold는 자료를 여러 구간으로 나누어 각 구간을 한 번씩 평가에 사용합니다. cross_val_score는 각 구간에서 모델을 새로 학습해 점수 배열을 돌려줍니다. '
+        'scoring="neg_mean_absolute_error"는 큰 점수가 좋다는 점수 규칙 때문에 MAE에 음수를 붙입니다. 실제 MAE는 부호를 바꾸어 읽습니다. '
+        '시간 순서 자료는 미래를 훈련에 넣지 않도록 TimeSeriesSplit을 씁니다.\n'
+        '작게 실행: ① 훈련·검증 인덱스가 겹치지 않는지 봅니다. ② 구간별 점수를 계산합니다. ③ 시간 자료에서는 이전 관측만 훈련에 사용합니다.',
+        'folds=KFold(n_splits=3)\nscores=cross_val_score(LinearRegression(),X,y,cv=folds,scoring="neg_mean_absolute_error")\n'
+        'mean_mae=(-scores).mean()',
+        '교차 검증을 돌린 뒤 같은 테스트 자료를 반복해서 모델 선택에 사용하면 최종 평가가 독립적이지 않습니다. '
+        '시간 순서 자료를 무작위로 섞어 미래를 예측한다고 해석하지 않습니다.',
+        'supplement', (), (
+            P('6개 표본을 순서를 섞지 않는 3개 구간으로 나누세요. 각 구간의 테스트 인덱스를 test_indices 배열(3행 2열)로 만드세요.',
+              VALIDATION + 'X=np.arange(6).reshape(-1,1)\n',
+              'folds=KFold(n_splits=3,shuffle=False)\n'
+              'test_indices=np.array([test for _,test in folds.split(X)])',
+              A('test_indices',[[0,1],[2,3],[4,5]],(3,2))),
+            P('선형 자료의 3구간 교차 검증 점수 scores와 각 구간 MAE의 평균 mean_mae를 구하세요. scoring은 neg_mean_absolute_error를 사용하세요.',
+              VALIDATION + 'X=np.arange(9).reshape(-1,1)\ny=2*X[:,0]+1\n',
+              "scores=cross_val_score(LinearRegression(),X,y,cv=3,scoring='neg_mean_absolute_error')\nmean_mae=(-scores).mean()",
+              A('scores',[0,0,0],(3,)) + (C('mean_mae',0.0,label='구간별 MAE 평균'),)),
+            P('시간 순서가 있는 8개 표본을 TimeSeriesSplit 3구간으로 나누세요. fold_sizes에 각 구간의 훈련·테스트 개수를, last_test에 마지막 평가 인덱스를 담으세요.',
+              VALIDATION + 'X=np.arange(8).reshape(-1,1)\n',
+              'folds=list(TimeSeriesSplit(n_splits=3).split(X))\n'
+              'fold_sizes=np.array([[len(train),len(test)] for train,test in folds])\nlast_test=folds[-1][1]',
+              A('fold_sizes',[[2,2],[4,2],[6,2]],(3,2)) + A('last_test',[6,7],(2,))),
+        ), ('sk_pipeline',), SKLEARN_NOTE))
+
     # Keep real probe helpers in executable initial, but show only the imports
     # and observation data in the learner's prepared-data panel.
     def visible_initial(initial):
-        for helper in (BAR_PROBE, HIST_PROBE, SCATTER_PROBE, MODEL_PROBE):
+        for helper in (BAR_PROBE, HIST_PROBE, SCATTER_PROBE, MODEL_PROBE,
+                       CLASSIFIER_PROBE, PIPELINE_PROBE):
             initial = initial.replace(helper, '')
         return initial.strip()
 
@@ -499,4 +619,22 @@ def validation_cases():
         p[2].solution.replace('y_train.mean()', 'y_test.mean()'),
         p[2].solution.replace('np.full(len(y_test),y_train.mean())', 'np.repeat(np.mean(y_train),len(X_test))'),
         '테스트 정답 평균으로 기준선을 만든 누출을 거부하며 동등한 기준선 배열 생성은 허용합니다.')
+
+    p = units['sk_classification'].problems
+    add('sk_classification', 0,
+        "model={'type':'LogisticRegression'}\npredictions=np.array([0,1])",
+        p[0].solution.replace('LogisticRegression()', 'LogisticRegression(C=10)'),
+        '예측 숫자만 적은 가짜 모델은 거부하고 실제 분류기의 설정 차이는 허용합니다.')
+    p = units['sk_pipeline'].problems
+    add('sk_pipeline', 1,
+        p[1].solution.replace('scaler_mean=model.steps[0][1].mean_',
+                              'scaler_mean=StandardScaler().fit(np.vstack([X_train,X_test])).mean_'),
+        p[1].solution.replace('make_pipeline(StandardScaler(),LinearRegression())',
+                              "Pipeline([('scale',StandardScaler()),('regression',LinearRegression())])"),
+        '테스트 값을 표준화 평균에 섞으면 거부하고 동등한 파이프라인 표현은 허용합니다.')
+    p = units['sk_cross_validation'].problems
+    add('sk_cross_validation', 1,
+        p[1].solution.replace("scoring='neg_mean_absolute_error'", "scoring='r2'"),
+        p[1].solution.replace('cv=3', 'cv=KFold(n_splits=3,shuffle=False)'),
+        'R²와 음의 MAE를 혼동하면 거부하고 같은 구간을 명시한 방식은 허용합니다.')
     return tuple(cases)

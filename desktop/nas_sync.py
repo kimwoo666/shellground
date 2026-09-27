@@ -22,7 +22,7 @@ FILES = {'progress-v3.json': 3, 'progress-v3-real.json': 3,
          'progress-v3-simulation.json': 3, 'python-progress-v1.json': 1,
          'conda-progress-v1.json': 1, 'notebook-progress-v1.json': 1,
          'system-concepts-v1.json': 1, 'memory-v1.json': 1}
-FIELDS = {'completed', 'passed', 'checkpoints', 'learning', 'last_learning',
+FIELDS = {'completed', 'passed', 'checkpoints', 'learning', 'last_learning', 'last_checkpoint',
           'positions', 'concept_positions', 'setup_completed', 'quiz', 'resume'}
 SETS = {'completed', 'passed', 'checkpoints', 'setup_completed'}
 LIMIT = 4 * 1024 * 1024

@@ -120,7 +120,7 @@ public final class NasSync {
     void settings(Activity activity){
         if(busy){Toast.makeText(activity,"진도를 저장 중입니다. 잠시 후 다시 열어 주세요.",Toast.LENGTH_SHORT).show();return;}
         LinearLayout form=new LinearLayout(activity);form.setOrientation(LinearLayout.VERTICAL);int pad=(int)(20*activity.getResources().getDisplayMetrics().density);form.setPadding(pad,pad,pad,pad);
-        TextView info=new TextView(activity);info.setText(status+"\n\nPC에서 만든 Shellground 진도 전용 폴더에 연결하세요. 같은 NAS의 공유 이름과 그 안의 하위 폴더를 입력합니다.\n\n완료·소단계·퀴즈만 동기화합니다. 코드는 보내지 않습니다. 로그인 정보는 이 기기에만 암호화해 저장합니다. 같은 Wi-Fi 또는 개인 VPN에서 사용하세요. SMB 포트를 인터넷에 공개하지 마세요.");form.addView(info);
+        TextView info=new TextView(activity);info.setText(status+"\n\nPC에서 만든 Shellground 진도 전용 폴더에 연결하세요. 같은 NAS의 공유 이름과 그 안의 하위 폴더를 입력합니다.\n\n단원·종합 복습 완료와 마지막 복습 위치, 소단계·퀴즈를 동기화합니다. 코드는 보내지 않습니다. 로그인 정보는 이 기기에만 암호화해 저장합니다. 같은 Wi-Fi 또는 개인 VPN에서 사용하세요. SMB 포트를 인터넷에 공개하지 마세요.");form.addView(info);
         String[] names={"NAS 주소 (예: nas.local)","공유 이름 (예: study)","하위 폴더 (예: Shellground/progress-v1)","사용자 이름","비밀번호","도메인 (선택)"};
         String[] fields={"server","share","folder","username","password","domain"};EditText[] inputs=new EditText[fields.length];
         for(int i=0;i<inputs.length;i++){
